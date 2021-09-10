@@ -40,10 +40,10 @@ Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid
 
 | Max Supply    | Discount |
 |---------------|----------|
-| < 350,000,000 | 75%      |
-| < 300,000,000 | 50%      |
-| < 250,000,000 | 25%      |
-| < 200,000,000 | 0%       |
+| > 350,000,000 | 75%      |
+| > 300,000,000 | 50%      |
+| > 250,000,000 | 25%      |
+| > 200,000,000 | 0%       |
 
 ## Staking Rewards
 t.b.d.
