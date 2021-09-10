@@ -28,18 +28,17 @@ t.b.d.
 
 ## Allocation
 ICO: 60%
-Founding Team: 30%
+Liqudity: 30%
 Investors: 10%
 
 ## Repurchasing Plan
-Every month 10% of the profits will be used for buying back the tokens for burning.
+Every month 25% of the profits will be used for buying back the tokens for burning. 
 
 ## Funds Usage
-Development
-Operations
-Marketting
-Business Development
-Reserved
+Platform Development and Maintenance: 30%
+Marketting: 40%
+Business Development: 10%
+Reserved: 20%
  
 ## Disinflationary Token
 t.b.d.
