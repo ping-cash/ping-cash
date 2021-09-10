@@ -1,6 +1,6 @@
 # Sociable Cash
 
-Sociable Cash is a wallet letting users to transfer tokens rapidly and simply by leveraging its decentralized identity directory services.
+Sociable Cash is a mobile wallet letting users to transfer tokens rapidly and simply by leveraging its decentralized identity directory services.
 
 Unlike other crypto wallets Sociable Cash is not aimed to support multiple protocols or different variety of tokens which is a valid requirement for wallets that are used for investment and trading purposes.
 
@@ -11,6 +11,9 @@ Therefore Social Cash is built on top of Binance Chain which provides rapid and 
 It is only meant to transfer BUSD token and Social Cash Token (SCH).
  
 # Disinflationary Token
+t.b.d
+
+# Decentralized identity directory services
 t.b.d
 
 # Staking Rewards
@@ -27,7 +30,10 @@ During the inital phase, SCH will be sent to users as reward and people will be 
 
 # Open Source Wallet Alternatives
 
-Bitpay is a the simple wallet alternative to take as a reference for technical knowhow gahtering purpose. It is lack of BSC and Directory capabilities, but it has the ApplePay and Credit card payment features which can be cloned. We'll investigate Bitpay in detail to identify how they were able to overcome regulatory requirements depsite they do not collect identification information from the end user.
+Bitpay is a the simple mobile wallet alternative to take as a reference for technical knowhow gahtering purpose. It is lack of BSC and Directory capabilities, but it has the ApplePay and Credit card payment features which can be cloned. We'll investigate Bitpay in detail to identify how they were able to overcome regulatory requirements depsite they do not collect identification information from the end user.
+https://github.com/bitpay/wallet
+
+TrustWallet is much more sophisticated mobile wallet in terms of variety of supported protocols and tokens. 
 
 # Crypto.com
 
