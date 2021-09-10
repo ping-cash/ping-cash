@@ -11,16 +11,16 @@ Therefore Social Cash is built on top of Binance Chain which provides rapid and 
 It is only meant to transfer BUSD token and Social Cash Token (SCH).
  
 # Disinflationary Token
-Will be defined in detail...
+t.b.d
 
 # Staking Rewards
-Will be defined in detail...
+t.b.d
 
 # Compensation of Visa Costs by SCH
-Will be defined in detail...
+t.b.d
 
 # Integrations with other Apps
-Will be defined in detail...
+t.b.d
 
 # Air Gaps
 During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends refered by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
