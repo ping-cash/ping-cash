@@ -42,3 +42,6 @@ Trustwallet is much more sophisticated mobile wallet in terms of variety of supp
 Crypto.com is a very sophisticated centralized mobile application (not a wallet) which has directory services as well. It provides credit card purchase and even it has its own visa credit card for spending purposes. It requires authorization of users with identification documents and face biometrics. The registration process is not instant, it requires 1-3 days approval. It doesn't have NFC capability to transfer tokens. It only imports phone contacts and do not consider social media contacts. It doesn't support tranfering BUSD. This application should be considered as a competitor for Binance or Coinbase Exchanges and their applications. Crypto.com has it own Defi Wallet as well but the Defi Wallet is lack of above mentioned capabilities.
 
 ## References
+https://docs.binance.org/smart-chain/developer/BEP20.html![image](https://user-images.githubusercontent.com/81884938/132891206-1d8568aa-6e32-491a-abef-424a841811e4.png)
+https://docs.binance.org/api-reference/cli.html
+
