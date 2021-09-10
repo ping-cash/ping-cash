@@ -32,7 +32,7 @@ Founding Team: 30%
 Investors: 10%
 
 ## Repurchasing Plan
-Buy back token from the market back and 
+Every month 10% of the profits will be used for buying back the tokens for burning.
 
 ## Funds Usage
 Development
