@@ -33,7 +33,7 @@ English first, multi lingual.
 - 3rd Week: $ 0.010
 
 ## Tokenomics
-SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. 
+SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. Buy back / burning process will keep proceeding until Max Supply drops down to 200,000,000.
 
 ## Revenue Model
 Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid by SCH.
