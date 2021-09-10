@@ -23,7 +23,7 @@ t.b.d
 ## Compensation of Visa Costs by SCH
 t.b.d
 
-## Integrations with other Apps
+## Integrations with other Mobile Apps
 t.b.d
 
 ## Air Gaps
