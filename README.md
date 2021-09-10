@@ -11,8 +11,8 @@ Therefore Sociable Cash is built on top of Binance Chain which provides rapid an
 
 It is only meant to transfer BUSD token and Sociable Cash Token (SCH).
 
-## Problem Statement
-Easy, safe, rapid, low cost token transfer.
+## Decentralized identity directory services
+Combining decentralized identity directory services with a wallet is a unique idea where there is no other implementations yet. t.b.d.
 
 ## Device Coverage
 iOS and Android devices
@@ -23,16 +23,20 @@ English first, multi lingual.
 ## Revenue Model
 Transfer (Deposit and Withdrawal) fees
 
+## Allocation
+ICO: 60%
+Liqudity: 25%
+AirGap: 5%
+Investors: 10%
+
+## Disinflationary Token
+Every month 25% of the profits will be used for buying back the tokens for burning. 
+
 ## Staking Rewards
 t.b.d.
 
-## Allocation
-ICO: 60%
-Liqudity: 30%
-Investors: 10%
-
-## Repurchasing Plan
-Every month 25% of the profits will be used for buying back the tokens for burning. 
+## Air Gaps
+During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends referred by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
 
 ## Funds Usage
 Platform Development and Maintenance: 30%
@@ -40,20 +44,11 @@ Marketting: 40%
 Business Development: 10%
 Reserved: 20%
  
-## Disinflationary Token
-t.b.d.
-
-## Decentralized identity directory services
-Combining decentralized identity directory services with a wallet is a unique idea where there is no other implementations yet. t.b.d.
-
 ## Compensation of Visa Costs by SCH
 t.b.d.
 
 ## Integrations with other Mobile Apps
 t.b.d.
-
-## Air Gaps
-During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends referred by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
 
 ## Open Source Wallet Alternatives
 
