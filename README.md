@@ -20,9 +20,6 @@ iOS and Android devices
 ## Languages
 English first, multi lingual.
 
-## Revenue Model
-Transfer (Deposit and Withdrawal) fees
-
 ## Allocation
 - Max Supply: 400,000,000
 - ICO: 50%
@@ -37,6 +34,16 @@ Transfer (Deposit and Withdrawal) fees
 
 ## Tokenomics
 SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. 
+
+## Revenue Model
+Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid by SCH.
+
+| Max Supply    | Discount |
+|---------------|----------|
+| < 350,000,000 | 75%      |
+| < 300,000,000 | 50%      |
+| < 250,000,000 | 25%      |
+| < 200,000,000 | 0%       |
 
 ## Staking Rewards
 t.b.d.
