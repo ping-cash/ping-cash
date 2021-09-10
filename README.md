@@ -15,7 +15,7 @@ It is only meant to transfer BUSD token and Social Cash Token (SCH).
 t.b.d
 
 ## Decentralized identity directory services
-t.b.d
+Combining decentralized identity directory services with a wallet is a unique idea where there is no other implementations yet. t.b.d.
 
 ## Staking Rewards
 t.b.d
