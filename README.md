@@ -45,3 +45,5 @@ Crypto.com is a very sophisticated centralized mobile application (not a wallet)
 https://docs.binance.org/index.html
 
 https://docs.binance.org/smart-chain/developer/BEP20.html
+
+https://github.com/ObsidianLabs/bsc-dapp-tutorial/blob/master/README.EN.md
