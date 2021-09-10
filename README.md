@@ -47,7 +47,3 @@ https://docs.binance.org/index.html
 https://docs.binance.org/smart-chain/developer/BEP20.html
 
 https://docs.binance.org/api-reference/cli.html
-
-https://github.com/binance-chain
-
-https://github.com/binance-chain/python-sdk
