@@ -24,13 +24,19 @@ English first, multi lingual.
 Transfer (Deposit and Withdrawal) fees
 
 ## Allocation
-ICO: 60%
-Liqudity: 25%
-AirGap: 5%
-Investors: 10%
+- Max Supply: 400,000,000
+- ICO: 50%
+- Liqudity: 35%
+- AirGap: 5%
+- Investors: 10%
 
-## Disinflationary Token
-Every month 25% of the profits will be used for buying back the tokens for burning. 
+## ICO Schedule
+- 1st Week: $ 0.008
+- 2nd Week: $ 0.009
+- 3rd Week: $ 0.010
+
+## Tokenomics
+SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. 
 
 ## Staking Rewards
 t.b.d.
@@ -39,10 +45,10 @@ t.b.d.
 During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends referred by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
 
 ## Funds Usage
-Platform Development and Maintenance: 30%
-Marketting: 40%
-Business Development: 10%
-Reserved: 20%
+- Platform Development and Maintenance: 30%
+- Marketting: 40%
+- Business Development: 10%
+- Reserved: 20%
  
 ## Compensation of Visa Costs by SCH
 t.b.d.
