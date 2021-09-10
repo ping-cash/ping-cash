@@ -10,21 +10,48 @@ Instead Sociable Cash is focused on transfering token in simplest, fastest and m
 Therefore Sociable Cash is built on top of Binance Chain which provides rapid and low cost transfers by means of BEP20 protocol.
 
 It is only meant to transfer BUSD token and Sociable Cash Token (SCH).
+
+## Problem Statement
+Easy, safe, rapid, low cost token transfer.
+
+## Device Coverage
+iOS and Android devices
+
+## Languages
+English first, multi lingual.
+
+## Revenue Model
+Transfer (Deposit and Withdrawal) fees
+
+## Staking Rewards
+t.b.d.
+
+## Allocation
+ICO: 60%
+Founding Team: 30%
+Investors: 10%
+
+## Repurchasing Plan
+Buy back token from the market back and 
+
+## Funds Usage
+Development
+Operations
+Marketting
+Business Development
+Reserved
  
 ## Disinflationary Token
-t.b.d
+t.b.d.
 
 ## Decentralized identity directory services
 Combining decentralized identity directory services with a wallet is a unique idea where there is no other implementations yet. t.b.d.
 
-## Staking Rewards
-t.b.d
-
 ## Compensation of Visa Costs by SCH
-t.b.d
+t.b.d.
 
 ## Integrations with other Mobile Apps
-t.b.d
+t.b.d.
 
 ## Air Gaps
 During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends referred by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
