@@ -50,3 +50,4 @@ https://docs.binance.org/api-reference/cli.html
 
 https://github.com/binance-chain
 
+https://github.com/binance-chain/python-sdk
