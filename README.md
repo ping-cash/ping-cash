@@ -30,11 +30,9 @@ During the inital phase, SCH will be sent to users as reward and people will be 
 
 # Open Source Wallet Alternatives
 
-Bitpay is a the simple mobile wallet alternative to take as a reference for technical knowhow gahtering purpose. It is lack of BSC and Directory capabilities, but it has the ApplePay and Credit card payment features which can be cloned. We'll investigate Bitpay in detail to identify how they were able to overcome regulatory requirements depsite they do not collect identification information from the end user.
-https://github.com/bitpay/wallet
+Bitpay is a the simple mobile wallet alternative to take as a reference for technical knowhow gahtering purpose. It is lack of BSC and Directory capabilities, but it has the ApplePay and Credit card payment features which can be cloned. We'll investigate Bitpay in detail to identify how they were able to overcome regulatory requirements depsite they do not collect identification information from the end user. (https://github.com/bitpay/wallet)
 
-TrustWallet is much more sophisticated mobile wallet in terms of variety of supported protocols and tokens. But it doesn't have any payment and withdrawal gateway
-https://github.com/trustwallet/wallet-core
+TrustWallet is much more sophisticated mobile wallet in terms of variety of supported protocols and tokens. But it doesn't have any payment and withdrawal gateway (https://github.com/trustwallet/wallet-core)
 
 # Crypto.com
 
