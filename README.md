@@ -27,7 +27,7 @@ t.b.d
 t.b.d
 
 ## Air Gaps
-During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends refered by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
+During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends referred by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
 
 ## Open Source Wallet Alternatives
 
