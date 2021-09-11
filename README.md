@@ -52,6 +52,17 @@ Tokens reserved for founding team and investors will be locked and will be only 
 | Apple  | Banana | Orange  |
 | Apple  | Banana | Orange  |
 
+
+| :        Fruits \|\| Food       : |||
+| :--------- | :-------- | :--------  |
+| Apple      | : Apple : | Apple      \
+| Banana     |   Banana  | Banana     \
+| Orange     |   Orange  | Orange     |
+| :   Rowspan is 4    : || How's it?  |
+|^^    A. Peach         ||   1. Fine :|
+|^^    B. Orange        ||^^ 2. Bad   |
+|^^    C. Banana        ||  It's OK!  |
+
 ## ICO Schedule
 | Week | Price   |
 |------|---------|
