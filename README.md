@@ -60,6 +60,13 @@ During the inital phase, SCH will be sent to users as reward and people will be 
 - Business Development: 10%
 - Reserved: 20%
 
+| Funds Usage   | Percent |
+|---------------|----------|
+| Platform Development and Maintenance | 30%      |
+| Marketting| 40%      |
+| Business Development | 10%      |
+| Reserved | 20%       |
+
 ## Compensation of Visa Costs by SCH
 t.b.d.
 
