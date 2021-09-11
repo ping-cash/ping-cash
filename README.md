@@ -31,9 +31,9 @@ Tokens reserved for founding team and investors will be locked and will be relas
 
 | Phase   | Max                 | Total               | Circulating                   |  Locked                 | Remaining             |
 |---------|---------------------|---------------------|-------------------------------|-------------------------|-----------------------|
-| First   | 400,000,000         | 350,000,000         | 220,000,000                   |  130,000,000            |  50,000,000           |
-| Interim | 400,000,000 - burnt | 350,000,000 - burnt | 220,000,000 + rewards - burnt |  130,000,000 - unlocked |  50,000,000 - rewards |
-| Last    | 200,000,000         | 200,000,000         | 200,000,000                   |  0                      |  0                    |
+| Initial  | 400,000,000         | 350,000,000         | 220,000,000                   |  130,000,000            |  50,000,000           |
+| Interim  | 400,000,000 - burnt | 350,000,000 - burnt | 220,000,000 + rewards - burnt |  130,000,000 - unlocked |  50,000,000 - rewards |
+| Final    | 200,000,000         | 200,000,000         | 200,000,000                   |  0                      |  0                    |
 
 ## ICO Schedule
 | Week | Price   |
