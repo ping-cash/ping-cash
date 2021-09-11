@@ -40,7 +40,7 @@ Tokens reserved for founding team and investors will be locked and will be only 
 | Phase   | Max         | Total       | Circulating | Liquidity Pool | Locked      | Remaining     |
 |---------|-------------|-------------|-------------|----------------|-------------|---------------|
 | First   | 400,000,000 | 200,000,000 | 200,000,000 | 10,000,000     | 140,000,000 |  50,000,000   |
-| Last    | 200,000,000 | 200,000,000 | 200,000,000                 || 0           |  0            |
+| Last    | 200,000,000 | 200,000,000 | *200,000,000*               || 0           |  0            |
 
 
 |             |          Grouping           ||
