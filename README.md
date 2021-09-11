@@ -14,26 +14,26 @@ It is only meant to transfer BUSD token and Sociable Cash Token (SCH).
 ## Decentralized identity directory services
 Combining decentralized identity directory services with a wallet is a unique idea where there is no other implementations yet. t.b.d.
 
-## Device Coverage
-iOS and Android devices
-
-## Languages
-English first, multi lingual.
+## Tokenomics
+SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. Buy back / burning process will keep proceeding until Max Supply drops down to half of the initial supply.
 
 ## Allocation
-- Max Supply: 400,000,000
-- ICO: 50%
-- Liqudity: 35%
-- AirGap: 5%
-- Investors: 10%
+| Week.       | Percent |
+|-------------|---------|
+| ICO         | 50%     |
+| Foundation  | 30%     |
+| Airgap      | 5%      |
+| Investors.  | 10%     |
 
 ## ICO Schedule
-- 1st Week: $ 0.008
-- 2nd Week: $ 0.009
-- 3rd Week: $ 0.010
+| Week | Price   |
+|------|---------|
+| 1st  | $ 0.008 |
+| 2nd  | $ 0.009 |
+| 3rd  | $ 0.010 |
 
-## Tokenomics
-SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. Buy back / burning process will keep proceeding until Max Supply drops down to 200,000,000.
+## Supply
+Max Supply will be 400,000,000 SCH.
 
 ## Revenue Model
 Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid by SCH.
@@ -48,6 +48,9 @@ Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid
 ## Staking Rewards
 t.b.d.
 
+## Liquidity Pool
+Sociable Cash will have its own SCH/BUSD balanced liquidity pool pair. Liquity providers will be rewarded with SCH. Sociable Cash platform will always ensure there would be at least 5,000,000 SCH in the pool.
+
 ## Air Gaps
 During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends referred by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
 
@@ -56,12 +59,18 @@ During the inital phase, SCH will be sent to users as reward and people will be 
 - Marketting: 40%
 - Business Development: 10%
 - Reserved: 20%
- 
+
 ## Compensation of Visa Costs by SCH
 t.b.d.
 
 ## Integrations with other Mobile Apps
 t.b.d.
+
+## Device Coverage
+iOS and Android devices
+
+## Languages
+English first, multi lingual.
 
 ## Open Source Wallet Alternatives
 
