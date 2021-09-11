@@ -37,43 +37,11 @@ Tokens reserved for founding team and investors will be locked and will be only 
 
 ## Supply
 
-| Phase   | Max         | Total       | Circulating | Liquidity Pool | Locked      | Remaining     |
-|---------|-------------|-------------|-------------|----------------|-------------|---------------|
-| First   | 400,000,000 | 200,000,000 | 200,000,000 | 10,000,000     | 140,000,000 |  50,000,000   |
-| Last    | 200,000,000 | 200,000,000 |: 200,000,000               :|| 0           |  0            |
-
-
-| :    Easy Multiline   : |||
-| :----- | :----- | :------ |
-| Apple  | Banana | Orange  \
-| Apple  | Banana | Orange  \
-| Apple  | Banana | Orange
-| Apple  | Banana | Orange  \
-| Apple  | Banana | Orange  |
-| Apple  | Banana | Orange  |
-
-
-| :        Fruits \|\| Food       : |||
-| :--------- | :-------- | :--------  |
-| Apple      | : Apple : | Apple      \
-| Banana     |   Banana  | Banana     \
-| Orange     |   Orange  | Orange     |
-| :   Rowspan is 4    : || How's it?  |
-|^^    A. Peach         ||   1. Fine :|
-|^^    B. Orange        ||^^ 2. Bad   |
-|^^    C. Banana        ||  It's OK!  |
-
-
-
-| :                   MathJax \|\| Image                 : |||
-| :------------ | :-------- | :----------------------------- |
-| Apple         | : Apple : | Apple                          \
-| Banana        | Banana    | Banana                         \
-| Orange        | Orange    | Orange                         |
-| :     Rowspan is 4     : || :        How's it?           : |
-| ^^     A. Peach          ||    1. ![example][cell-image]   |
-| ^^     B. Orange         || ^^ 2. $I = \int \rho R^{2} dV$ |
-| ^^     C. Banana         || **It's OK!**                   |
+| Phase   | Max                 | Total               | Circulating | Liquidity Pool | Locked      | Remaining     |
+|---------|---------------------|---------------------|-------------|----------------|-------------|---------------|
+| First   | 400,000,000         | 350,000,000         | 200,000,000 | 10,000,000     | 140,000,000 |  50,000,000   |
+| Interim | 400,000,000 - burnt | 350,000,000 - burnt | 200,000,000 | 10,000,000     | 140,000,000 |  50,000,000   |
+| Last    | 200,000,000         | 200,000,000         | 200,000,000 |   Dynamic      | 0           |  0            |
 
 ## ICO Schedule
 | Week | Price   |
