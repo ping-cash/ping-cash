@@ -37,13 +37,11 @@ Tokens reserved for founding team and investors will be locked and will be only 
 
 ## Supply
 
-| Supply                 | Percent |
-|-----------------------|---------|
-| Max                   | 400,000,     |
-| Investors             | 15%     |
-| Foundation            | 20%     |
-| LP / Rewards / Airgap | 15%     |
-
+| Phase   | Max                 | Total       | Circulating | Liquidity Pool | Locked      | Remaining     |
+|---------|---------------------|-------------|-------------|------------------------------|---------------|
+| Day 1   | 400,000,000         | 200,000,000 | 200,000,000 | 10,000,000     | 140,000,000 |  50,000,000   |
+| Day x   | 400,000,000 - burnt |             |             |                |             |               |
+| Day z   | 200,000,000         | 200,000,000 |      200,000,000             |             |               |
 
 Max Supply will be 400,000,000 SCH.
 - Total Supply
