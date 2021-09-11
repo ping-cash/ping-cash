@@ -43,19 +43,14 @@ Tokens reserved for founding team and investors will be locked and will be only 
 | Last    | 200,000,000 | 200,000,000 |: 200,000,000               :|| 0           |  0            |
 
 
-|             |          Grouping           ||
-First Header  | Second Header | Third Header |
- ------------ | :-----------: | -----------: |
-Content       |          *Long Cell*        ||
-Content       |   **Cell**    |         Cell |
-
-New section   |     More      |         Data |
-
-
-Max Supply will be 400,000,000 SCH.
-- Total Supply
-- Max Supply
-- Circulating Supply
+| :    Easy Multiline   : |||
+| :----- | :----- | :------ |
+| Apple  | Banana | Orange  \
+| Apple  | Banana | Orange  \
+| Apple  | Banana | Orange
+| Apple  | Banana | Orange  \
+| Apple  | Banana | Orange  |
+| Apple  | Banana | Orange  |
 
 ## ICO Schedule
 | Week | Price   |
