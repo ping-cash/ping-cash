@@ -13,6 +13,9 @@ It is only meant to transfer BUSD token and Sociable Cash Token (SCH).
 
 ## Decentralized identity directory services
 Combining decentralized identity directory services with a wallet is a unique idea where there is no other implementations yet. t.b.d.
+W3C DID
+Sovrin
+Veramo
 
 ## Tokenomics
 SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. Buy back / burning process will keep proceeding until Max Supply drops down to half of the initial supply.
@@ -21,7 +24,7 @@ SCH is designed to be a disinflationary token. Every month 25% of the profits wi
 | Type                  | Percent |
 |-----------------------|---------|
 | ICO                   | 50%     |
-| Investors             | 15%     |
+| Private Investors     | 15%     |
 | Foundation / LP       | 20%     |
 | Rewards / Airgap      | 15%     |
 
@@ -29,11 +32,11 @@ Tokens reserved for founding team and investors will be locked and will be relas
 
 ## Supply
 
-| Phase    | Max                 | Total               | Circulating                   |  Locked                 | Remaining             |
-|----------|---------------------|---------------------|-------------------------------|-------------------------|-----------------------|
-| Initial  | 400,000,000         | 350,000,000         | 220,000,000                   |  130,000,000            |  50,000,000           |
-| Interim  | 400,000,000 - burnt | 350,000,000 - burnt | 220,000,000 + rewards - burnt |  130,000,000 - unlocked |  50,000,000 - rewards |
-| Final    | 200,000,000         | 200,000,000         | 200,000,000                   |  0                      |  0                    |
+| Phase    | Max                 | Total               | Circulating                    |  Locked                 | Remaining              |
+|----------|---------------------|---------------------|--------------------------------|-------------------------|------------------------|
+| Initial  | 400,000,000         | 350,000,000         | 220,000,000                    |  130,000,000            |  50,000,000            |
+| Interim  | 400,000,000 - burnt | 350,000,000 - burnt | 220,000,000 + emission - burnt |  130,000,000 - unlocked |  50,000,000 - emission |
+| Final    | 200,000,000         | 200,000,000         | 200,000,000                    |  0                      |  0                     |
 
 ## ICO Schedule
 | Week | Price   |
@@ -52,9 +55,6 @@ Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid
 | > 250,000,000 | 25%      |
 | > 200,000,000 | 0%       |
 
-## Liquidity Pool
-Sociable Cash will have its own SCH/BUSD balanced liquidity pool pair. Liquity providers will be rewarded with SCH. Sociable Cash platform will always ensure there would be enough amount of liquidity in the pool.
-
 ## Funds Usage
 | Usage                                | Percent |
 |--------------------------------------|---------|
@@ -63,11 +63,22 @@ Sociable Cash will have its own SCH/BUSD balanced liquidity pool pair. Liquity p
 | Initial Liquidity Pool               | 10%     |
 | Reserved                             | 20%     |
 
-## Reward Structure
+## Liquidity Pool
+Sociable Cash will have its own SCH/BUSD balanced liquidity pool pair. Liquity providers will be rewarded with SCH. Sociable Cash platform will always ensure there would be enough amount of liquidity in the pool.
+
+## SCH Reward Structure
 - Airgaps for the new joiners and refferrers.
 - Liquity Pool Rewards
 - Locked and Flexible Staking Rewards
 - Compensation of Visa Costs from the marketting budget till the end of Phase-3 for SCH hodlers.
+- Access to features on Sociable Platforms
+
+## Early withdrawal penalty
+Applied for locked staking.
+t.b.d
+
+## Long Term Price Drivers
+
 
 ## Integrations
 | Phases | Integrations.              | Target          |
