@@ -29,8 +29,8 @@ Tokens reserved for founding team and investors will be locked and will be relas
 
 ## Supply
 
-| Phase   | Max                 | Total               | Circulating                   |  Locked                 | Remaining             |
-|---------|---------------------|---------------------|-------------------------------|-------------------------|-----------------------|
+| Phase    | Max                 | Total               | Circulating                   |  Locked                 | Remaining             |
+|----------|---------------------|---------------------|-------------------------------|-------------------------|-----------------------|
 | Initial  | 400,000,000         | 350,000,000         | 220,000,000                   |  130,000,000            |  50,000,000           |
 | Interim  | 400,000,000 - burnt | 350,000,000 - burnt | 220,000,000 + rewards - burnt |  130,000,000 - unlocked |  50,000,000 - rewards |
 | Final    | 200,000,000         | 200,000,000         | 200,000,000                   |  0                      |  0                    |
@@ -53,20 +53,17 @@ Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid
 | > 200,000,000 | 0%       |
 
 ## Liquidity Pool
-Sociable Cash will have its own SCH/BUSD balanced liquidity pool pair. Liquity providers will be rewarded with SCH. Sociable Cash platform will always ensure there would be at least 5,000,000 SCH in the pool.
-
-## Air Gaps
-During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends referred by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
+Sociable Cash will have its own SCH/BUSD balanced liquidity pool pair. Liquity providers will be rewarded with SCH. Sociable Cash platform will always ensure there would be enough amount of liquidity in the pool.
 
 ## Funds Usage
-| Funds Usage                          | Percent |
+| Usage                                | Percent |
 |--------------------------------------|---------|
-| Development and Maintenance          | 25%     |
-| Marketting                           | 25%     |
-| LP / Rewards / Airgap                | 30%     |
+| Development and Maintenance          | 30%     |
+| Marketting / Rewards                 | 40%     |
+| Initial Liquidity Pool               | 10%     |
 | Reserved                             | 20%     |
 
-## Rewards Structure
+## Reward Structure
 - Airgaps for the new joiners and refferrers.
 - Liquity Pool Rewards
 - Locked and Flexible Staking Rewards
