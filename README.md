@@ -18,12 +18,15 @@ Combining decentralized identity directory services with a wallet is a unique id
 SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. Buy back / burning process will keep proceeding until Max Supply drops down to half of the initial supply.
 
 ## Allocation
-| Week.       | Percent |
-|-------------|---------|
-| ICO         | 50%     |
-| Foundation  | 30%     |
-| Airgap      | 5%      |
-| Investors.  | 10%     |
+| Week.          | Percent |
+|----------------|---------|
+| ICO            | 50%     |
+| Investors      | 10%     |
+| Foundation     | 20%     |
+| LP and Staking | 10%     |
+| Airgaps        | 5%      |
+
+Tokens reserved for founding team will be only relased gradually proportional to the burned tokens every month.
 
 ## ICO Schedule
 | Week | Price   |
@@ -55,17 +58,12 @@ Sociable Cash will have its own SCH/BUSD balanced liquidity pool pair. Liquity p
 During the inital phase, SCH will be sent to users as reward and people will be rewarded more if their friends referred by them registers to the wallet. Invitations will not be sent only through phone number, but also through social media applications.
 
 ## Funds Usage
-- Platform Development and Maintenance: 30%
-- Marketting: 40%
-- Business Development: 10%
-- Reserved: 20%
-
-| Funds Usage   | Percent |
-|---------------|----------|
-| Platform Development and Maintenance | 30%      |
-| Marketting| 40%      |
-| Business Development | 10%      |
-| Reserved | 20%       |
+| Funds Usage                          | Percent |
+|--------------------------------------|---------|
+| Development and Maintenance          | 30%     |
+| Marketting                           | 40%     |
+| Liqudity Providing                   | 10%     |
+| Reserved                             | 20%     |
 
 ## Compensation of Visa Costs by SCH
 t.b.d.
