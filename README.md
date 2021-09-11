@@ -22,26 +22,18 @@ SCH is designed to be a disinflationary token. Every month 25% of the profits wi
 |-----------------------|---------|
 | ICO                   | 50%     |
 | Investors             | 15%     |
-| Foundation            | 20%     |
-| LP / Rewards / Airgap | 15%     |
+| Foundation / LP       | 20%     |
+| Rewards / Airgap      | 15%     |
 
-Tokens reserved for founding team and investors will be locked and will be only relased gradually proportional to the burned tokens every month. 
-
-## Allocation
-| Week.                 | Percent |
-|-----------------------|---------|
-| ICO                   | 50%     |
-| Investors             | 15%     |
-| Foundation            | 20%     |
-| LP / Rewards / Airgap | 15%     |
+Tokens reserved for founding team and investors will be locked and will be relased gradually proportional to the burned tokens every month. The only unlocked initial Foundation tokens will be limited to 5% for initializing the BUSD/SCH liquidity pool.
 
 ## Supply
 
-| Phase   | Max                 | Total               | Circulating | Liquidity Pool | Locked      | Remaining     |
-|---------|---------------------|---------------------|-------------|----------------|-------------|---------------|
-| First   | 400,000,000         | 350,000,000         | 200,000,000 | 10,000,000     | 140,000,000 |  50,000,000   |
-| Interim | 400,000,000 - burnt | 350,000,000 - burnt | 200,000,000 | 10,000,000     | 140,000,000 |  50,000,000   |
-| Last    | 200,000,000         | 200,000,000         | 200,000,000 |   Dynamic      | 0           |  0            |
+| Phase   | Max                 | Total               | Circulating                   |  Locked                 | Remaining             |
+|---------|---------------------|---------------------|-------------------------------|-------------------------|-----------------------|
+| First   | 400,000,000         | 350,000,000         | 220,000,000                   |  130,000,000            |  50,000,000           |
+| Interim | 400,000,000 - burnt | 350,000,000 - burnt | 220,000,000 + rewards - burnt |  130,000,000 - unlocked |  50,000,000 - rewards |
+| Last    | 200,000,000         | 200,000,000         | 200,000,000                   |  0                      |  0                    |
 
 ## ICO Schedule
 | Week | Price   |
