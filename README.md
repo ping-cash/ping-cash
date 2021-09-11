@@ -65,7 +65,7 @@ During the inital phase, SCH will be sent to users as reward and people will be 
 - Airgaps for the new joiners and refferrers.
 - Liquity Pool Rewards
 - Locked and Flexible Staking Rewards
-- Compensation of Visa Costs from the marketting budget till the end of Phase-3
+- Compensation of Visa Costs from the marketting budget till the end of Phase-3 for SCH hodlers.
 
 ## Integrations
 | Phases | Integrations.              | Target          |
