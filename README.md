@@ -63,6 +63,18 @@ Tokens reserved for founding team and investors will be locked and will be only 
 |^^    B. Orange        ||^^ 2. Bad   |
 |^^    C. Banana        ||  It's OK!  |
 
+
+
+| :                   MathJax \|\| Image                 : |||
+| :------------ | :-------- | :----------------------------- |
+| Apple         | : Apple : | Apple                          \
+| Banana        | Banana    | Banana                         \
+| Orange        | Orange    | Orange                         |
+| :     Rowspan is 4     : || :        How's it?           : |
+| ^^     A. Peach          ||    1. ![example][cell-image]   |
+| ^^     B. Orange         || ^^ 2. $I = \int \rho R^{2} dV$ |
+| ^^     C. Banana         || **It's OK!**                   |
+
 ## ICO Schedule
 | Week | Price   |
 |------|---------|
