@@ -25,7 +25,30 @@ SCH is designed to be a disinflationary token. Every month 25% of the profits wi
 | Foundation            | 20%     |
 | LP / Rewards / Airgap | 15%     |
 
-Tokens reserved for founding team and investors will be only relased gradually proportional to the burned tokens every month.
+Tokens reserved for founding team and investors will be locked and will be only relased gradually proportional to the burned tokens every month. 
+
+## Allocation
+| Week.                 | Percent |
+|-----------------------|---------|
+| ICO                   | 50%     |
+| Investors             | 15%     |
+| Foundation            | 20%     |
+| LP / Rewards / Airgap | 15%     |
+
+## Supply
+
+| Supply                 | Percent |
+|-----------------------|---------|
+| Max                   | 400,000,     |
+| Investors             | 15%     |
+| Foundation            | 20%     |
+| LP / Rewards / Airgap | 15%     |
+
+
+Max Supply will be 400,000,000 SCH.
+- Total Supply
+- Max Supply
+- Circulating Supply
 
 ## ICO Schedule
 | Week | Price   |
@@ -33,12 +56,6 @@ Tokens reserved for founding team and investors will be only relased gradually p
 | 1st  | $ 0.008 |
 | 2nd  | $ 0.009 |
 | 3rd  | $ 0.010 |
-
-## Supply
-Max Supply will be 400,000,000 SCH.
-- Total Supply
-- Max Supply
-- Circulating Supply
 
 ## Revenue Model
 Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid by SCH.
