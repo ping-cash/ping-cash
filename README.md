@@ -47,9 +47,6 @@ Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid
 | > 250,000,000 | 25%      |
 | > 200,000,000 | 0%       |
 
-## Staking Rewards
-t.b.d.
-
 ## Liquidity Pool
 Sociable Cash will have its own SCH/BUSD balanced liquidity pool pair. Liquity providers will be rewarded with SCH. Sociable Cash platform will always ensure there would be at least 5,000,000 SCH in the pool.
 
