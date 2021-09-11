@@ -18,13 +18,12 @@ Combining decentralized identity directory services with a wallet is a unique id
 SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. Buy back / burning process will keep proceeding until Max Supply drops down to half of the initial supply.
 
 ## Allocation
-| Week.          | Percent |
-|----------------|---------|
-| ICO            | 50%     |
-| Investors      | 10%     |
-| Foundation     | 20%     |
-| LP and Staking | 10%     |
-| Airgaps        | 5%      |
+| Week.                 | Percent |
+|-----------------------|---------|
+| ICO                   | 50%     |
+| Investors             | 10%     |
+| Foundation            | 20%     |
+| LP / Rewards / Airgap | 20%     |
 
 Tokens reserved for founding team will be only relased gradually proportional to the burned tokens every month.
 
