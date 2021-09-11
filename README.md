@@ -64,11 +64,19 @@ During the inital phase, SCH will be sent to users as reward and people will be 
 | Liqudity Providing                   | 10%     |
 | Reserved                             | 20%     |
 
-## Compensation of Visa Costs by SCH
-t.b.d.
+## Rewards Structure
+- Airgaps for the new joiners and refferrers.
+- Liquity Pool Rewards
+- Locked and Flexible Staking Rewards
+- Compensation of Visa Costs from the marketting budget till the end of Phase-3
 
-## Integrations with other Mobile Apps
-t.b.d.
+## Integrations
+| Phases | Integrations.              | Target          |
+|--------|----------------------------|-----------------|
+| 0      | Standalone Sociable.Cash   | 2021 Q4         |
+| 1      | Sociable.Games Payments    | 2022 Q1         |
+| 2      | Sociable.Travel Payments   | 2022 Q3         |
+| 3      | Various other platforms    | 2022 Q4 Onwards |
 
 ## Device Coverage
 iOS and Android devices
