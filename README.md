@@ -36,6 +36,9 @@ Tokens reserved for founding team and investors will be only relased gradually p
 
 ## Supply
 Max Supply will be 400,000,000 SCH.
+- Total Supply
+- Max Supply
+- Circulating Supply
 
 ## Revenue Model
 Transfer (Deposit / Withdrawal) fees. Fees will be discounted when they are paid by SCH.
