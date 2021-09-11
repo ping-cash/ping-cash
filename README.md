@@ -13,9 +13,9 @@ It is only meant to transfer BUSD token and Sociable Cash Token (SCH).
 
 ## Decentralized identity directory services
 Combining decentralized identity directory services with a wallet is a unique idea where there is no other implementations yet. t.b.d.
-W3C DID
-Sovrin
-Veramo
+- W3C DID
+- Sovrin
+- Veramo
 
 ## Tokenomics
 SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. Buy back / burning process will keep proceeding until Max Supply drops down to half of the initial supply.
