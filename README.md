@@ -16,6 +16,7 @@ Combining decentralized identity directory services with a wallet is a unique id
 - W3C DID
 - Sovrin: Trinsic wallet is a mobile implementation on top of Sovrin Blockchain.
 - Veramo
+
 Any successful single sign on (Google, Facebook, Instagram, Twitther, SMS etc.) happening through the wallet will be saved as credententials in the self sovereign wallet as distributed identifier (DID)
 
 ## Tokenomics
