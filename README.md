@@ -15,6 +15,7 @@ It is only meant to transfer BUSD token and Sociable Cash Token (SCH).
 Combining decentralized identity directory services with a wallet is a unique idea where there is no other implementations yet. t.b.d.
 - W3C DID
 - Sovrin: Trinsic wallet is a mobile implementation on top of Sovrin Blockchain.
+https://sovrin.org/wp-content/uploads/Sovrin-Protocol-and-Token-White-Paper.pdf
 - Veramo
 
 Any successful single sign on (Google, Facebook, Instagram, Twitther, SMS etc.) happening through the wallet will be saved as credententials in the self sovereign wallet as distributed identifier (DID)
