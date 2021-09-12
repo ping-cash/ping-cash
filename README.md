@@ -7,18 +7,19 @@ Unlike other crypto wallets Sociable Cash is not aimed to support multiple proto
 
 Instead Sociable Cash is focused on transfering tokens in simplest, fastest and most affordable way by avoiding all the complexities and usability challanges.
 
-Therefore Sociable Cash is built on top of Binance Chain which provides rapid and low cost transfers by means of BEP20 protocol.
+Therefore Sociable Cash is built on top of Binance Smart Chain which provides rapid and low cost transfers by means of BEP20 protocol.
 
 It is only meant to transfer BUSD token and Sociable Cash Token (SCH).
 
 ## Decentralized identity directory services
 Combining decentralized identity directory services with a wallet is a unique idea where there is no other implementations yet. t.b.d.
 - W3C DID
-- Sovrin
+- Sovrin: Trinsic wallet is a mobile implementation on top of Sovrin Blockchain.
 - Veramo
+Any successful single sign on (Google, Facebook, Instagram, Twitther, SMS etc.) happening through the wallet will be saved as credententials in the self sovereign wallet as distributed identifier (DID)
 
 ## Tokenomics
-SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. Buy back / burning process will keep proceeding until Max Supply drops down to half of the initial supply.
+SCH is designed to be a disinflationary token. Every month 25% of the profits will be used for buying back the tokens for burning. Buy back / burning process will keep proceeding until Max Supply drops down to half of the initial max supply.
 
 ## Allocation
 | Type                  | Percent |
