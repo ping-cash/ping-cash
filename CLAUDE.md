@@ -5,10 +5,13 @@
 **Cash** - The cheapest way to send money anywhere. A stablecoin-powered remittance platform targeting migrant workers in GCC countries sending money home.
 
 **Key Differentiators:**
+- **Zero fees in-network** - free transfers between Cash users
 - No app needed to receive (claim via link)
-- Fees under 1% (vs 5-7% traditional)
+- Minimal cash-out fees (0.5-1%) vs 5-7% traditional
 - Instant delivery (seconds vs days)
 - Stablecoin rails (USDC on Solana)
+
+**Revenue Model:** Treasury yield on user balances + FX spread + minimal cash-out fees
 
 **Repository:** https://github.com/sociable-cloud/cash
 
@@ -28,6 +31,7 @@
 | Notifications | WhatsApp Business API |
 | Container | Docker |
 | Orchestration | Kubernetes (Civo/Vultr) |
+| Service Mesh | Istio (API Gateway + mTLS) |
 | CI/CD | GitHub Actions |
 
 ## Architecture
@@ -57,7 +61,7 @@
 - Saga Pattern (choreography via events)
 - Circuit Breaker (for external services)
 - Outbox Pattern (reliable event publishing)
-- API Gateway Pattern
+- Istio Service Mesh (API Gateway + mTLS + traffic management)
 
 ## Project Structure
 
@@ -79,6 +83,8 @@ sociable-cash/
 ├── docs/
 │   ├── ARCHITECTURE.md  # System architecture with Mermaid diagrams
 │   ├── NFR.md           # Non-functional requirements & design patterns
+│   ├── BUSINESS.md      # Competitors, revenue model, fee structure
+│   ├── CASHFLOW.md      # Cash-in and cash-out options by country
 │   ├── DATABASE.md      # Schema documentation
 │   └── API.md           # REST API specification
 ├── scripts/
@@ -162,6 +168,8 @@ Token for pushing: `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`
 - [x] Docker Compose for local dev
 - [x] CI/CD pipeline (GitHub Actions)
 - [x] Documentation with Mermaid diagrams
+- [x] Business model defined (BUSINESS.md)
+- [x] Cash-in/Cash-out options documented (CASHFLOW.md)
 - [ ] Auth service implementation
 - [ ] User service implementation
 - [ ] Wallet service implementation
@@ -171,7 +179,37 @@ Token for pushing: `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`
 - [ ] Mobile app (React Native)
 - [ ] Web claim flow (Next.js)
 
-## Notes
+## Key Business Decisions
+
+### Fee Structure
+- **Zero fees in-network** - transfers between Cash users are free
+- **Cash-in fees** - passed through from payment providers (Apple Pay 1.5-2.5%, Card 2-3%, Bank 0.5-1%, USDC direct FREE)
+- **Cash-out fees** - our revenue: Mobile wallet 0.5%, Bank 0.75%, Cash pickup 1%
+
+### Revenue Model
+1. **Treasury Yield (45%)** - Deploy user USDC balances to Circle Yield, T-Bills (Ondo), DeFi lending
+2. **FX Spread (30%)** - 0.3-0.5% margin on currency conversion (vs 2-4% at banks)
+3. **Cash-out Fees (15%)** - Small fees when exiting the network
+4. **Premium/B2B (10%)** - Future: subscriptions, API access
+
+### Cash-In Options
+- Apple Pay, Google Pay (instant, 1.5-2.5%)
+- Debit/Credit Card (instant, 2-3%)
+- Bank Transfer (1-24hr, 0.5-1%)
+- USDC Direct (instant, FREE)
+
+### Cash-Out Options
+- Auto-detect country from recipient phone number
+- Show relevant options first (GCash for PH, M-Pesa for KE, etc.)
+- Available in BOTH mobile app (senders) and web claim (recipients)
+- 40+ countries, 100+ methods
+
+### Competitors
+- Global: Wise, Remitly, Western Union, WorldRemit
+- Africa: Chipper Cash, Sendwave, Lemfi, Eversend
+- Crypto: Strike, Coinbase, Circle
+
+## Technical Notes
 
 - Use Mermaid diagrams for all architecture documentation
 - Follow the transfer-service as template for new services
@@ -179,3 +217,4 @@ Token for pushing: `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`
 - User/claim data goes to MongoDB (AP)
 - Events published via Outbox pattern to Redpanda
 - CloudEvents format for all events
+- **Istio** for service mesh, API gateway, and mTLS (not Kong/Traefik)

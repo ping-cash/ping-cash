@@ -19,8 +19,8 @@ flowchart TB
         Admin["Admin Panel<br/>(Next.js)"]
     end
 
-    subgraph Gateway["🚪 API Gateway"]
-        Kong["Kong / Traefik<br/>Rate Limit • JWT • Routing • DDoS"]
+    subgraph Gateway["🚪 Istio Service Mesh"]
+        Istio["Istio Gateway<br/>mTLS • Rate Limit • JWT • Traffic Mgmt"]
     end
 
     subgraph Services["⚙️ Backend Services"]
@@ -51,15 +51,15 @@ flowchart TB
         Persona["Persona<br/>KYC/ID"]
     end
 
-    Mobile --> Kong
-    Web --> Kong
-    Admin --> Kong
+    Mobile --> Istio
+    Web --> Istio
+    Admin --> Istio
 
-    Kong --> Auth
-    Kong --> Transfer
-    Kong --> Claim
-    Kong --> User
-    Kong --> Wallet
+    Istio --> Auth
+    Istio --> Transfer
+    Istio --> Claim
+    Istio --> User
+    Istio --> Wallet
 
     Auth --> Redis
     User --> Mongo
@@ -90,7 +90,8 @@ flowchart TB
 - Contact list access and sync
 - Transfer creation and history
 - Balance management
-- On-ramp integration (MoonPay widget)
+- Cash-in: Apple Pay, Google Pay, Card, Bank, USDC direct
+- Cash-out: To sender's country or recipient's home country
 
 **Tech Stack**:
 | Component | Technology |
@@ -133,9 +134,15 @@ mobile/
 **Key Features**:
 - Claim link resolution
 - Phone OTP verification
-- Off-ramp method selection
-- Cash-out processing
+- Smart country detection (auto-detect from recipient phone)
+- Off-ramp method selection (country-specific options)
+- Cash-out processing (mobile wallets, bank, cash pickup)
 - Receipt generation
+
+**Cash-Out UX**:
+- Auto-detect recipient's country from phone number
+- Show relevant options first (GCash for PH, M-Pesa for KE, etc.)
+- Allow switching to other countries if needed
 
 **Tech Stack**:
 | Component | Technology |
@@ -329,9 +336,16 @@ sequenceDiagram
 ```
 
 **Supported Methods (Phase 1)**:
-- GCash (Philippines)
-- Maya (Philippines)
-- Bank transfer (Philippines)
+
+| Country | Methods |
+|---------|---------|
+| 🇵🇭 Philippines | GCash, Maya, Bank (BDO/BPI), Cash Pickup |
+| 🇮🇳 India | UPI/IMPS, Bank (NEFT), Paytm |
+| 🇵🇰 Pakistan | JazzCash, Easypaisa, Bank |
+| 🇧🇩 Bangladesh | bKash, Nagad, Bank |
+| 🇰🇪 Kenya | M-Pesa, Bank |
+
+See [CASHFLOW.md](./CASHFLOW.md) for complete country coverage.
 
 ---
 
@@ -522,8 +536,8 @@ flowchart TB
     end
 
     subgraph K8s["☸️ Kubernetes Cluster"]
-        subgraph Ingress["Ingress"]
-            IG[Traefik/Kong]
+        subgraph Ingress["Istio Service Mesh"]
+            IG[Istio Gateway + Envoy Sidecars]
         end
 
         subgraph Services["Services"]
@@ -701,13 +715,16 @@ SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 - [ ] Contact list with search
 - [ ] Send money flow
 - [ ] Transfer history
-- [ ] On-ramp (MoonPay widget)
+- [ ] Cash-in (Apple Pay, Google Pay, Card, Bank, USDC)
+- [ ] Cash-out (to sender's country or home country)
 
 ### Web Claim Flow
 - [ ] Claim landing page
 - [ ] OTP verification
-- [ ] Cash-out method selection
-- [ ] GCash integration
+- [ ] Smart country detection from phone number
+- [ ] Cash-out method selection (country-specific)
+- [ ] Mobile wallet integrations (GCash, M-Pesa, bKash, etc.)
+- [ ] Bank transfer integration
 - [ ] Success/receipt page
 
 ### Backend
@@ -719,9 +736,10 @@ SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 - [ ] Off-ramp service (TransFi)
 
 ### Infrastructure
-- [ ] Kubernetes setup (Civo)
+- [ ] Kubernetes setup (Civo/Vultr)
+- [ ] Istio service mesh installation
 - [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Monitoring dashboards
+- [ ] Monitoring dashboards (Kiali, Grafana)
 - [ ] Alerting rules
 
 ### Compliance

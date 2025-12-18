@@ -70,8 +70,8 @@ We use **Domain-Driven Design (DDD)** to identify bounded contexts:
 ```mermaid
 flowchart TB
     subgraph Platform["CASH PLATFORM"]
-        subgraph Gateway["🚪 API GATEWAY (Kong/Traefik)"]
-            GW[Rate Limiting • JWT • Routing]
+        subgraph Gateway["🚪 ISTIO SERVICE MESH"]
+            GW[mTLS • Rate Limiting • JWT • Traffic Mgmt]
         end
 
         subgraph Identity["🔐 IDENTITY CONTEXT"]
@@ -417,33 +417,96 @@ flowchart TB
 - ❌ Anti-pattern (dual-write): Update DB, then publish to Kafka (can fail, inconsistent state)
 - ✅ Outbox Pattern: Single transaction writes to DB and outbox, background job publishes
 
-### 6. API Gateway Pattern
+### 6. Istio Service Mesh & Gateway Pattern
 
-Single entry point with cross-cutting concerns:
+Single entry point with service mesh capabilities:
 
 ```mermaid
 flowchart TB
-    subgraph Gateway["🚪 KONG / TRAEFIK"]
-        TLS[1. TLS Termination]
-        RL[2. Rate Limiting]
-        Auth[3. Authentication]
-        Val[4. Request Validation]
-        Route[5. Routing]
-        Transform[6. Response Transform]
-        Obs[7. Observability]
+    subgraph Gateway["🚪 ISTIO SERVICE MESH"]
+        subgraph Ingress["Istio Ingress Gateway"]
+            TLS[1. TLS Termination]
+            RL[2. Rate Limiting]
+            Auth[3. JWT Authentication]
+        end
 
-        TLS --> RL --> Auth --> Val --> Route --> Transform --> Obs
+        subgraph Mesh["Envoy Sidecars"]
+            mTLS[4. mTLS Between Services]
+            Route[5. Virtual Service Routing]
+            CB[6. Circuit Breaker]
+            Retry[7. Retries & Timeouts]
+        end
+
+        subgraph Observe["Observability"]
+            Kiali[Kiali - Service Graph]
+            Jaeger[Jaeger - Distributed Tracing]
+            Prom[Prometheus - Metrics]
+        end
+
+        TLS --> RL --> Auth --> mTLS --> Route --> CB --> Retry
     end
 
-    subgraph Routes["Route Destinations"]
-        R1["/auth/* → auth-service"]
-        R2["/transfers/* → transfer-service"]
-        R3["/claims/* → claim-service"]
+    subgraph Routes["Virtual Service Routing"]
+        R1["VirtualService: auth/*"]
+        R2["VirtualService: transfers/*"]
+        R3["VirtualService: claims/*"]
     end
 
     Gateway --> Routes
 
     style Gateway fill:#003459,color:#fff
+    style Mesh fill:#466bb0,color:#fff
+```
+
+**Why Istio over Kong/Traefik:**
+
+| Feature | Kong/Traefik | Istio |
+|---------|--------------|-------|
+| Service mesh | Separate add-on | Native |
+| mTLS | Plugin-based | Built-in, automatic |
+| Traffic management | Basic routing | Advanced (canary, mirror, fault injection) |
+| Observability | Requires plugins | Built-in (Kiali, Jaeger, Prometheus) |
+| Cost | Enterprise features paid | Fully open source |
+| K8s integration | External resources | Native CRDs (VirtualService, DestinationRule) |
+
+**Istio CRD Examples:**
+
+```yaml
+# Virtual Service for routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: transfer-service
+spec:
+  hosts:
+    - transfer-service
+  http:
+    - match:
+        - uri:
+            prefix: /transfers
+      route:
+        - destination:
+            host: transfer-service
+            port:
+              number: 8080
+
+# Destination Rule for circuit breaker
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: transfer-service
+spec:
+  host: transfer-service
+  trafficPolicy:
+    connectionPool:
+      http:
+        h2UpgradePolicy: UPGRADE
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
 ```
 
 ### 7. Strangler Fig Pattern (For Future Migrations)
@@ -756,10 +819,10 @@ flowchart TB
         CDN3[TTL: 1 hour - 1 year]
     end
 
-    subgraph L2["Layer 2: API Gateway (Kong)"]
+    subgraph L2["Layer 2: Istio Gateway"]
         GW1[Frequently accessed endpoints]
         GW2[FX rates, claim info]
-        GW3[TTL: 60 seconds]
+        GW3[TTL: 60 seconds via Envoy cache]
     end
 
     subgraph L3["Layer 3: Application (Redis)"]
@@ -828,16 +891,16 @@ async handleUserUpdated(event: UserUpdatedEvent) {
 ```mermaid
 flowchart TB
     subgraph K8s["☸️ KUBERNETES CLUSTER"]
-        subgraph Ingress["INGRESS LAYER"]
-            Traefik[Traefik Ingress]
+        subgraph Ingress["ISTIO INGRESS"]
+            IstioGW[Istio Gateway]
             CertMgr[Cert-Manager]
             ExtDNS[External DNS]
         end
 
-        subgraph Mesh["SERVICE MESH (Linkerd)"]
-            mTLS[mTLS between services]
-            Split[Traffic splitting - canary]
-            Metrics[Golden metrics]
+        subgraph Mesh["ISTIO SERVICE MESH"]
+            mTLS[Automatic mTLS]
+            Split[Traffic splitting - canary/mirror]
+            Metrics[Golden metrics + Kiali]
         end
 
         subgraph Apps["APPLICATION SERVICES"]
@@ -870,7 +933,7 @@ flowchart TB
     end
 
     style K8s fill:#326ce5,color:#fff
-    style Mesh fill:#2beda7,color:#000
+    style Mesh fill:#466bb0,color:#fff
     style Data fill:#7c3aed,color:#fff
     style Observability fill:#f97316,color:#fff
 ```
