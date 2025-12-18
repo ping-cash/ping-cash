@@ -67,41 +67,45 @@ We follow and extend the [12-Factor methodology](https://12factor.net):
 
 We use **Domain-Driven Design (DDD)** to identify bounded contexts:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CASH PLATFORM                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                         API GATEWAY                                  │    │
-│  │                        (Kong / Traefik)                             │    │
-│  │  • Rate limiting  • JWT validation  • Request routing               │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                    │                                         │
-│         ┌──────────────────────────┼──────────────────────────┐             │
-│         │                          │                          │             │
-│         ▼                          ▼                          ▼             │
-│  ┌─────────────┐           ┌─────────────┐           ┌─────────────┐       │
-│  │   IDENTITY  │           │   PAYMENT   │           │  DELIVERY   │       │
-│  │   CONTEXT   │           │   CONTEXT   │           │   CONTEXT   │       │
-│  ├─────────────┤           ├─────────────┤           ├─────────────┤       │
-│  │             │           │             │           │             │       │
-│  │ • Auth      │           │ • Transfer  │           │ • Claim     │       │
-│  │ • User      │           │ • Wallet    │           │ • Off-ramp  │       │
-│  │ • KYC       │           │ • FX        │           │ • Notify    │       │
-│  │             │           │ • Ledger    │           │             │       │
-│  └──────┬──────┘           └──────┬──────┘           └──────┬──────┘       │
-│         │                          │                          │             │
-│         └──────────────────────────┼──────────────────────────┘             │
-│                                    │                                         │
-│                                    ▼                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                          EVENT BUS                                   │    │
-│  │                     (Apache Kafka / Redpanda)                       │    │
-│  │  • Domain events  • Integration events  • Audit log                 │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Platform["CASH PLATFORM"]
+        subgraph Gateway["🚪 API GATEWAY (Kong/Traefik)"]
+            GW[Rate Limiting • JWT • Routing]
+        end
+
+        subgraph Identity["🔐 IDENTITY CONTEXT"]
+            Auth[Auth Service]
+            User[User Service]
+            KYC[KYC Service]
+        end
+
+        subgraph Payment["💰 PAYMENT CONTEXT"]
+            Transfer[Transfer Service]
+            Wallet[Wallet Service]
+            FX[FX Service]
+            Ledger[Ledger Service]
+        end
+
+        subgraph Delivery["📦 DELIVERY CONTEXT"]
+            Claim[Claim Service]
+            Offramp[Off-ramp Service]
+            Notify[Notify Service]
+        end
+
+        subgraph EventBus["📨 EVENT BUS (Kafka/Redpanda)"]
+            Events[Domain Events • Integration Events • Audit Log]
+        end
+
+        GW --> Identity & Payment & Delivery
+        Identity & Payment & Delivery --> EventBus
+    end
+
+    style Gateway fill:#003459,color:#fff
+    style Identity fill:#7c3aed,color:#fff
+    style Payment fill:#10b981,color:#fff
+    style Delivery fill:#ea580c,color:#fff
+    style EventBus fill:#e11d48,color:#fff
 ```
 
 ### Service Catalog
@@ -121,27 +125,25 @@ We use **Domain-Driven Design (DDD)** to identify bounded contexts:
 
 ### Service Communication Matrix
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        COMMUNICATION PATTERNS                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  SYNCHRONOUS (gRPC/REST)              ASYNCHRONOUS (Kafka)                  │
-│  ════════════════════════             ═════════════════════                 │
-│                                                                              │
-│  • Query operations                   • Commands (state changes)            │
-│  • Real-time data needs               • Event notifications                 │
-│  • Simple request/response            • Saga orchestration                  │
-│                                                                              │
-│  ┌─────────┐    gRPC     ┌─────────┐                                        │
-│  │ Gateway │────────────▶│ Service │  (Queries: GET balance, GET user)     │
-│  └─────────┘             └─────────┘                                        │
-│                                                                              │
-│  ┌─────────┐   Kafka    ┌─────────┐                                        │
-│  │ Service │───────────▶│ Service │  (Events: TransferCreated, Claimed)    │
-│  └─────────┘            └─────────┘                                        │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Sync["SYNCHRONOUS (gRPC/REST)"]
+        S1[Query operations]
+        S2[Real-time data needs]
+        S3[Simple request/response]
+    end
+
+    subgraph Async["ASYNCHRONOUS (Kafka)"]
+        A1[Commands - state changes]
+        A2[Event notifications]
+        A3[Saga orchestration]
+    end
+
+    Gateway -->|gRPC| Service1[Service]
+    Service2[Service] -->|Kafka| Service3[Service]
+
+    style Sync fill:#3b82f6,color:#fff
+    style Async fill:#10b981,color:#fff
 ```
 
 ### Inter-Service Communication
@@ -162,42 +164,33 @@ We use **Domain-Driven Design (DDD)** to identify bounded contexts:
 
 Separate read and write models for optimal performance:
 
+```mermaid
+flowchart TB
+    Client[Client]
+
+    subgraph Commands["COMMANDS (Writes)"]
+        CH[Command Handler]
+        WDB[(PostgreSQL<br/>Write DB)]
+    end
+
+    subgraph Queries["QUERIES (Reads)"]
+        QH[Query Handler]
+        RDB[(MongoDB<br/>Read DB)]
+    end
+
+    Client --> CH & QH
+    CH --> WDB
+    WDB -->|Events| RDB
+    QH --> RDB
+
+    style Commands fill:#ef4444,color:#fff
+    style Queries fill:#10b981,color:#fff
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CQRS PATTERN                                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│                              ┌─────────────┐                                │
-│                              │   Client    │                                │
-│                              └──────┬──────┘                                │
-│                                     │                                        │
-│                    ┌────────────────┴────────────────┐                      │
-│                    │                                 │                      │
-│                    ▼                                 ▼                      │
-│             ┌─────────────┐                  ┌─────────────┐                │
-│             │  COMMANDS   │                  │   QUERIES   │                │
-│             │  (Writes)   │                  │   (Reads)   │                │
-│             └──────┬──────┘                  └──────┬──────┘                │
-│                    │                                 │                      │
-│                    ▼                                 ▼                      │
-│             ┌─────────────┐                  ┌─────────────┐                │
-│             │  Command    │                  │   Query     │                │
-│             │  Handler    │                  │   Handler   │                │
-│             └──────┬──────┘                  └──────┬──────┘                │
-│                    │                                 │                      │
-│                    ▼                                 ▼                      │
-│             ┌─────────────┐                  ┌─────────────┐                │
-│             │ PostgreSQL  │ ───Events───▶   │  MongoDB    │                │
-│             │ (Write DB)  │                  │ (Read DB)   │                │
-│             └─────────────┘                  └─────────────┘                │
-│                                                                              │
-│  Benefits:                                                                  │
-│  • Optimized read models (denormalized for queries)                        │
-│  • Independent scaling of read/write workloads                             │
-│  • Event sourcing ready                                                    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+
+**Benefits**:
+- Optimized read models (denormalized for queries)
+- Independent scaling of read/write workloads
+- Event sourcing ready
 
 **Implementation**:
 
@@ -249,38 +242,35 @@ interface TransferReadModel {
 
 Store all changes as immutable events:
 
+```mermaid
+flowchart LR
+    subgraph Traditional["Traditional CRUD"]
+        T1[UPDATE balance<br/>SET amount = 50]
+        T2[❌ History lost]
+    end
+
+    subgraph EventSourced["Event Sourcing"]
+        E1[INSERT BalanceDebited $50]
+        E2[INSERT BalanceCredited $30]
+        E3[✅ Full audit trail]
+    end
+
+    subgraph EventStore["EVENT STORE"]
+        direction TB
+        ES1["wallet_1 | v1 | WalletCreated | {user: abc}"]
+        ES2["wallet_1 | v2 | BalanceCredited | {amount: 100}"]
+        ES3["wallet_1 | v3 | BalanceDebited | {amount: 50}"]
+        ES4["wallet_1 | v4 | BalanceCredited | {amount: 30}"]
+    end
+
+    Traditional --> EventSourced
+    EventSourced --> EventStore
+
+    style EventSourced fill:#10b981,color:#fff
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          EVENT SOURCING                                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  Traditional CRUD:           Event Sourcing:                                │
-│  ════════════════            ═══════════════                                │
-│                                                                              │
-│  UPDATE balance              INSERT event                                   │
-│  SET amount = 50             (BalanceDebited, $50)                          │
-│  WHERE user_id = 1           │                                              │
-│                              INSERT event                                   │
-│  ❌ History lost             (BalanceCredited, $30)                         │
-│                              │                                              │
-│                              ✅ Full audit trail                            │
-│                                                                              │
-│  ┌────────────────────────────────────────────────────────────────────┐     │
-│  │                        EVENT STORE                                  │     │
-│  ├────────────────────────────────────────────────────────────────────┤     │
-│  │ stream_id │ version │ event_type      │ data            │ timestamp│     │
-│  ├───────────┼─────────┼─────────────────┼─────────────────┼──────────┤     │
-│  │ wallet_1  │    1    │ WalletCreated   │ {user: "abc"}   │ 10:00:00 │     │
-│  │ wallet_1  │    2    │ BalanceCredited │ {amount: 100}   │ 10:01:00 │     │
-│  │ wallet_1  │    3    │ BalanceDebited  │ {amount: 50}    │ 10:02:00 │     │
-│  │ wallet_1  │    4    │ BalanceCredited │ {amount: 30}    │ 10:03:00 │     │
-│  └────────────────────────────────────────────────────────────────────┘     │
-│                                                                              │
-│  Current State = Replay(all events for stream)                              │
-│  Balance = 0 + 100 - 50 + 30 = $80                                         │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+
+**Current State** = Replay(all events for stream)
+**Balance** = 0 + 100 - 50 + 30 = **$80**
 
 **Use Cases**:
 - **Ledger Service**: Complete audit trail for all financial transactions
@@ -291,41 +281,26 @@ Store all changes as immutable events:
 
 Manage distributed transactions across services:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                     TRANSFER SAGA (Choreography)                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  Happy Path:                                                                │
-│  ═══════════                                                                │
-│                                                                              │
-│  ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐               │
-│  │Transfer │     │ Wallet  │     │ Claim   │     │ Notify  │               │
-│  │ Service │     │ Service │     │ Service │     │ Service │               │
-│  └────┬────┘     └────┬────┘     └────┬────┘     └────┬────┘               │
-│       │               │               │               │                     │
-│       │ TransferInitiated             │               │                     │
-│       │──────────────▶│               │               │                     │
-│       │               │               │               │                     │
-│       │               │ BalanceDebited│               │                     │
-│       │               │──────────────▶│               │                     │
-│       │               │               │               │                     │
-│       │               │               │ ClaimCreated  │                     │
-│       │               │               │──────────────▶│                     │
-│       │               │               │               │                     │
-│       │               │               │               │ NotificationSent    │
-│       │◀──────────────┴───────────────┴───────────────│                     │
-│       │                                               │                     │
-│                                                                              │
-│  Compensation (Rollback):                                                   │
-│  ════════════════════════                                                   │
-│                                                                              │
-│  If ClaimCreation fails:                                                    │
-│  1. Notify Service receives ClaimFailed event                              │
-│  2. Wallet Service receives ClaimFailed → emits BalanceRefunded            │
-│  3. Transfer Service receives BalanceRefunded → marks transfer FAILED      │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+sequenceDiagram
+    participant T as Transfer Service
+    participant W as Wallet Service
+    participant C as Claim Service
+    participant N as Notify Service
+
+    Note over T,N: Happy Path
+
+    T->>W: TransferInitiated
+    W->>C: BalanceDebited
+    C->>N: ClaimCreated
+    N-->>T: NotificationSent
+
+    Note over T,N: Compensation (if ClaimCreation fails)
+
+    C--xN: ClaimFailed
+    N-->>W: ClaimFailed
+    W->>T: BalanceRefunded
+    T->>T: Mark FAILED
 ```
 
 **Event Flow**:
@@ -368,38 +343,23 @@ NotificationSent {
 
 Prevent cascade failures when external services fail:
 
+```mermaid
+stateDiagram-v2
+    [*] --> CLOSED
+    CLOSED --> OPEN: failures > threshold
+    OPEN --> HALF_OPEN: timeout elapsed
+    HALF_OPEN --> CLOSED: success
+    HALF_OPEN --> OPEN: failure
+
+    CLOSED: Normal traffic
+    OPEN: Fail fast
+    HALF_OPEN: Test single request
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         CIRCUIT BREAKER                                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  States:                                                                    │
-│  ═══════                                                                    │
-│                                                                              │
-│  ┌─────────┐     failures > threshold    ┌─────────┐                       │
-│  │ CLOSED  │ ─────────────────────────▶  │  OPEN   │                       │
-│  │         │                              │         │                       │
-│  │ Normal  │                              │ Failing │                       │
-│  │ traffic │  ◀─────────────────────────  │ fast    │                       │
-│  └─────────┘     success in half-open    └────┬────┘                       │
-│       ▲                                       │                             │
-│       │                                       │ timeout                     │
-│       │                                       ▼                             │
-│       │                               ┌─────────────┐                       │
-│       └───────────────────────────────│ HALF-OPEN  │                       │
-│                success                │             │                       │
-│                                       │ Test single │                       │
-│                                       │ request     │                       │
-│                                       └─────────────┘                       │
-│                                                                              │
-│  Configuration:                                                             │
-│  ══════════════                                                             │
-│  • Failure threshold: 5 failures in 30 seconds                             │
-│  • Open duration: 30 seconds                                                │
-│  • Half-open max requests: 3                                                │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+
+**Configuration**:
+- Failure threshold: 5 failures in 30 seconds
+- Open duration: 30 seconds
+- Half-open max requests: 3
 
 **Implementation with Resilience4j**:
 
@@ -425,102 +385,77 @@ const result = await circuitBreaker.execute(async () => {
 
 Ensure reliable event publishing with database transactions:
 
+```mermaid
+flowchart TB
+    subgraph Transaction["SINGLE TRANSACTION"]
+        I1[INSERT INTO transfers]
+        I2[INSERT INTO outbox]
+        C[COMMIT]
+        I1 --> I2 --> C
+    end
+
+    subgraph Publisher["OUTBOX PUBLISHER (Background)"]
+        S1[SELECT unpublished]
+        S2[Publish to Kafka]
+        S3[UPDATE published=true]
+        S1 --> S2 --> S3
+    end
+
+    subgraph OutboxTable["Outbox Table"]
+        direction LR
+        O1["id=1 | transfer.events | {TransferCreated} | ✓"]
+        O2["id=2 | transfer.events | {TransferClaimed} | ✗"]
+    end
+
+    Transaction --> Publisher --> OutboxTable
+
+    style Transaction fill:#10b981,color:#fff
+    style Publisher fill:#3b82f6,color:#fff
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          OUTBOX PATTERN                                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  Problem: How to atomically update DB AND publish event?                    │
-│                                                                              │
-│  ❌ Anti-pattern (dual-write):                                              │
-│     1. Update database                                                      │
-│     2. Publish to Kafka ← This can fail, leaving inconsistent state        │
-│                                                                              │
-│  ✅ Outbox Pattern:                                                         │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                     SINGLE TRANSACTION                               │    │
-│  │  ┌─────────────────────────────────────────────────────────────┐    │    │
-│  │  │ 1. INSERT INTO transfers (...)                               │    │    │
-│  │  │ 2. INSERT INTO outbox (topic, payload, created_at)          │    │    │
-│  │  │ COMMIT                                                       │    │    │
-│  │  └─────────────────────────────────────────────────────────────┘    │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                    OUTBOX PUBLISHER (Background)                     │    │
-│  │  ┌─────────────────────────────────────────────────────────────┐    │    │
-│  │  │ 1. SELECT * FROM outbox WHERE published = false              │    │    │
-│  │  │ 2. Publish to Kafka                                          │    │    │
-│  │  │ 3. UPDATE outbox SET published = true WHERE id = ?           │    │    │
-│  │  └─────────────────────────────────────────────────────────────┘    │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-│  Outbox Table:                                                              │
-│  ┌─────────┬────────────────┬─────────────────────────┬───────────┐        │
-│  │ id      │ topic          │ payload                 │ published │        │
-│  ├─────────┼────────────────┼─────────────────────────┼───────────┤        │
-│  │ 1       │ transfer.events│ {TransferCreated...}    │ true      │        │
-│  │ 2       │ transfer.events│ {TransferClaimed...}    │ false     │        │
-│  └─────────┴────────────────┴─────────────────────────┴───────────┘        │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+
+**Problem solved**: How to atomically update DB AND publish event?
+- ❌ Anti-pattern (dual-write): Update DB, then publish to Kafka (can fail, inconsistent state)
+- ✅ Outbox Pattern: Single transaction writes to DB and outbox, background job publishes
 
 ### 6. API Gateway Pattern
 
 Single entry point with cross-cutting concerns:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          API GATEWAY                                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                        KONG / Traefik                                │    │
-│  ├─────────────────────────────────────────────────────────────────────┤    │
-│  │                                                                      │    │
-│  │  Request Flow:                                                       │    │
-│  │  ═════════════                                                       │    │
-│  │                                                                      │    │
-│  │  1. TLS Termination                                                 │    │
-│  │     └─▶ Decrypt HTTPS, forward HTTP internally                      │    │
-│  │                                                                      │    │
-│  │  2. Rate Limiting                                                   │    │
-│  │     └─▶ Redis-backed, per-user/IP limits                           │    │
-│  │                                                                      │    │
-│  │  3. Authentication                                                  │    │
-│  │     └─▶ Validate JWT, extract user context                         │    │
-│  │                                                                      │    │
-│  │  4. Request Validation                                              │    │
-│  │     └─▶ JSON schema validation                                      │    │
-│  │                                                                      │    │
-│  │  5. Routing                                                         │    │
-│  │     └─▶ /auth/* → auth-service                                     │    │
-│  │     └─▶ /transfers/* → transfer-service                            │    │
-│  │     └─▶ /claims/* → claim-service                                  │    │
-│  │                                                                      │    │
-│  │  6. Response Transformation                                         │    │
-│  │     └─▶ Consistent error format, CORS headers                      │    │
-│  │                                                                      │    │
-│  │  7. Observability                                                   │    │
-│  │     └─▶ Request ID, distributed tracing, metrics                   │    │
-│  │                                                                      │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Gateway["🚪 KONG / TRAEFIK"]
+        TLS[1. TLS Termination]
+        RL[2. Rate Limiting]
+        Auth[3. Authentication]
+        Val[4. Request Validation]
+        Route[5. Routing]
+        Transform[6. Response Transform]
+        Obs[7. Observability]
+
+        TLS --> RL --> Auth --> Val --> Route --> Transform --> Obs
+    end
+
+    subgraph Routes["Route Destinations"]
+        R1["/auth/* → auth-service"]
+        R2["/transfers/* → transfer-service"]
+        R3["/claims/* → claim-service"]
+    end
+
+    Gateway --> Routes
+
+    style Gateway fill:#003459,color:#fff
 ```
 
 ### 7. Strangler Fig Pattern (For Future Migrations)
 
 Incrementally replace components without big-bang rewrites:
 
-```
-Phase 1: New service handles new features
-Phase 2: Route specific paths to new service
-Phase 3: Migrate remaining traffic
-Phase 4: Decommission old service
-```
+| Phase | Description |
+|-------|-------------|
+| Phase 1 | New service handles new features |
+| Phase 2 | Route specific paths to new service |
+| Phase 3 | Migrate remaining traffic |
+| Phase 4 | Decommission old service |
 
 ---
 
@@ -528,30 +463,26 @@ Phase 4: Decommission old service
 
 ### CAP Theorem Analysis
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          CAP THEOREM                                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│                         CONSISTENCY                                         │
-│                              △                                               │
-│                             /│\                                              │
-│                            / │ \                                             │
-│                           /  │  \                                            │
-│                          /   │   \                                           │
-│                         /    │    \                                          │
-│                        /  CA │ CP  \                                         │
-│                       /      │      \                                        │
-│                      /       │       \                                       │
-│                     ▼────────┴────────▼                                      │
-│              AVAILABILITY            PARTITION                               │
-│                                     TOLERANCE                                │
-│                                                                              │
-│  Network partitions WILL happen. Choose between:                            │
-│  • CP: Consistency + Partition Tolerance (reject writes during partition)   │
-│  • AP: Availability + Partition Tolerance (accept writes, resolve later)    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph CAP["CAP THEOREM"]
+        C[CONSISTENCY]
+        A[AVAILABILITY]
+        P[PARTITION TOLERANCE]
+    end
+
+    subgraph Choice["Network partitions WILL happen"]
+        CP["CP: Consistency + Partition<br/>(reject writes during partition)"]
+        AP["AP: Availability + Partition<br/>(accept writes, resolve later)"]
+    end
+
+    C --- CP
+    P --- CP
+    A --- AP
+    P --- AP
+
+    style CP fill:#3b82f6,color:#fff
+    style AP fill:#10b981,color:#fff
 ```
 
 ### Database Selection by Service
@@ -650,44 +581,39 @@ db.users.createIndex({ "wallet.address": 1 });
 db.users.createIndex({ "contacts.phone": 1 });
 ```
 
-### Redis (Caching & Sessions)
+### Redis Data Structures
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          REDIS DATA STRUCTURES                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  Sessions (String with TTL):                                                │
-│  ══════════════════════════                                                 │
-│  KEY: session:{session_id}                                                  │
-│  VALUE: {userId, phone, createdAt, ...}                                    │
-│  TTL: 24 hours                                                              │
-│                                                                              │
-│  Rate Limiting (Sorted Set):                                                │
-│  ═══════════════════════════                                                │
-│  KEY: ratelimit:{user_id}:{endpoint}                                       │
-│  MEMBERS: request timestamps                                                │
-│  Use ZRANGEBYSCORE to count requests in window                             │
-│                                                                              │
-│  OTP Codes (String with TTL):                                               │
-│  ════════════════════════════                                               │
-│  KEY: otp:{phone_hash}                                                      │
-│  VALUE: {code, attempts, createdAt}                                        │
-│  TTL: 10 minutes                                                            │
-│                                                                              │
-│  FX Rates Cache (Hash):                                                     │
-│  ══════════════════════                                                     │
-│  KEY: fx:rates:USD                                                          │
-│  FIELDS: PHP=55.80, INR=83.25, PKR=278.50                                  │
-│  TTL: 60 seconds                                                            │
-│                                                                              │
-│  Claim Code Lookup (String):                                                │
-│  ═══════════════════════════                                                │
-│  KEY: claim:{code}                                                          │
-│  VALUE: {claimId, transferId, status}                                      │
-│  TTL: 7 days                                                                │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Sessions["Sessions (String + TTL)"]
+        S1["KEY: session:{id}"]
+        S2["VALUE: {userId, phone, ...}"]
+        S3["TTL: 24 hours"]
+    end
+
+    subgraph RateLimit["Rate Limiting (Sorted Set)"]
+        R1["KEY: ratelimit:{user}:{endpoint}"]
+        R2["MEMBERS: timestamps"]
+        R3["ZRANGEBYSCORE for window"]
+    end
+
+    subgraph OTP["OTP Codes (String + TTL)"]
+        O1["KEY: otp:{phone_hash}"]
+        O2["VALUE: {code, attempts}"]
+        O3["TTL: 10 minutes"]
+    end
+
+    subgraph FX["FX Rates (Hash)"]
+        F1["KEY: fx:rates:USD"]
+        F2["FIELDS: PHP=55.80, INR=83.25"]
+        F3["TTL: 60 seconds"]
+    end
+
+    subgraph Claims["Claim Lookup (String)"]
+        C1["KEY: claim:{code}"]
+        C2["VALUE: {claimId, status}"]
+        C3["TTL: 7 days"]
+    end
 ```
 
 ---
@@ -698,53 +624,46 @@ db.users.createIndex({ "contacts.phone": 1 });
 
 We use **Redpanda** (Kafka-compatible, simpler operations) for event streaming:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        EVENT STREAMING ARCHITECTURE                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                         REDPANDA CLUSTER                             │    │
-│  │                      (Kafka-compatible)                              │    │
-│  ├─────────────────────────────────────────────────────────────────────┤    │
-│  │                                                                      │    │
-│  │  Topics:                                                             │    │
-│  │  ═══════                                                             │    │
-│  │                                                                      │    │
-│  │  transfer.events (partitioned by sender_id)                         │    │
-│  │  ├── TransferInitiated                                              │    │
-│  │  ├── TransferConfirmed                                              │    │
-│  │  ├── TransferClaimed                                                │    │
-│  │  ├── TransferCompleted                                              │    │
-│  │  ├── TransferCancelled                                              │    │
-│  │  └── TransferFailed                                                 │    │
-│  │                                                                      │    │
-│  │  wallet.events (partitioned by wallet_id)                           │    │
-│  │  ├── BalanceDebited                                                 │    │
-│  │  ├── BalanceCredited                                                │    │
-│  │  └── BalanceRefunded                                                │    │
-│  │                                                                      │    │
-│  │  claim.events (partitioned by claim_id)                             │    │
-│  │  ├── ClaimCreated                                                   │    │
-│  │  ├── ClaimVerified                                                  │    │
-│  │  └── ClaimExpired                                                   │    │
-│  │                                                                      │    │
-│  │  offramp.events (partitioned by offramp_id)                         │    │
-│  │  ├── OfframpInitiated                                               │    │
-│  │  ├── OfframpProcessing                                              │    │
-│  │  ├── OfframpCompleted                                               │    │
-│  │  └── OfframpFailed                                                  │    │
-│  │                                                                      │    │
-│  │  notify.commands (partitioned by recipient_phone)                   │    │
-│  │  ├── SendWhatsApp                                                   │    │
-│  │  ├── SendSMS                                                        │    │
-│  │  └── SendPush                                                       │    │
-│  │                                                                      │    │
-│  │  audit.events (all events mirrored for compliance)                  │    │
-│  │                                                                      │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Redpanda["REDPANDA CLUSTER (Kafka-compatible)"]
+        subgraph TransferTopic["transfer.events"]
+            T1[TransferInitiated]
+            T2[TransferConfirmed]
+            T3[TransferClaimed]
+            T4[TransferCompleted]
+        end
+
+        subgraph WalletTopic["wallet.events"]
+            W1[BalanceDebited]
+            W2[BalanceCredited]
+            W3[BalanceRefunded]
+        end
+
+        subgraph ClaimTopic["claim.events"]
+            C1[ClaimCreated]
+            C2[ClaimVerified]
+            C3[ClaimExpired]
+        end
+
+        subgraph OfframpTopic["offramp.events"]
+            O1[OfframpInitiated]
+            O2[OfframpCompleted]
+            O3[OfframpFailed]
+        end
+
+        subgraph NotifyTopic["notify.commands"]
+            N1[SendWhatsApp]
+            N2[SendSMS]
+            N3[SendPush]
+        end
+
+        subgraph AuditTopic["audit.events"]
+            A1[All events mirrored]
+        end
+    end
+
+    style Redpanda fill:#e11d48,color:#fff
 ```
 
 ### Event Schema (CloudEvents + Avro)
@@ -786,41 +705,42 @@ interface CloudEvent<T> {
 }
 ```
 
-### Consumer Groups & Ordering
+### Consumer Groups & Partitioning
 
+```mermaid
+flowchart TB
+    subgraph Topic["transfer.events (6 partitions)"]
+        P0[Partition 0]
+        P1[Partition 1]
+        P2[Partition 2]
+        P3[Partition 3]
+        P4[Partition 4]
+        P5[Partition 5]
+    end
+
+    subgraph ClaimGroup["Consumer Group: claim-service"]
+        CC1["Consumer 1<br/>P0, P1"]
+        CC2["Consumer 2<br/>P2, P3"]
+        CC3["Consumer 3<br/>P4, P5"]
+    end
+
+    subgraph NotifyGroup["Consumer Group: notify-service"]
+        NC1["Consumer 1<br/>P0, P1, P2"]
+        NC2["Consumer 2<br/>P3, P4, P5"]
+    end
+
+    P0 & P1 --> CC1
+    P2 & P3 --> CC2
+    P4 & P5 --> CC3
+
+    P0 & P1 & P2 --> NC1
+    P3 & P4 & P5 --> NC2
+
+    style Topic fill:#e11d48,color:#fff
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    CONSUMER GROUPS & PARTITIONING                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  Topic: transfer.events (6 partitions)                                      │
-│                                                                              │
-│  ┌───────────┬───────────┬───────────┬───────────┬───────────┬───────────┐ │
-│  │Partition 0│Partition 1│Partition 2│Partition 3│Partition 4│Partition 5│ │
-│  └─────┬─────┴─────┬─────┴─────┬─────┴─────┬─────┴─────┬─────┴─────┬─────┘ │
-│        │           │           │           │           │           │        │
-│        │           │           │           │           │           │        │
-│  ┌─────┴───────────┴───────────┴───────────┴───────────┴───────────┴─────┐ │
-│  │                    Consumer Group: claim-service                       │ │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐                             │ │
-│  │  │Consumer 1│  │Consumer 2│  │Consumer 3│                             │ │
-│  │  │ P0, P1   │  │ P2, P3   │  │ P4, P5   │                             │ │
-│  │  └──────────┘  └──────────┘  └──────────┘                             │ │
-│  └───────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│  ┌───────────────────────────────────────────────────────────────────────┐ │
-│  │                    Consumer Group: notify-service                      │ │
-│  │  ┌──────────┐  ┌──────────┐                                           │ │
-│  │  │Consumer 1│  │Consumer 2│  (separate group, sees all events)        │ │
-│  │  │ P0,P1,P2 │  │ P3,P4,P5 │                                           │ │
-│  │  └──────────┘  └──────────┘                                           │ │
-│  └───────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│  Partitioning Key: sender_id                                                │
-│  Guarantees: All events for same sender processed in order                  │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+
+**Partitioning Key**: `sender_id`
+**Guarantees**: All events for same sender processed in order
 
 ---
 
@@ -828,36 +748,37 @@ interface CloudEvent<T> {
 
 ### Multi-Layer Cache Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        CACHING LAYERS                                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  Layer 1: CDN (Cloudflare)                                                  │
-│  ═════════════════════════                                                  │
-│  • Static assets (JS, CSS, images)                                          │
-│  • API responses with Cache-Control headers                                 │
-│  • Geographic distribution                                                  │
-│  • TTL: 1 hour - 1 year                                                    │
-│                                                                              │
-│  Layer 2: API Gateway Cache (Kong)                                          │
-│  ═════════════════════════════════                                          │
-│  • Frequently accessed, public endpoints                                    │
-│  • FX rates, claim info                                                     │
-│  • TTL: 60 seconds                                                          │
-│                                                                              │
-│  Layer 3: Application Cache (Redis)                                         │
-│  ══════════════════════════════════                                         │
-│  • Sessions, OTP codes                                                      │
-│  • User profiles, wallet balances                                           │
-│  • TTL: varies by data type                                                │
-│                                                                              │
-│  Layer 4: Database Query Cache                                              │
-│  ═════════════════════════════                                              │
-│  • PostgreSQL prepared statements                                           │
-│  • MongoDB working set in RAM                                               │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph L1["Layer 1: CDN (Cloudflare)"]
+        CDN1[Static assets - JS, CSS, images]
+        CDN2[API responses with Cache-Control]
+        CDN3[TTL: 1 hour - 1 year]
+    end
+
+    subgraph L2["Layer 2: API Gateway (Kong)"]
+        GW1[Frequently accessed endpoints]
+        GW2[FX rates, claim info]
+        GW3[TTL: 60 seconds]
+    end
+
+    subgraph L3["Layer 3: Application (Redis)"]
+        APP1[Sessions, OTP codes]
+        APP2[User profiles, balances]
+        APP3[TTL: varies by type]
+    end
+
+    subgraph L4["Layer 4: Database Query Cache"]
+        DB1[PostgreSQL prepared statements]
+        DB2[MongoDB working set in RAM]
+    end
+
+    L1 --> L2 --> L3 --> L4
+
+    style L1 fill:#f97316,color:#fff
+    style L2 fill:#3b82f6,color:#fff
+    style L3 fill:#ef4444,color:#fff
+    style L4 fill:#8b5cf6,color:#fff
 ```
 
 ### Cache Patterns
@@ -904,84 +825,59 @@ async handleUserUpdated(event: UserUpdatedEvent) {
 
 ### Cluster Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    KUBERNETES CLUSTER ARCHITECTURE                           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  NAMESPACE: cash-system                                                     │
-│  ══════════════════════                                                     │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                         INGRESS LAYER                                │    │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │    │
-│  │  │   Traefik    │  │ Cert-Manager │  │  External    │               │    │
-│  │  │   Ingress    │  │ (Let's Enc.) │  │    DNS       │               │    │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘               │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                         SERVICE MESH                                 │    │
-│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
-│  │  │                    Linkerd (lightweight)                      │   │    │
-│  │  │  • mTLS between services                                      │   │    │
-│  │  │  • Traffic splitting (canary)                                 │   │    │
-│  │  │  • Observability (golden metrics)                            │   │    │
-│  │  └──────────────────────────────────────────────────────────────┘   │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                      APPLICATION SERVICES                            │    │
-│  │                                                                      │    │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐       │    │
-│  │  │   auth     │ │   user     │ │  transfer  │ │   wallet   │       │    │
-│  │  │  service   │ │  service   │ │  service   │ │  service   │       │    │
-│  │  │  (2 pods)  │ │  (2 pods)  │ │  (3 pods)  │ │  (2 pods)  │       │    │
-│  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘       │    │
-│  │                                                                      │    │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐       │    │
-│  │  │   claim    │ │  offramp   │ │   notify   │ │    fx      │       │    │
-│  │  │  service   │ │  service   │ │  service   │ │  service   │       │    │
-│  │  │  (2 pods)  │ │  (2 pods)  │ │  (2 pods)  │ │  (1 pod)   │       │    │
-│  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘       │    │
-│  │                                                                      │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                       DATA SERVICES                                  │    │
-│  │                                                                      │    │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐                       │    │
-│  │  │ PostgreSQL │ │  MongoDB   │ │   Redis    │                       │    │
-│  │  │  (Crunchy) │ │ (Percona)  │ │  (Bitnami) │                       │    │
-│  │  │            │ │            │ │            │                       │    │
-│  │  │ Primary +  │ │ ReplicaSet │ │  Sentinel  │                       │    │
-│  │  │ Read Rep.  │ │  (3 nodes) │ │  (3 nodes) │                       │    │
-│  │  └────────────┘ └────────────┘ └────────────┘                       │    │
-│  │                                                                      │    │
-│  │  ┌────────────────────────────────────────────┐                     │    │
-│  │  │              Redpanda                       │                     │    │
-│  │  │         (Kafka-compatible)                  │                     │    │
-│  │  │            (3 brokers)                      │                     │    │
-│  │  └────────────────────────────────────────────┘                     │    │
-│  │                                                                      │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                      OBSERVABILITY                                   │    │
-│  │                                                                      │    │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐       │    │
-│  │  │ Prometheus │ │   Grafana  │ │   Loki     │ │   Tempo    │       │    │
-│  │  │  (metrics) │ │  (dashb.)  │ │   (logs)   │ │  (traces)  │       │    │
-│  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘       │    │
-│  │                                                                      │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph K8s["☸️ KUBERNETES CLUSTER"]
+        subgraph Ingress["INGRESS LAYER"]
+            Traefik[Traefik Ingress]
+            CertMgr[Cert-Manager]
+            ExtDNS[External DNS]
+        end
+
+        subgraph Mesh["SERVICE MESH (Linkerd)"]
+            mTLS[mTLS between services]
+            Split[Traffic splitting - canary]
+            Metrics[Golden metrics]
+        end
+
+        subgraph Apps["APPLICATION SERVICES"]
+            Auth[auth<br/>2 pods]
+            User[user<br/>2 pods]
+            Transfer[transfer<br/>3 pods]
+            Wallet[wallet<br/>2 pods]
+            Claim[claim<br/>2 pods]
+            Offramp[offramp<br/>2 pods]
+            Notify[notify<br/>2 pods]
+            FXSvc[fx<br/>1 pod]
+        end
+
+        subgraph Data["DATA SERVICES"]
+            PG[(PostgreSQL<br/>Primary + Replica)]
+            Mongo[(MongoDB<br/>ReplicaSet 3)]
+            Redis[(Redis<br/>Sentinel 3)]
+            RP[(Redpanda<br/>3 brokers)]
+        end
+
+        subgraph Observability["OBSERVABILITY"]
+            Prom[Prometheus]
+            Graf[Grafana]
+            Loki[Loki]
+            Tempo[Tempo]
+        end
+
+        Ingress --> Mesh --> Apps --> Data
+        Apps --> Observability
+    end
+
+    style K8s fill:#326ce5,color:#fff
+    style Mesh fill:#2beda7,color:#000
+    style Data fill:#7c3aed,color:#fff
+    style Observability fill:#f97316,color:#fff
 ```
 
 ### Resource Allocation (Bootstrap → Scale)
 
-**Bootstrap (MVP - $100/month)**:
+**Bootstrap (MVP - ~$150/month)**:
 
 ```yaml
 # Minimal viable cluster
@@ -1007,7 +903,7 @@ resources:
     redpanda: { cpu: 500m, memory: 1Gi }    # Single broker
 ```
 
-**Growth (1K daily transfers - $300/month)**:
+**Growth (1K daily transfers - ~$500/month)**:
 
 ```yaml
 nodes:
@@ -1028,7 +924,7 @@ resources:
     redpanda: { cpu: 1, memory: 2Gi, replicas: 3 }
 ```
 
-**Scale (100K daily transfers - $2000/month)**:
+**Scale (100K daily transfers - ~$3000/month)**:
 
 ```yaml
 nodes:
@@ -1080,42 +976,29 @@ helm/
 
 ### Design Philosophy
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        UX DESIGN PRINCIPLES                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  1. INVISIBLE COMPLEXITY                                                    │
-│     ═══════════════════════                                                 │
-│     • User sees: "Send $100 to Mom"                                        │
-│     • We handle: Blockchain, stablecoins, FX, off-ramp                     │
-│     • Zero crypto jargon in UI                                              │
-│                                                                              │
-│  2. PROGRESSIVE DISCLOSURE                                                  │
-│     ═══════════════════════                                                 │
-│     • Start simple, reveal complexity only when needed                      │
-│     • Default options that work for 90% of users                           │
-│     • Advanced options hidden but accessible                                │
-│                                                                              │
-│  3. INSTANT FEEDBACK                                                        │
-│     ══════════════════                                                      │
-│     • Every action acknowledged < 100ms                                     │
-│     • Optimistic updates (show success, reconcile async)                   │
-│     • Skeleton screens, not spinners                                        │
-│                                                                              │
-│  4. ERROR PREVENTION > ERROR HANDLING                                       │
-│     ══════════════════════════════════                                      │
-│     • Validate phone numbers as typed                                       │
-│     • Confirm large amounts before sending                                  │
-│     • Undo option for 5 seconds after action                               │
-│                                                                              │
-│  5. OFFLINE-FIRST                                                           │
-│     ═════════════                                                           │
-│     • App works without network (view balance, history)                     │
-│     • Queue actions when offline, sync when connected                       │
-│     • Clear indicators of sync status                                       │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+mindmap
+  root((UX PRINCIPLES))
+    Invisible Complexity
+      User sees Send $100 to Mom
+      We handle blockchain, FX, off-ramp
+      Zero crypto jargon
+    Progressive Disclosure
+      Start simple
+      Default options for 90%
+      Advanced options hidden
+    Instant Feedback
+      Every action < 100ms
+      Optimistic updates
+      Skeleton screens not spinners
+    Error Prevention
+      Validate as typed
+      Confirm large amounts
+      5-second undo option
+    Offline-First
+      Works without network
+      Queue actions offline
+      Clear sync indicators
 ```
 
 ### Mobile App UX Specifications
@@ -1162,63 +1045,30 @@ const successAnimation = {
 
 #### Loading States
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        LOADING STATE HIERARCHY                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  < 100ms:  No indicator (imperceptible)                                     │
-│  ─────────────────────────────────────                                      │
-│                                                                              │
-│  100ms - 1s:  Skeleton screen                                               │
-│  ──────────────────────────────────                                         │
-│  ┌─────────────────────────────┐                                            │
-│  │ ████████████  ████████████  │  ← Pulsing placeholder                    │
-│  │ ████████████████████        │                                            │
-│  │ ██████████                  │                                            │
-│  └─────────────────────────────┘                                            │
-│                                                                              │
-│  1s - 5s:  Skeleton + progress indicator                                    │
-│  ─────────────────────────────────────                                      │
-│  ┌─────────────────────────────┐                                            │
-│  │ Loading your transfers...   │  ← Contextual message                     │
-│  │ ▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░  │  ← Progress bar                           │
-│  └─────────────────────────────┘                                            │
-│                                                                              │
-│  > 5s:  Full progress with cancel option                                    │
-│  ──────────────────────────────────────                                     │
-│  ┌─────────────────────────────┐                                            │
-│  │ Processing transfer...      │                                            │
-│  │ This may take a moment      │                                            │
-│  │ ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░  │                                            │
-│  │                             │                                            │
-│  │        [Cancel]             │                                            │
-│  └─────────────────────────────┘                                            │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+```mermaid
+flowchart TB
+    subgraph L1["< 100ms: No indicator"]
+        N1[Imperceptible to user]
+    end
 
-#### Empty States
+    subgraph L2["100ms - 1s: Skeleton screen"]
+        S1["████████ ████████"]
+        S2["████████████████"]
+        S3["Pulsing placeholder"]
+    end
 
-Every empty state is an opportunity to guide the user:
+    subgraph L3["1s - 5s: Skeleton + progress"]
+        P1["Loading transfers..."]
+        P2["▓▓▓▓▓▓▓▓░░░░░░░░░"]
+    end
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                                                              │
-│                          ┌─────────┐                                        │
-│                          │   📤    │                                        │
-│                          └─────────┘                                        │
-│                                                                              │
-│                    No transfers yet                                         │
-│                                                                              │
-│           Send money to family and friends                                  │
-│           anywhere in the world.                                            │
-│                                                                              │
-│                  ┌─────────────────────┐                                    │
-│                  │  Send your first $  │                                    │
-│                  └─────────────────────┘                                    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+    subgraph L4["> 5s: Full progress + cancel"]
+        F1["Processing transfer..."]
+        F2["▓▓▓▓▓▓▓▓▓▓▓▓░░░░░"]
+        F3["[Cancel]"]
+    end
+
+    L1 --> L2 --> L3 --> L4
 ```
 
 ### Web Claim Flow UX
@@ -1247,78 +1097,41 @@ Every empty state is an opportunity to guide the user:
 
 #### Claim Page States
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      CLAIM FLOW STATES                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  State 1: Landing                    State 2: Verify                        │
-│  ┌─────────────────────────┐        ┌─────────────────────────┐            │
-│  │                         │        │                         │            │
-│  │     You received        │        │   Enter the code sent   │            │
-│  │       $100.00           │        │   to +63 *** *** 4567   │            │
-│  │                         │        │                         │            │
-│  │     from John           │        │   ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐│            │
-│  │                         │        │   │ │ │ │ │ │ │ │ │ │ │ ││            │
-│  │  [Claim Now]            │        │   └─┘ └─┘ └─┘ └─┘ └─┘ └─┘│            │
-│  │                         │        │                         │            │
-│  │  Expires in 6 days      │        │   Resend code (0:45)    │            │
-│  │                         │        │                         │            │
-│  └─────────────────────────┘        └─────────────────────────┘            │
-│                                                                              │
-│  State 3: Cash-out Selection         State 4: Success                       │
-│  ┌─────────────────────────┐        ┌─────────────────────────┐            │
-│  │                         │        │                         │            │
-│  │  Choose how to receive  │        │         ✓               │            │
-│  │       ₱5,580            │        │                         │            │
-│  │                         │        │   ₱5,580 sent to        │            │
-│  │  ┌───────────────────┐  │        │   your GCash!           │            │
-│  │  │ 📱 GCash  Instant │  │        │                         │            │
-│  │  └───────────────────┘  │        │   Reference: CASH-12345 │            │
-│  │  ┌───────────────────┐  │        │                         │            │
-│  │  │ 📱 Maya   Instant │  │        │   ┌───────────────────┐ │            │
-│  │  └───────────────────┘  │        │   │  Send money back  │ │            │
-│  │  ┌───────────────────┐  │        │   └───────────────────┘ │            │
-│  │  │ 🏦 Bank   1-2 hrs │  │        │                         │            │
-│  │  └───────────────────┘  │        │                         │            │
-│  │                         │        │                         │            │
-│  └─────────────────────────┘        └─────────────────────────┘            │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+```mermaid
+stateDiagram-v2
+    [*] --> Landing
+    Landing --> Verify: Tap Claim Now
+    Verify --> CashOut: OTP Valid
+    Verify --> Verify: Invalid (retry)
+    CashOut --> Processing: Select method
+    Processing --> Success: Funds delivered
+    Success --> [*]
 
-### Performance Perception
+    state Landing {
+        [*] --> ShowAmount
+        ShowAmount: You received $100
+        ShowAmount: from John
+        ShowAmount: Expires in 6 days
+    }
 
-```typescript
-// Optimistic Updates
-const handleSend = async () => {
-  // 1. Immediately show success UI
-  setStatus('success');
-  showConfetti();
-  playSuccessSound();
+    state Verify {
+        [*] --> EnterOTP
+        EnterOTP: 6-digit code
+        EnterOTP: Resend available
+    }
 
-  // 2. Actually process transfer
-  try {
-    await createTransfer(data);
-    // Already showing success, nothing to do
-  } catch (error) {
-    // 3. Rollback UI if failed
-    setStatus('error');
-    showError(error.message);
-  }
-};
+    state CashOut {
+        [*] --> SelectMethod
+        SelectMethod: GCash - Instant
+        SelectMethod: Maya - Instant
+        SelectMethod: Bank - 1-2 hrs
+    }
 
-// Skeleton Loading
-const TransferListSkeleton = () => (
-  <View>
-    {[1, 2, 3].map(i => (
-      <Animated.View
-        key={i}
-        style={[styles.skeleton, pulseAnimation]}
-      />
-    ))}
-  </View>
-);
+    state Success {
+        [*] --> Confirmed
+        Confirmed: ₱5,580 sent!
+        Confirmed: Reference shown
+    }
 ```
 
 ### Accessibility (WCAG 2.1 AA)
@@ -1383,39 +1196,41 @@ LIMIT 20;
 
 ### Defense in Depth
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        SECURITY LAYERS                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  Layer 1: Edge (Cloudflare)                                                 │
-│  ══════════════════════════                                                 │
-│  • DDoS protection                                                          │
-│  • WAF rules                                                                │
-│  • Bot detection                                                            │
-│  • Rate limiting                                                            │
-│                                                                              │
-│  Layer 2: Network (K8s)                                                     │
-│  ══════════════════════                                                     │
-│  • Network policies (pod isolation)                                         │
-│  • Service mesh mTLS (Linkerd)                                             │
-│  • Ingress TLS termination                                                  │
-│                                                                              │
-│  Layer 3: Application                                                       │
-│  ════════════════════                                                       │
-│  • JWT authentication                                                       │
-│  • Input validation (Zod schemas)                                          │
-│  • CORS, CSP headers                                                        │
-│  • SQL injection prevention (parameterized)                                │
-│                                                                              │
-│  Layer 4: Data                                                              │
-│  ═════════════                                                              │
-│  • Encryption at rest (AES-256)                                            │
-│  • Encryption in transit (TLS 1.3)                                         │
-│  • PII hashing/masking                                                     │
-│  • Audit logging                                                            │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph L1["Layer 1: Edge (Cloudflare)"]
+        E1[DDoS protection]
+        E2[WAF rules]
+        E3[Bot detection]
+        E4[Rate limiting]
+    end
+
+    subgraph L2["Layer 2: Network (K8s)"]
+        N1[Network policies]
+        N2[Service mesh mTLS]
+        N3[Ingress TLS]
+    end
+
+    subgraph L3["Layer 3: Application"]
+        A1[JWT authentication]
+        A2[Input validation - Zod]
+        A3[CORS, CSP headers]
+        A4[SQL injection prevention]
+    end
+
+    subgraph L4["Layer 4: Data"]
+        D1[Encryption at rest - AES-256]
+        D2[Encryption in transit - TLS 1.3]
+        D3[PII hashing/masking]
+        D4[Audit logging]
+    end
+
+    L1 --> L2 --> L3 --> L4
+
+    style L1 fill:#f97316,color:#fff
+    style L2 fill:#3b82f6,color:#fff
+    style L3 fill:#10b981,color:#fff
+    style L4 fill:#8b5cf6,color:#fff
 ```
 
 ### Secrets Management
@@ -1467,12 +1282,12 @@ spec:
 
 This architecture provides:
 
-- ✅ **World-class design patterns** (CQRS, Event Sourcing, Saga, Circuit Breaker)
-- ✅ **CAP-aware database selection** (PostgreSQL for finance, MongoDB for reads)
-- ✅ **Event-driven with Kafka/Redpanda** (reliable, scalable messaging)
-- ✅ **Kubernetes-first** (Civo/Vultr for cost efficiency)
-- ✅ **Modern UX** (offline-first, sub-100ms feedback, delightful interactions)
-- ✅ **Scale-ready** (horizontal scaling from day one)
-- ✅ **Cost-efficient bootstrap** (~$150/month to start)
+- **World-class design patterns** (CQRS, Event Sourcing, Saga, Circuit Breaker)
+- **CAP-aware database selection** (PostgreSQL for finance, MongoDB for reads)
+- **Event-driven with Kafka/Redpanda** (reliable, scalable messaging)
+- **Kubernetes-first** (Civo/Vultr for cost efficiency)
+- **Modern UX** (offline-first, sub-100ms feedback, delightful interactions)
+- **Scale-ready** (horizontal scaling from day one)
+- **Cost-efficient bootstrap** (~$150/month to start)
 
 Ready to proceed with implementation?

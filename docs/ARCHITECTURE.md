@@ -11,102 +11,72 @@ This document describes the technical architecture for Cash Phase 1 MVP, coverin
 
 ## System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                                   CLIENTS                                        │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                  │
-│   ┌─────────────────┐          ┌─────────────────┐          ┌────────────────┐  │
-│   │   Mobile App    │          │   Web Claim     │          │   Admin Panel  │  │
-│   │  (React Native) │          │   (Next.js)     │          │   (Next.js)    │  │
-│   │                 │          │                 │          │                │  │
-│   │  - iOS         │          │  - Claim flow   │          │  - Monitoring  │  │
-│   │  - Android     │          │  - OTP verify   │          │  - Support     │  │
-│   │                 │          │  - Cash-out     │          │  - Reports     │  │
-│   └────────┬────────┘          └────────┬────────┘          └───────┬────────┘  │
-│            │                            │                           │           │
-└────────────┼────────────────────────────┼───────────────────────────┼───────────┘
-             │                            │                           │
-             └────────────────────────────┼───────────────────────────┘
-                                          │
-                                          ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                                  API GATEWAY                                     │
-│                              (Kong / AWS API Gateway)                            │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  - Rate limiting          - JWT validation         - Request logging            │
-│  - CORS handling          - API versioning         - DDoS protection            │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                          │
-                                          ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                               BACKEND SERVICES                                   │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                  │
-│   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐            │
-│   │   Auth Service  │    │ Transfer Service│    │  Claim Service  │            │
-│   │                 │    │                 │    │                 │            │
-│   │  - Phone verify │    │  - Create       │    │  - Generate     │            │
-│   │  - Session mgmt │    │  - Execute      │    │  - Verify       │            │
-│   │  - Privy SDK    │    │  - Status       │    │  - Process      │            │
-│   └────────┬────────┘    └────────┬────────┘    └────────┬────────┘            │
-│            │                      │                      │                      │
-│   ┌────────┴────────┐    ┌────────┴────────┐    ┌────────┴────────┐            │
-│   │  User Service   │    │ Wallet Service  │    │  Notify Service │            │
-│   │                 │    │                 │    │                 │            │
-│   │  - Profile      │    │  - Balance      │    │  - WhatsApp     │            │
-│   │  - KYC status   │    │  - Addresses    │    │  - SMS          │            │
-│   │  - Contacts     │    │  - Privy calls  │    │  - Push         │            │
-│   └─────────────────┘    └─────────────────┘    └─────────────────┘            │
-│                                                                                  │
-│   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐            │
-│   │ Off-ramp Service│    │   FX Service    │    │Compliance Service│            │
-│   │                 │    │                 │    │                 │            │
-│   │  - TransFi API  │    │  - Rate fetch   │    │  - AML screen   │            │
-│   │  - Status track │    │  - Conversion   │    │  - Sanctions    │            │
-│   │  - Webhooks     │    │  - Cache        │    │  - Limits       │            │
-│   └─────────────────┘    └─────────────────┘    └─────────────────┘            │
-│                                                                                  │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                          │
-                                          ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                                 DATA LAYER                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                  │
-│   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐            │
-│   │   PostgreSQL    │    │     Redis       │    │   S3 / Minio    │            │
-│   │                 │    │                 │    │                 │            │
-│   │  - Users        │    │  - Sessions     │    │  - KYC docs     │            │
-│   │  - Transfers    │    │  - Rate cache   │    │  - Receipts     │            │
-│   │  - Claims       │    │  - OTP codes    │    │  - Logs         │            │
-│   │  - Wallets      │    │  - Rate limits  │    │                 │            │
-│   └─────────────────┘    └─────────────────┘    └─────────────────┘            │
-│                                                                                  │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                          │
-                                          ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                             EXTERNAL SERVICES                                    │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                  │
-│   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐            │
-│   │     Privy       │    │    TransFi      │    │     Twilio      │            │
-│   │                 │    │                 │    │                 │            │
-│   │  - Embedded     │    │  - Off-ramp     │    │  - SMS OTP      │            │
-│   │    wallets      │    │  - GCash/M-Pesa │    │  - Voice        │            │
-│   │  - MPC keys     │    │  - Webhooks     │    │                 │            │
-│   └─────────────────┘    └─────────────────┘    └─────────────────┘            │
-│                                                                                  │
-│   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐            │
-│   │  WhatsApp API   │    │    Persona      │    │     Solana      │            │
-│   │                 │    │                 │    │                 │            │
-│   │  - Notifications│    │  - ID verify    │    │  - USDC         │            │
-│   │  - Templates    │    │  - Liveness     │    │  - Transactions │            │
-│   │                 │    │  - Sanctions    │    │                 │            │
-│   └─────────────────┘    └─────────────────┘    └─────────────────┘            │
-│                                                                                  │
-└─────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Clients["📱 Clients"]
+        Mobile["Mobile App<br/>(React Native)"]
+        Web["Web Claim<br/>(Next.js)"]
+        Admin["Admin Panel<br/>(Next.js)"]
+    end
+
+    subgraph Gateway["🚪 API Gateway"]
+        Kong["Kong / Traefik<br/>Rate Limit • JWT • Routing • DDoS"]
+    end
+
+    subgraph Services["⚙️ Backend Services"]
+        Auth["Auth Service<br/>Phone verify • Sessions"]
+        Transfer["Transfer Service<br/>Create • Execute • Status"]
+        Claim["Claim Service<br/>Generate • Verify • Process"]
+        User["User Service<br/>Profile • KYC • Contacts"]
+        Wallet["Wallet Service<br/>Balance • Addresses • Privy"]
+        Notify["Notify Service<br/>WhatsApp • SMS • Push"]
+        Offramp["Off-ramp Service<br/>TransFi • Webhooks"]
+        FX["FX Service<br/>Rates • Conversion"]
+        Compliance["Compliance Service<br/>AML • Sanctions • Limits"]
+    end
+
+    subgraph Data["💾 Data Layer"]
+        PG[(PostgreSQL<br/>Transfers • Ledger)]
+        Mongo[(MongoDB<br/>Users • Claims)]
+        Redis[(Redis<br/>Sessions • Cache)]
+        S3[(S3/Minio<br/>KYC docs • Logs)]
+    end
+
+    subgraph External["🌐 External Services"]
+        Privy["Privy<br/>Embedded Wallets"]
+        TransFi["TransFi<br/>Off-ramp"]
+        Twilio["Twilio<br/>SMS/OTP"]
+        WhatsApp["WhatsApp API<br/>Notifications"]
+        Solana["Solana<br/>USDC"]
+        Persona["Persona<br/>KYC/ID"]
+    end
+
+    Mobile --> Kong
+    Web --> Kong
+    Admin --> Kong
+
+    Kong --> Auth
+    Kong --> Transfer
+    Kong --> Claim
+    Kong --> User
+    Kong --> Wallet
+
+    Auth --> Redis
+    User --> Mongo
+    Transfer --> PG
+    Wallet --> Privy
+    Wallet --> Solana
+    Claim --> Mongo
+    Offramp --> TransFi
+    Notify --> WhatsApp
+    Notify --> Twilio
+    Compliance --> Persona
+
+    style Gateway fill:#003459,color:#fff
+    style Clients fill:#1e40af,color:#fff
+    style Services fill:#10b981,color:#fff
+    style Data fill:#7c3aed,color:#fff
+    style External fill:#ea580c,color:#fff
 ```
 
 ## Component Details
@@ -123,14 +93,14 @@ This document describes the technical architecture for Cash Phase 1 MVP, coverin
 - On-ramp integration (MoonPay widget)
 
 **Tech Stack**:
-```
-- React Native 0.73+
-- Expo (managed workflow)
-- Privy React Native SDK
-- React Navigation 6
-- TanStack Query (data fetching)
-- Zustand (state management)
-```
+| Component | Technology |
+|-----------|------------|
+| Framework | React Native 0.73+ |
+| Build | Expo (managed workflow) |
+| Auth | Privy React Native SDK |
+| Navigation | React Navigation 6 |
+| Data Fetching | TanStack Query |
+| State | Zustand |
 
 **Directory Structure**:
 ```
@@ -168,13 +138,13 @@ mobile/
 - Receipt generation
 
 **Tech Stack**:
-```
-- Next.js 14 (App Router)
-- TypeScript
-- Tailwind CSS
-- Shadcn/ui components
-- Server Actions
-```
+| Component | Technology |
+|-----------|------------|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| Components | Shadcn/ui |
+| Data | Server Actions |
 
 **Directory Structure**:
 ```
@@ -198,448 +168,331 @@ web/
 **Purpose**: Core business logic, data management, and external integrations.
 
 **Tech Stack**:
-```
-- Node.js 20 LTS
-- TypeScript
-- Fastify (HTTP framework)
-- Prisma (ORM)
-- Bull (job queues)
-- Zod (validation)
-```
+| Component | Technology |
+|-----------|------------|
+| Runtime | Node.js 20 LTS |
+| Language | TypeScript |
+| Framework | Fastify |
+| ORM | Prisma |
+| Queues | Bull |
+| Validation | Zod |
 
-**Service Breakdown**:
+---
 
-#### Auth Service
-```typescript
-// Endpoints
-POST /auth/init          // Start phone verification
-POST /auth/verify        // Verify OTP, create session
-POST /auth/refresh       // Refresh JWT token
-POST /auth/logout        // Invalidate session
+## Service Breakdown
 
-// Privy Integration
-- Uses Privy Server SDK for wallet creation
-- JWT tokens signed with our secret
-- Session stored in Redis (24h TTL)
-```
+### Auth Service
 
-#### Transfer Service
-```typescript
-// Endpoints
-POST /transfers              // Create new transfer
-GET  /transfers/:id          // Get transfer details
-GET  /transfers              // List user's transfers
-POST /transfers/:id/cancel   // Cancel pending transfer
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as Auth Service
+    participant R as Redis
+    participant T as Twilio
+    participant P as Privy
 
-// States
-PENDING    → Awaiting blockchain confirmation
-CONFIRMED  → On-chain, awaiting claim
-CLAIMED    → Recipient verified ownership
-PROCESSING → Off-ramp in progress
-COMPLETED  → Funds delivered
-CANCELLED  → Cancelled by sender
-EXPIRED    → Claim link expired (7 days)
+    C->>A: POST /auth/init {phone}
+    A->>T: Send OTP
+    A->>R: Store OTP attempt
+    A-->>C: {session_id}
+
+    C->>A: POST /auth/verify {otp}
+    A->>T: Verify OTP
+    A->>P: Create/Get User
+    P-->>A: {wallet_address}
+    A->>R: Create session
+    A-->>C: {jwt, user}
 ```
 
-#### Claim Service
-```typescript
-// Endpoints
-GET  /claims/:code           // Get claim details (public)
-POST /claims/:code/verify    // Verify phone ownership
-POST /claims/:code/cashout   // Initiate cash-out
+**Endpoints**:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/init` | Start phone verification |
+| POST | `/auth/verify` | Verify OTP, create session |
+| POST | `/auth/refresh` | Refresh JWT token |
+| POST | `/auth/logout` | Invalidate session |
 
-// Security
-- Claim codes are 12-char alphanumeric (62^12 possibilities)
+### Transfer Service
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: Create transfer
+    pending --> confirmed: Blockchain confirmed
+    confirmed --> claimed: Recipient verified
+    claimed --> processing: Off-ramp initiated
+    processing --> completed: Funds delivered
+
+    pending --> cancelled: Sender cancels
+    confirmed --> expired: 7 days passed
+    processing --> failed: Off-ramp failed
+
+    cancelled --> [*]
+    expired --> [*]
+    completed --> [*]
+    failed --> processing: Retry
+```
+
+**Endpoints**:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/transfers` | Create new transfer |
+| GET | `/transfers/:id` | Get transfer details |
+| GET | `/transfers` | List user's transfers |
+| POST | `/transfers/:id/cancel` | Cancel pending transfer |
+
+### Claim Service
+
+**Security Features**:
+- Claim codes: 12-char alphanumeric (62^12 possibilities)
 - Rate limited: 5 OTP attempts per claim
 - Expires after 7 days or on completion
+
+**Endpoints**:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/claims/:code` | Get claim details (public) |
+| POST | `/claims/:code/verify` | Verify phone ownership |
+| POST | `/claims/:code/cashout` | Initiate cash-out |
+
+### Wallet Service
+
+```mermaid
+flowchart LR
+    subgraph App["Mobile App"]
+        U[User]
+    end
+
+    subgraph Backend["Wallet Service"]
+        WS[Wallet API]
+    end
+
+    subgraph Privy["Privy MPC"]
+        S1[Shard 1<br/>Device]
+        S2[Shard 2<br/>Privy]
+        S3[Shard 3<br/>Recovery]
+    end
+
+    subgraph Solana["Solana"]
+        USDC[USDC Token]
+    end
+
+    U --> WS
+    WS --> S1 & S2
+    S1 & S2 --> |2-of-3 Sign| USDC
+
+    style Privy fill:#10b981,color:#fff
 ```
 
-#### Wallet Service
-```typescript
-// Endpoints
-GET  /wallet/balance         // Get USDC balance
-GET  /wallet/address         // Get deposit address
-POST /wallet/send            // Send to another user
+**Endpoints**:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/wallet/balance` | Get USDC balance |
+| GET | `/wallet/address` | Get deposit address |
+| POST | `/wallet/send` | Send to another user |
 
-// Privy Integration
-- Each user gets embedded Solana wallet
-- We never hold private keys
-- Transactions signed via Privy MPC
+### Notification Service
+
+**Channels**:
+| Channel | Primary Use | Fallback |
+|---------|-------------|----------|
+| WhatsApp | Claim notifications | SMS |
+| SMS | OTP codes | - |
+| Push | App users | SMS |
+
+**Templates**:
+| Template | Example |
+|----------|---------|
+| `TRANSFER_RECEIVED` | "You received $100 from Mom" |
+| `CLAIM_REMINDER` | "Don't forget to claim your $100" |
+| `CASHOUT_COMPLETE` | "₱5,580 sent to your GCash" |
+
+### Off-ramp Service
+
+```mermaid
+sequenceDiagram
+    participant W as Web Claim
+    participant O as Off-ramp Service
+    participant T as TransFi
+    participant G as GCash
+
+    W->>O: POST /offramp/quote
+    O->>T: GET /quote
+    T-->>O: {rate, fees, eta}
+    O-->>W: {quote}
+
+    W->>O: POST /offramp/execute
+    O->>T: POST /payout
+    T->>G: Send PHP
+    G-->>T: Success
+    T-->>O: Webhook: completed
+    O-->>W: {status: completed}
 ```
 
-#### Notification Service
-```typescript
-// Channels
-- WhatsApp Business API (primary)
-- Twilio SMS (fallback)
-- Push notifications (app users)
-
-// Templates
-TRANSFER_RECEIVED   // "You received $100 from Mom"
-CLAIM_REMINDER      // "Don't forget to claim your $100"
-CASHOUT_COMPLETE    // "₱5,580 sent to your GCash"
-```
-
-#### Off-ramp Service
-```typescript
-// TransFi Integration
-POST /offramp/quote          // Get cash-out quote
-POST /offramp/execute        // Execute cash-out
-GET  /offramp/status/:id     // Check status
-
-// Supported Methods (Phase 1)
+**Supported Methods (Phase 1)**:
 - GCash (Philippines)
 - Maya (Philippines)
 - Bank transfer (Philippines)
-```
 
-### 4. Database Schema
-
-See [DATABASE.md](./DATABASE.md) for complete schema.
-
-**Core Tables**:
-```
-users           - User accounts
-wallets         - Blockchain wallet addresses
-transfers       - Transfer records
-claims          - Claim links and status
-kyc_records     - KYC verification data
-notifications   - Notification log
-```
-
-### 5. External Service Integrations
-
-#### Privy (Wallet Infrastructure)
-
-**Purpose**: Embedded wallets with social login, no seed phrases.
-
-**Integration Points**:
-```typescript
-// Server SDK
-import { PrivyClient } from '@privy-io/server-auth';
-
-const privy = new PrivyClient(appId, appSecret);
-
-// Create user wallet
-const user = await privy.createUser({
-  phone: '+639171234567',
-});
-
-// Sign transaction
-const signature = await privy.signTransaction(userId, transaction);
-```
-
-**Pricing**: $0.05/wallet + $0.01/transaction
-
-#### TransFi (Off-ramp)
-
-**Purpose**: Convert USDC to local currency (GCash, bank, etc.)
-
-**Integration Flow**:
-```
-1. GET /quote
-   - Input: amount, currency, destination (gcash/bank)
-   - Output: exchange rate, fees, estimated delivery
-
-2. POST /payout
-   - Input: amount, recipient details, destination
-   - Output: payout_id, status
-
-3. Webhook: payout.completed / payout.failed
-   - Update our database
-   - Notify user
-```
-
-**Pricing**: 0.5-1% per transaction (we keep portion)
-
-#### Twilio (SMS/OTP)
-
-**Purpose**: Phone verification via SMS OTP.
-
-**Integration**:
-```typescript
-import twilio from 'twilio';
-
-const client = twilio(accountSid, authToken);
-
-// Send OTP
-await client.verify.v2
-  .services(verifySid)
-  .verifications.create({
-    to: '+639171234567',
-    channel: 'sms',
-  });
-
-// Verify OTP
-await client.verify.v2
-  .services(verifySid)
-  .verificationChecks.create({
-    to: '+639171234567',
-    code: '123456',
-  });
-```
-
-**Pricing**: $0.05/verification
-
-#### WhatsApp Business API
-
-**Purpose**: Send claim notifications to recipients.
-
-**Integration**:
-```typescript
-// Using official WhatsApp Cloud API
-const response = await fetch(
-  `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
-  {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to: recipientPhone,
-      type: 'template',
-      template: {
-        name: 'transfer_received',
-        language: { code: 'en' },
-        components: [
-          {
-            type: 'body',
-            parameters: [
-              { type: 'text', text: senderName },
-              { type: 'text', text: amount },
-              { type: 'text', text: claimUrl },
-            ],
-          },
-        ],
-      },
-    }),
-  }
-);
-```
-
-**Pricing**: $0.005-0.05/message depending on region
-
-#### Solana (Blockchain)
-
-**Purpose**: USDC transfers on Solana for speed and low cost.
-
-**Integration**:
-```typescript
-import { Connection, PublicKey } from '@solana/web3.js';
-import { getAssociatedTokenAddress, transfer } from '@solana/spl-token';
-
-const connection = new Connection('https://api.mainnet-beta.solana.com');
-
-// USDC mint on Solana
-const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
-
-// Get balance
-const tokenAccount = await getAssociatedTokenAddress(USDC_MINT, userPubkey);
-const balance = await connection.getTokenAccountBalance(tokenAccount);
-
-// Transfer (via Privy signing)
-const tx = await transfer(
-  connection,
-  payer,
-  sourceAccount,
-  destinationAccount,
-  owner,
-  amount * 1e6, // USDC has 6 decimals
-);
-```
-
-**Costs**: ~$0.001 per transaction
+---
 
 ## Data Flows
 
 ### Flow 1: User Registration
 
-```
-┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
-│  Mobile  │     │   Auth   │     │  Twilio  │     │  Privy   │
-│   App    │     │ Service  │     │          │     │          │
-└────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘
-     │                │                │                │
-     │ 1. Enter phone │                │                │
-     │───────────────>│                │                │
-     │                │                │                │
-     │                │ 2. Send OTP    │                │
-     │                │───────────────>│                │
-     │                │                │                │
-     │ 3. Enter OTP   │                │                │
-     │───────────────>│                │                │
-     │                │                │                │
-     │                │ 4. Verify OTP  │                │
-     │                │───────────────>│                │
-     │                │                │                │
-     │                │ 5. Create user │                │
-     │                │────────────────────────────────>│
-     │                │                │                │
-     │                │ 6. Return wallet address        │
-     │                │<────────────────────────────────│
-     │                │                │                │
-     │ 7. JWT + user  │                │                │
-     │<───────────────│                │                │
-     │                │                │                │
+```mermaid
+sequenceDiagram
+    autonumber
+    participant M as Mobile App
+    participant A as Auth Service
+    participant T as Twilio
+    participant P as Privy
+    participant R as Redis
+
+    M->>A: Enter phone number
+    A->>T: Send OTP
+    T-->>M: SMS received
+    M->>A: Enter OTP code
+    A->>T: Verify OTP
+    T-->>A: Valid
+    A->>P: Create user wallet
+    P-->>A: Wallet address
+    A->>R: Store session
+    A-->>M: JWT + user data
 ```
 
 ### Flow 2: Send Money
 
-```
-┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
-│  Mobile  │     │ Transfer │     │  Wallet  │     │  Solana  │     │ WhatsApp │
-│   App    │     │ Service  │     │ Service  │     │          │     │          │
-└────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘
-     │                │                │                │                │
-     │ 1. Create      │                │                │                │
-     │    transfer    │                │                │                │
-     │───────────────>│                │                │                │
-     │                │                │                │                │
-     │                │ 2. Check       │                │                │
-     │                │    balance     │                │                │
-     │                │───────────────>│                │                │
-     │                │                │                │                │
-     │                │                │ 3. Sign & send │                │
-     │                │                │    USDC        │                │
-     │                │                │───────────────>│                │
-     │                │                │                │                │
-     │                │                │ 4. Tx hash     │                │
-     │                │                │<───────────────│                │
-     │                │                │                │                │
-     │                │ 5. Create claim│                │                │
-     │                │    link        │                │                │
-     │                │────────────────────────────────────────────────>│
-     │                │                │                │                │
-     │ 6. Success +   │                │                │                │
-     │    claim link  │                │                │                │
-     │<───────────────│                │                │                │
-     │                │                │                │                │
+```mermaid
+sequenceDiagram
+    autonumber
+    participant M as Mobile App
+    participant T as Transfer Service
+    participant W as Wallet Service
+    participant S as Solana
+    participant N as Notify Service
+    participant WA as WhatsApp
+
+    M->>T: Create transfer<br/>{recipient, amount}
+    T->>W: Check balance
+    W-->>T: Balance OK
+    T->>W: Sign & send USDC
+    W->>S: Transfer USDC
+    S-->>W: Tx hash
+    W-->>T: Confirmed
+    T->>N: Send notification
+    N->>WA: Claim link message
+    WA-->>N: Delivered
+    T-->>M: Success + claim link
 ```
 
 ### Flow 3: Claim Money (Web)
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Web Browser
+    participant C as Claim Service
+    participant T as Twilio
+    participant O as Off-ramp Service
+    participant TF as TransFi
+    participant G as GCash
+
+    B->>C: Open claim link
+    C-->>B: Show amount & sender
+    B->>C: Request OTP
+    C->>T: Send OTP
+    T-->>B: SMS received
+    B->>C: Submit OTP
+    C->>T: Verify
+    T-->>C: Valid
+    C-->>B: Show cash-out options
+    B->>C: Select GCash
+    C->>O: Execute off-ramp
+    O->>TF: POST /payout
+    TF->>G: Send PHP
+    G-->>TF: Success
+    TF-->>O: Webhook
+    O-->>C: Complete
+    C-->>B: Success! ₱5,580 received
 ```
-┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
-│   Web    │     │  Claim   │     │  Twilio  │     │ Off-ramp │     │  TransFi │
-│  Browser │     │ Service  │     │          │     │ Service  │     │          │
-└────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘
-     │                │                │                │                │
-     │ 1. Open claim  │                │                │                │
-     │    link        │                │                │                │
-     │───────────────>│                │                │                │
-     │                │                │                │                │
-     │ 2. Claim info  │                │                │                │
-     │<───────────────│                │                │                │
-     │                │                │                │                │
-     │ 3. Request OTP │                │                │                │
-     │───────────────>│                │                │                │
-     │                │ 4. Send OTP    │                │                │
-     │                │───────────────>│                │                │
-     │                │                │                │                │
-     │ 5. Submit OTP  │                │                │                │
-     │───────────────>│                │                │                │
-     │                │ 6. Verify      │                │                │
-     │                │───────────────>│                │                │
-     │                │                │                │                │
-     │ 7. Cash-out    │                │                │                │
-     │    options     │                │                │                │
-     │<───────────────│                │                │                │
-     │                │                │                │                │
-     │ 8. Select      │                │                │                │
-     │    GCash       │                │                │                │
-     │───────────────>│                │                │                │
-     │                │                │                │                │
-     │                │ 9. Execute     │                │                │
-     │                │    off-ramp    │                │                │
-     │                │───────────────────────────────>│                │
-     │                │                │                │                │
-     │                │                │                │ 10. Send to    │
-     │                │                │                │     GCash      │
-     │                │                │                │───────────────>│
-     │                │                │                │                │
-     │ 11. Success    │                │                │                │
-     │<───────────────│                │                │                │
-     │                │                │                │                │
-```
+
+---
 
 ## Security Architecture
 
-### Authentication
+### Authentication Flow
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                   Authentication Flow                    │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│   1. Phone Verification (Twilio Verify)                 │
-│      - Rate limited: 3 attempts / 10 min                │
-│      - Code expires: 10 minutes                         │
-│                                                          │
-│   2. JWT Token (HS256)                                  │
-│      - Access token: 15 min TTL                         │
-│      - Refresh token: 7 days TTL                        │
-│      - Stored in secure storage (mobile)                │
-│      - HttpOnly cookie (web)                            │
-│                                                          │
-│   3. Session Management (Redis)                         │
-│      - Session ID stored with user context              │
-│      - Invalidated on logout / password change          │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Phone["📱 Phone Verification"]
+        P1[Rate limited: 3 attempts/10min]
+        P2[Code expires: 10 minutes]
+        P3[Twilio Verify]
+    end
+
+    subgraph JWT["🔐 JWT Tokens"]
+        J1[Access token: 15min TTL]
+        J2[Refresh token: 7 days TTL]
+        J3[HS256 signed]
+    end
+
+    subgraph Session["💾 Session Management"]
+        S1[Redis storage]
+        S2[Invalidate on logout]
+        S3[Device tracking]
+    end
+
+    Phone --> JWT --> Session
 ```
 
-### Wallet Security
+### Wallet Security (Privy MPC)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Privy MPC Architecture                │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│   User Key Shards:                                      │
-│   ┌─────────┐  ┌─────────┐  ┌─────────┐                │
-│   │ Device  │  │  Privy  │  │ Recovery│                │
-│   │  Shard  │  │  Shard  │  │  Shard  │                │
-│   └────┬────┘  └────┬────┘  └────┬────┘                │
-│        │            │            │                      │
-│        └────────────┼────────────┘                      │
-│                     │                                    │
-│              ┌──────┴──────┐                            │
-│              │   2-of-3    │                            │
-│              │  Threshold  │                            │
-│              │   Signing   │                            │
-│              └─────────────┘                            │
-│                                                          │
-│   - We never see complete private key                   │
-│   - User can recover with phone + recovery shard        │
-│   - Privy is SOC 2 Type II certified                    │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Shards["Key Shards"]
+        D[Device Shard<br/>User's phone]
+        P[Privy Shard<br/>Privy servers]
+        R[Recovery Shard<br/>Encrypted backup]
+    end
+
+    subgraph Signing["Threshold Signing"]
+        T[2-of-3<br/>Required]
+    end
+
+    subgraph Security["Security Guarantees"]
+        S1[We never see private key]
+        S2[User can recover with phone]
+        S3[SOC 2 Type II certified]
+    end
+
+    D --> T
+    P --> T
+    R -.->|recovery only| T
+    T --> Security
+
+    style Signing fill:#10b981,color:#fff
 ```
 
 ### Claim Link Security
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                   Claim Link Security                    │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│   URL Format: https://cash.app/c/{code}                 │
-│                                                          │
-│   Code Generation:                                      │
-│   - 12 characters, alphanumeric (a-zA-Z0-9)            │
-│   - 62^12 = 3.2 × 10^21 possibilities                  │
-│   - Generated using crypto.randomBytes()                │
-│                                                          │
-│   Security Measures:                                    │
-│   - Phone verification required to claim                │
-│   - 5 OTP attempts max, then locked                    │
-│   - 7-day expiration                                    │
-│   - Single-use (cannot be claimed twice)               │
-│   - Rate limit: 10 claims/hour per IP                  │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Generation["Code Generation"]
+        G1[12 characters]
+        G2[a-zA-Z0-9]
+        G3["62^12 = 3.2×10^21"]
+        G4[crypto.randomBytes]
+    end
+
+    subgraph Protection["Security Measures"]
+        P1[Phone verification required]
+        P2[5 OTP attempts max]
+        P3[7-day expiration]
+        P4[Single-use only]
+        P5[10 claims/hour per IP]
+    end
+
+    Generation --> Protection
 ```
 
 ### Data Encryption
@@ -652,84 +505,110 @@ const tx = await transfer(
 | Session tokens | Redis (encrypted at rest) | TLS 1.3 |
 | Database | PostgreSQL TDE | TLS 1.3 |
 
+---
+
 ## Infrastructure
 
-### Phase 1 Deployment
+### Phase 1 Deployment (Kubernetes)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    AWS Infrastructure                    │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│   Region: me-south-1 (Bahrain) - closest to GCC         │
-│                                                          │
-│   ┌─────────────────────────────────────────────────┐   │
-│   │                     VPC                          │   │
-│   │  ┌─────────────────────────────────────────┐    │   │
-│   │  │            Public Subnet                 │    │   │
-│   │  │  ┌─────────────┐  ┌─────────────┐       │    │   │
-│   │  │  │     ALB     │  │  CloudFront │       │    │   │
-│   │  │  └─────────────┘  └─────────────┘       │    │   │
-│   │  └─────────────────────────────────────────┘    │   │
-│   │                                                  │   │
-│   │  ┌─────────────────────────────────────────┐    │   │
-│   │  │            Private Subnet                │    │   │
-│   │  │  ┌─────────────────────────────────┐    │    │   │
-│   │  │  │         ECS Fargate             │    │    │   │
-│   │  │  │  ┌─────────┐  ┌─────────┐       │    │    │   │
-│   │  │  │  │   API   │  │  Worker │       │    │    │   │
-│   │  │  │  │ Service │  │  Tasks  │       │    │    │   │
-│   │  │  │  └─────────┘  └─────────┘       │    │    │   │
-│   │  │  └─────────────────────────────────┘    │    │   │
-│   │  └─────────────────────────────────────────┘    │   │
-│   │                                                  │   │
-│   │  ┌─────────────────────────────────────────┐    │   │
-│   │  │            Data Subnet                   │    │   │
-│   │  │  ┌───────────┐  ┌───────────┐           │    │   │
-│   │  │  │    RDS    │  │ ElastiCache│           │    │   │
-│   │  │  │ Postgres  │  │   Redis    │           │    │   │
-│   │  │  └───────────┘  └───────────┘           │    │   │
-│   │  └─────────────────────────────────────────┘    │   │
-│   └─────────────────────────────────────────────────┘   │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Internet["🌐 Internet"]
+        Users[Users]
+    end
+
+    subgraph CDN["CDN"]
+        CF[CloudFlare]
+    end
+
+    subgraph K8s["☸️ Kubernetes Cluster"]
+        subgraph Ingress["Ingress"]
+            IG[Traefik/Kong]
+        end
+
+        subgraph Services["Services"]
+            API[API Pods<br/>2 replicas]
+            Worker[Worker Pods<br/>1 replica]
+        end
+
+        subgraph Data["Managed Services"]
+            PG[(PostgreSQL)]
+            RD[(Redis)]
+            MG[(MongoDB)]
+        end
+    end
+
+    subgraph Storage["Object Storage"]
+        S3[S3-compatible<br/>KYC docs]
+    end
+
+    Users --> CF --> IG
+    IG --> API
+    API --> Worker
+    API --> PG & RD & MG
+    Worker --> S3
+
+    style K8s fill:#326ce5,color:#fff
 ```
 
 ### Resource Sizing (Phase 1)
 
 | Resource | Spec | Monthly Cost |
 |----------|------|--------------|
-| ECS Fargate (API) | 2 tasks × 0.5 vCPU, 1GB | ~$30 |
-| ECS Fargate (Worker) | 1 task × 0.25 vCPU, 0.5GB | ~$10 |
-| RDS PostgreSQL | db.t3.small, 20GB | ~$30 |
-| ElastiCache Redis | cache.t3.micro | ~$15 |
-| ALB | 1 load balancer | ~$20 |
-| CloudFront | 100GB transfer | ~$10 |
-| S3 | 10GB storage | ~$1 |
-| **Total** | | **~$120/month** |
+| K8s Cluster (Civo) | 3 nodes × 2 vCPU, 4GB | ~$60 |
+| PostgreSQL (Managed) | 1 vCPU, 2GB, 20GB | ~$30 |
+| MongoDB (Atlas) | M10 Shared | ~$60 |
+| Redis (Managed) | 256MB | ~$10 |
+| Object Storage | 10GB | ~$5 |
+| CloudFlare | Pro plan | ~$20 |
+| **Total** | | **~$185/month** |
 
 ### Monitoring & Observability
 
+```mermaid
+flowchart LR
+    subgraph Sources["📊 Data Sources"]
+        App[Applications]
+        K8s[Kubernetes]
+        DB[Databases]
+    end
+
+    subgraph Collection["📥 Collection"]
+        Prom[Prometheus]
+        Loki[Loki]
+        Tempo[Tempo]
+    end
+
+    subgraph Visualization["📈 Visualization"]
+        Graf[Grafana]
+    end
+
+    subgraph Alerting["🚨 Alerting"]
+        AM[AlertManager]
+        PD[PagerDuty]
+        Slack[Slack]
+    end
+
+    App --> Prom & Loki & Tempo
+    K8s --> Prom
+    DB --> Prom
+
+    Prom & Loki & Tempo --> Graf
+    Prom --> AM --> PD & Slack
+
+    style Collection fill:#e6522c,color:#fff
+    style Visualization fill:#f46800,color:#fff
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Observability Stack                   │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│   Logs:        CloudWatch Logs → OpenSearch (optional)  │
-│   Metrics:     CloudWatch Metrics + Custom dashboards   │
-│   Traces:      AWS X-Ray                                │
-│   Alerts:      CloudWatch Alarms → SNS → PagerDuty     │
-│   Uptime:      Better Uptime / Checkly                  │
-│                                                          │
-│   Key Metrics:                                          │
-│   - Transfer success rate (target: 99.5%)               │
-│   - Claim completion rate                               │
-│   - Off-ramp success rate                               │
-│   - API latency (p99 < 500ms)                          │
-│   - Error rate (< 0.1%)                                │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
-```
+
+**Key Metrics**:
+| Metric | Target |
+|--------|--------|
+| Transfer success rate | 99.5% |
+| API latency (p99) | < 500ms |
+| Error rate | < 0.1% |
+| Uptime | 99.9% |
+
+---
 
 ## API Specification
 
@@ -737,25 +616,26 @@ See [API.md](./API.md) for complete OpenAPI specification.
 
 ### Key Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/init` | Start phone verification |
-| POST | `/auth/verify` | Verify OTP, get JWT |
-| GET | `/wallet/balance` | Get user's USDC balance |
-| POST | `/transfers` | Create new transfer |
-| GET | `/transfers/:id` | Get transfer status |
-| GET | `/claims/:code` | Get claim info (public) |
-| POST | `/claims/:code/verify` | Verify claim ownership |
-| POST | `/claims/:code/cashout` | Execute cash-out |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/auth/init` | Start phone verification | Public |
+| POST | `/auth/verify` | Verify OTP, get JWT | Public |
+| GET | `/wallet/balance` | Get user's USDC balance | Required |
+| POST | `/transfers` | Create new transfer | Required |
+| GET | `/transfers/:id` | Get transfer status | Required |
+| GET | `/claims/:code` | Get claim info | Public |
+| POST | `/claims/:code/verify` | Verify claim ownership | Public |
+| POST | `/claims/:code/cashout` | Execute cash-out | Public |
+
+---
 
 ## Development Setup
 
 ### Prerequisites
 
 ```bash
-# Required
 node >= 20.0.0
-pnpm >= 8.0.0
+pnpm >= 9.0.0
 docker >= 24.0.0
 ```
 
@@ -769,7 +649,7 @@ cd cash
 # Install dependencies
 pnpm install
 
-# Start local services (Postgres, Redis)
+# Start local services (Postgres, MongoDB, Redis, Redpanda)
 docker-compose up -d
 
 # Run database migrations
@@ -788,6 +668,7 @@ pnpm dev:mobile   # Mobile app only
 # .env.local
 DATABASE_URL=postgresql://localhost:5432/cash
 REDIS_URL=redis://localhost:6379
+MONGODB_URL=mongodb://localhost:27017/cash
 
 # Privy
 PRIVY_APP_ID=xxx
@@ -809,6 +690,8 @@ TRANSFI_WEBHOOK_SECRET=xxx
 # Solana
 SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 ```
+
+---
 
 ## Phase 1 Deliverables Checklist
 
@@ -836,7 +719,7 @@ SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 - [ ] Off-ramp service (TransFi)
 
 ### Infrastructure
-- [ ] AWS setup (VPC, ECS, RDS, Redis)
+- [ ] Kubernetes setup (Civo)
 - [ ] CI/CD pipeline (GitHub Actions)
 - [ ] Monitoring dashboards
 - [ ] Alerting rules
