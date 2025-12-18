@@ -1,0 +1,75 @@
+// Prisma schema for Transfer Service
+// Uses PostgreSQL for ACID compliance
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model Transfer {
+  id                    String   @id
+  senderId              String   @map("sender_id")
+  recipientPhone        String   @map("recipient_phone")
+  recipientPhoneHash    String   @map("recipient_phone_hash")
+  recipientUserId       String?  @map("recipient_user_id")
+
+  // Money
+  amount                String
+  currency              String
+  feeAmount             String?  @map("fee_amount")
+
+  // Status
+  status                String   @default("pending")
+  version               Int      @default(1)
+
+  // Claim
+  claimCode             String   @unique @map("claim_code")
+  claimUrl              String   @map("claim_url")
+  claimExpiresAt        DateTime @map("claim_expires_at")
+
+  // Blockchain
+  blockchainChain       String?  @map("blockchain_chain")
+  blockchainTxHash      String?  @map("blockchain_tx_hash")
+  blockchainConfirmedAt DateTime? @map("blockchain_confirmed_at")
+
+  // Cash-out
+  cashoutMethod         String?  @map("cashout_method")
+  cashoutLocalAmount    String?  @map("cashout_local_amount")
+  cashoutLocalCurrency  String?  @map("cashout_local_currency")
+  cashoutReference      String?  @map("cashout_reference")
+  cashoutCompletedAt    DateTime? @map("cashout_completed_at")
+
+  // Metadata
+  note                  String?
+
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@index([senderId])
+  @@index([recipientPhoneHash])
+  @@index([recipientUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([senderId, createdAt])
+
+  @@map("transfers")
+}
+
+// Outbox table for reliable event publishing
+model Outbox {
+  id        String   @id @default(uuid())
+  topic     String
+  key       String?
+  payload   Json
+  headers   Json?
+  published Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([published, createdAt])
+  @@map("outbox")
+}

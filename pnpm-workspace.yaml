@@ -1,0 +1,12 @@
+packages:
+  # Client applications
+  - "apps/*"
+
+  # Microservices
+  - "services/*"
+
+  # Shared packages
+  - "packages/*"
+
+  # Infrastructure tooling (if any Node scripts)
+  - "infrastructure/scripts"
