@@ -43,6 +43,134 @@ flowchart LR
 
 ---
 
+## Competitive Capability Matrix
+
+### Heatmap: Vendor Capabilities (0-10 Scale)
+
+> **Legend**: 🟢 8-10 (Strong) | 🟡 5-7 (Moderate) | 🟠 2-4 (Weak) | 🔴 0-1 (None)
+
+| Vendor | GCC Cash-In | US/EU Cash-In | PH Cash-Out | India Cash-Out | Africa Cash-Out | Stablecoin Rails | Speed | Low Fees | No-App Receive | Network Effects | Global Coverage | Compliance |
+|--------|:-----------:|:-------------:|:-----------:|:--------------:|:---------------:|:----------------:|:-----:|:--------:|:--------------:|:---------------:|:---------------:|:----------:|
+| **Cash (Us)** | 🟢 8 | 🟡 6 | 🟢 9 | 🟡 7 | 🟡 7 | 🟢 10 | 🟢 10 | 🟢 10 | 🟢 10 | 🟡 5* | 🟡 6 | 🟡 6 |
+| **GCash** | 🔴 0 | 🔴 0 | 🟢 10 | 🔴 0 | 🔴 0 | 🔴 0 | 🟢 9 | 🟢 9 | 🔴 0 | 🟢 9 | 🔴 1 | 🟢 9 |
+| **Maya** | 🔴 0 | 🔴 0 | 🟢 10 | 🔴 0 | 🔴 0 | 🟠 3 | 🟢 9 | 🟢 9 | 🔴 0 | 🟢 8 | 🔴 1 | 🟢 9 |
+| **M-Pesa** | 🔴 0 | 🔴 1 | 🔴 0 | 🔴 0 | 🟢 10 | 🔴 0 | 🟢 9 | 🟢 8 | 🔴 0 | 🟢 10 | 🔴 1 | 🟢 9 |
+| **Wise** | 🟡 7 | 🟢 10 | 🟢 8 | 🟢 9 | 🟡 7 | 🔴 1 | 🟡 5 | 🟢 8 | 🔴 0 | 🟠 3 | 🟢 10 | 🟢 10 |
+| **Remitly** | 🟡 7 | 🟢 9 | 🟢 9 | 🟢 9 | 🟢 8 | 🔴 0 | 🟡 7 | 🟡 6 | 🔴 0 | 🟠 2 | 🟢 9 | 🟢 9 |
+| **Western Union** | 🟢 9 | 🟢 10 | 🟢 9 | 🟢 9 | 🟢 10 | 🔴 0 | 🟡 6 | 🔴 2 | 🟢 8 | 🟠 2 | 🟢 10 | 🟢 10 |
+| **WorldRemit** | 🟡 6 | 🟢 9 | 🟢 8 | 🟢 8 | 🟢 9 | 🔴 0 | 🟡 6 | 🟡 5 | 🔴 0 | 🟠 2 | 🟢 9 | 🟢 9 |
+| **MoneyGram** | 🟢 8 | 🟢 9 | 🟢 8 | 🟢 8 | 🟢 9 | 🟠 3 | 🟡 6 | 🟠 3 | 🟡 7 | 🟠 2 | 🟢 10 | 🟢 10 |
+| **Sendwave** | 🔴 1 | 🟢 8 | 🔴 0 | 🔴 0 | 🟢 9 | 🔴 0 | 🟢 9 | 🟢 9 | 🔴 0 | 🟠 4 | 🟠 4 | 🟢 8 |
+| **Chipper Cash** | 🔴 0 | 🟡 5 | 🔴 0 | 🔴 0 | 🟢 9 | 🟠 3 | 🟢 9 | 🟢 8 | 🔴 0 | 🟡 7 | 🟠 3 | 🟡 7 |
+| **Strike** | 🔴 1 | 🟢 9 | 🔴 1 | 🔴 1 | 🟠 3 | 🟢 10 | 🟢 10 | 🟢 10 | 🔴 0 | 🟠 4 | 🟠 4 | 🟡 7 |
+| **Circle (USDC)** | 🟠 3 | 🟢 9 | 🟠 2 | 🟠 2 | 🟠 2 | 🟢 10 | 🟢 10 | 🟢 10 | 🔴 0 | 🟠 3 | 🟡 6 | 🟢 10 |
+| **Coinbase** | 🟠 2 | 🟢 10 | 🟠 2 | 🟠 2 | 🟠 2 | 🟢 10 | 🟢 9 | 🟡 7 | 🔴 0 | 🟡 5 | 🟡 7 | 🟢 9 |
+| **Paytm/UPI** | 🔴 0 | 🔴 0 | 🔴 0 | 🟢 10 | 🔴 0 | 🔴 0 | 🟢 10 | 🟢 10 | 🔴 0 | 🟢 10 | 🔴 0 | 🟢 9 |
+
+*\* Cash network effects are low today but designed to grow virally*
+
+### Capability Definitions
+
+| Capability | What It Measures (0-10) |
+|------------|------------------------|
+| **GCC Cash-In** | Ability to collect money from users in UAE, Saudi, Oman, Kuwait, Qatar, Bahrain |
+| **US/EU Cash-In** | Ability to collect money from users in US, UK, Europe |
+| **PH Cash-Out** | Ability to deliver to GCash, Maya, banks, cash pickup in Philippines |
+| **India Cash-Out** | Ability to deliver via UPI, Paytm, bank transfer in India |
+| **Africa Cash-Out** | Ability to deliver via M-Pesa, Airtel Money, banks in Kenya, Nigeria, etc. |
+| **Stablecoin Rails** | Use of USDC/USDT/crypto for settlement (not user-facing, backend) |
+| **Speed** | Real-time or near-instant delivery (10 = seconds, 5 = hours, 0 = days) |
+| **Low Fees** | Total cost to user including FX (10 = <1%, 5 = 2-3%, 0 = >5%) |
+| **No-App Receive** | Recipient can receive without downloading app or full KYC |
+| **Network Effects** | Both sides benefit from same platform, viral growth incentive |
+| **Global Coverage** | Number of send/receive corridors supported |
+| **Compliance** | Regulatory strength, licensing, AML/KYC infrastructure |
+
+### Visual Heatmap (Numeric Scores)
+
+```
+                    GCC   US/EU  PH     India  Africa Stable Speed  Fees   NoApp  Network Global Comply
+                    CashIn CashIn CashOut CashOut CashOut Rails        Low    Recv   Effect  Cover
+─────────────────────────────────────────────────────────────────────────────────────────────────────────
+Cash (Us)           ███8   ██6    ███9   ██7    ██7    ████10 ████10 ████10 ████10 ██5    ██6    ██6
+GCash               ░░0    ░░0    ████10 ░░0    ░░0    ░░0    ███9   ███9   ░░0    ███9   ░1     ███9
+Maya                ░░0    ░░0    ████10 ░░0    ░░0    █3     ███9   ███9   ░░0    ███8   ░1     ███9
+M-Pesa              ░░0    ░1     ░░0    ░░0    ████10 ░░0    ███9   ███8   ░░0    ████10 ░1     ███9
+Wise                ██7    ████10 ███8   ███9   ██7    ░1     ██5    ███8   ░░0    █3     ████10 ████10
+Remitly             ██7    ███9   ███9   ███9   ███8   ░░0    ██7    ██6    ░░0    █2     ███9   ███9
+Western Union       ███9   ████10 ███9   ███9   ████10 ░░0    ██6    ░2     ███8   █2     ████10 ████10
+WorldRemit          ██6    ███9   ███8   ███8   ███9   ░░0    ██6    ██5    ░░0    █2     ███9   ███9
+MoneyGram           ███8   ███9   ███8   ███8   ███9   █3     ██6    █3     ██7    █2     ████10 ████10
+Sendwave            ░1     ███8   ░░0    ░░0    ███9   ░░0    ███9   ███9   ░░0    █4     █4     ███8
+Chipper Cash        ░░0    ██5    ░░0    ░░0    ███9   █3     ███9   ███8   ░░0    ██7    █3     ██7
+Strike              ░1     ███9   ░1     ░1     █3     ████10 ████10 ████10 ░░0    █4     █4     ██7
+Circle              █3     ███9   █2     █2     █2     ████10 ████10 ████10 ░░0    █3     ██6    ████10
+Coinbase            █2     ████10 █2     █2     █2     ████10 ███9   ██7    ░░0    ██5    ██7    ███9
+Paytm/UPI           ░░0    ░░0    ░░0    ████10 ░░0    ░░0    ████10 ████10 ░░0    ████10 ░░0    ███9
+─────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Legend: ░ = 0-1 | █ = 2-4 | ██ = 5-7 | ███ = 8-9 | ████ = 10
+```
+
+### Key Insights from the Matrix
+
+#### Where Cash Wins (Our Advantages)
+
+| Capability | Our Score | Best Competitor | Gap |
+|------------|-----------|-----------------|-----|
+| **Stablecoin Rails** | 10 | Strike/Circle (10) | Tied, but we have cash-out |
+| **Speed** | 10 | Strike (10), UPI (10) | Tied |
+| **Low Fees** | 10 | Strike (10), GCash (9) | We match Strike, beat others |
+| **No-App Receive** | 10 | Western Union (8) | +2 (and we're cheaper) |
+| **GCC + Stablecoin** | Unique | None | No one else combines these |
+
+#### Where Cash is Weak (Must Improve)
+
+| Capability | Our Score | Target | How to Improve |
+|------------|-----------|--------|----------------|
+| **Network Effects** | 5 | 8+ | Viral referrals, both-sided incentives |
+| **Global Coverage** | 6 | 8+ | Add corridors (India, Pakistan, Bangladesh) |
+| **Compliance** | 6 | 8+ | Obtain GCC licenses, strengthen AML |
+| **US/EU Cash-In** | 6 | 8+ | Expand beyond GCC focus (Phase 2) |
+
+#### Competitor Blind Spots (Opportunities)
+
+| Competitor | Critical Weakness | Our Opportunity |
+|------------|-------------------|-----------------|
+| **GCash/Maya** | Zero GCC cash-in (0) | They can't send FROM where workers are |
+| **Wise** | Slow speed (5), no stablecoin (1) | We're 10x faster |
+| **Western Union** | High fees (2) | We're 80% cheaper |
+| **Strike** | No cash-out (1-3) | We bridge crypto to fiat |
+| **Circle** | No consumer app, no cash-out (2) | We're B2C with full rails |
+| **M-Pesa/Paytm** | Single country (0-1 outside home) | We're cross-border |
+
+#### Strategic Positioning
+
+```mermaid
+quadrantChart
+    title Capability Positioning (GCC Remittance)
+    x-axis Low Cost Structure --> High Cost Structure
+    y-axis Weak GCC Presence --> Strong GCC Presence
+    quadrant-1 "Premium Legacy"
+    quadrant-2 "Target Zone"
+    quadrant-3 "Domestic Only"
+    quadrant-4 "Expensive Legacy"
+
+    Cash: [0.15, 0.80]
+    Western Union: [0.85, 0.90]
+    MoneyGram: [0.75, 0.80]
+    Wise: [0.30, 0.70]
+    Remitly: [0.45, 0.70]
+    GCash: [0.10, 0.05]
+    Maya: [0.10, 0.05]
+    Strike: [0.10, 0.10]
+    Circle: [0.10, 0.25]
+```
+
+**Our position**: Low cost + Strong GCC presence = Unique quadrant
+
+---
+
 ## Barrier 1: No GCC Presence
 
 GCash cannot accept money from a worker in Dubai because they have:
