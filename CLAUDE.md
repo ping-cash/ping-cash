@@ -85,6 +85,8 @@ sociable-cash/
 │   ├── NFR.md           # Non-functional requirements & design patterns
 │   ├── BUSINESS.md      # Competitors, revenue model, fee structure
 │   ├── CASHFLOW.md      # Cash-in and cash-out options by country
+│   ├── COMPETITORS.md   # GCash/Maya comparison, why we're different
+│   ├── STRATEGY.md      # Competitive moat, defensibility, risks
 │   ├── DATABASE.md      # Schema documentation
 │   └── API.md           # REST API specification
 ├── scripts/
@@ -170,6 +172,8 @@ Token for pushing: `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`
 - [x] Documentation with Mermaid diagrams
 - [x] Business model defined (BUSINESS.md)
 - [x] Cash-in/Cash-out options documented (CASHFLOW.md)
+- [x] Competitor comparison vs GCash/Maya (COMPETITORS.md)
+- [x] Competitive strategy & moat analysis (STRATEGY.md)
 - [ ] Auth service implementation
 - [ ] User service implementation
 - [ ] Wallet service implementation
@@ -208,6 +212,10 @@ Token for pushing: `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`
 - Global: Wise, Remitly, Western Union, WorldRemit
 - Africa: Chipper Cash, Sendwave, Lemfi, Eversend
 - Crypto: Strike, Coinbase, Circle
+- Domestic e-wallets (NOT competitors): GCash, Maya, M-Pesa (we cash OUT to these)
+
+See `docs/COMPETITORS.md` for detailed comparison with GCash/Maya.
+See `docs/STRATEGY.md` for moat analysis and why they can't easily replicate us.
 
 ## Technical Notes
 
