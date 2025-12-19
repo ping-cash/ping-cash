@@ -87,6 +87,7 @@ sociable-cash/
 │   ├── CASHFLOW.md      # Cash-in and cash-out options by country
 │   ├── COMPETITORS.md   # GCash/Maya comparison, why we're different
 │   ├── STRATEGY.md      # Competitive moat, defensibility, risks
+│   ├── FLOWS.md         # User journeys, sequence diagrams, routing logic
 │   ├── DATABASE.md      # Schema documentation
 │   └── API.md           # REST API specification
 ├── scripts/
@@ -174,6 +175,7 @@ Token for pushing: `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`
 - [x] Cash-in/Cash-out options documented (CASHFLOW.md)
 - [x] Competitor comparison vs GCash/Maya (COMPETITORS.md)
 - [x] Competitive strategy & moat analysis (STRATEGY.md)
+- [x] User journey flows & sequence diagrams (FLOWS.md)
 - [ ] Auth service implementation
 - [ ] User service implementation
 - [ ] Wallet service implementation
