@@ -10,6 +10,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "turbo dev",
+    "dev:services": "turbo dev --filter='./services/*'",
+    "dev:mobile": "pnpm --filter @cash/mobile dev",
+    "dev:mobile:tunnel": "pnpm --filter @cash/mobile tunnel",
     "build": "turbo build",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e",
@@ -22,6 +25,8 @@
     "db:generate": "turbo db:generate",
     "db:migrate": "turbo db:migrate",
     "db:push": "turbo db:push",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
     "docker:build": "turbo docker:build",
     "docker:push": "turbo docker:push",
     "prepare": "husky"
@@ -50,5 +55,8 @@
     "*.{json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "^4.0.1"
   }
 }

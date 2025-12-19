@@ -14,7 +14,7 @@ services:
       POSTGRES_PASSWORD: cash
       POSTGRES_DB: cash
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Using 5433 to avoid SSH tunnel conflict
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
