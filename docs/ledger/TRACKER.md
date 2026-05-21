@@ -39,15 +39,14 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 ## Blockers (External)
 
+All external service accounts are provisioned (2026-05-21). Deployment target is the existing OpenOva Sovereign at `openova-io/openova-private` — no separate cluster to provision.
+
 | What's Blocked | Who's Blocking | ETA | Mitigation |
 |---|---|---|---|
-| Privy MPC integration | Privy account creation (founder) | — | Manual signup at privy.io |
-| TransFi off-ramp | TransFi sandbox provisioning (founder) | — | Email TransFi sales |
-| Twilio Verify | Twilio account + Verify service (founder) | — | Manual signup at twilio.com |
-| WhatsApp Business API | Meta Business verification (founder) | — | Apply via Meta Business Suite |
-| Persona KYC | Persona account (founder) | — | Manual signup at withpersona.com |
-| Kubernetes cluster | Civo / Vultr account (founder) | — | Manual signup |
-| Domain registration | `ping.cash` purchase (founder) | — | Buy at Namecheap / Spaceship |
+| OpenBao secret paths for Ping (`ping/privy/*`, `ping/transfi/*`, etc.) | Founder (Sovereign-side) | Before first deploy | Founder populates paths; Ping declares ExternalSecret CRDs |
+| Domain registration | `ping.cash` purchase (founder) | Before public launch | Buy at Namecheap / Spaceship; DNS at PowerDNS on Sovereign |
+
+(All other external services already provisioned.)
 
 ---
 

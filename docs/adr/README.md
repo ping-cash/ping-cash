@@ -42,6 +42,7 @@ What did we reject, and why?
 | [0003](0003-cap-database-split.md) | Polyglot persistence: PostgreSQL (CP) + MongoDB (AP) + Redis (cache) | Accepted | 2026-05-21 |
 | [0004](0004-privy-mpc-wallets.md) | Privy MPC for embedded wallets | Accepted | 2026-05-21 |
 | [0005](0005-transfi-primary-offramp.md) | TransFi as primary off-ramp provider | Accepted | 2026-05-21 |
+| [0006](0006-deployment-via-openova-sovereign.md) | Deployment via OpenOva Sovereign (openova-private) | Accepted | 2026-05-21 |
 
 ---
 

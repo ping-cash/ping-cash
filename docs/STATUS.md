@@ -83,31 +83,47 @@
 
 ## Infrastructure
 
-| Layer | Status |
+Per [ADR 0006](adr/0006-deployment-via-openova-sovereign.md), Ping deploys to the existing OpenOva Sovereign at `openova-io/openova-private`. We don't operate any of the infrastructure below — the Sovereign provides it:
+
+| Layer | Status (provided by Sovereign) |
 |---|---|
-| Kubernetes cluster (Civo/Vultr) | 🔴 NOT PROVISIONED |
-| Istio service mesh | 🔴 NOT INSTALLED |
-| Helm charts | 🔴 NOT WRITTEN |
-| Managed PostgreSQL | 🔴 NOT PROVISIONED |
-| Managed MongoDB | 🔴 NOT PROVISIONED |
-| Managed Redis | 🔴 NOT PROVISIONED |
-| Redpanda cluster | 🔴 NOT PROVISIONED |
-| Observability stack (Prometheus/Grafana/Loki/Tempo) | 🔴 NOT INSTALLED |
+| Kubernetes cluster | ✅ Existing on `openova-private` |
+| Istio service mesh | ✅ Existing |
+| PostgreSQL (CNPG) | ✅ Existing |
+| MongoDB (replica set) | ✅ Existing |
+| Redis (Sentinel) | ✅ Existing |
+| Redpanda (3 brokers) | ✅ Existing |
+| Observability (Prometheus/Grafana/Loki/Tempo/Kiali) | ✅ Existing |
+| OpenBao + External Secrets Operator | ✅ Existing |
+| Harbor container registry (proxy-cached ghcr.io) | ✅ Existing |
+| PowerDNS + cert-manager + external-dns | ✅ Existing |
+
+**Our responsibility (status: 🔴 NOT WRITTEN):**
+
+| Item | Status |
+|---|---|
+| `platform/<service>/` Helm charts (one per microservice) | 🔴 NOT WRITTEN |
+| `products/bp-ping/blueprint.yaml` (Blueprint manifest) | 🔴 NOT WRITTEN |
+| `.github/workflows/build.yml` (matrix build + Blueprint publish + Sovereign SHA bump) | 🟡 Stub `ci.yml` exists; needs full pipeline |
+| `ExternalSecret` resources for Privy/TransFi/Twilio/WhatsApp/Persona | 🔴 NOT WRITTEN |
+| OpenBao secret paths populated (founder-side on Sovereign) | 🔴 Founder action needed |
 
 ---
 
 ## External Services
 
+All external service accounts confirmed provisioned by founder (2026-05-21). Real clients wired from day one. Credentials live in OpenBao on `openova-private`; Ping pods consume via ESO-mounted Secrets.
+
 | Service | Status |
 |---|---|
-| Privy (embedded wallets) | 🔴 Account not created |
-| TransFi (off-ramp) | 🔴 Account not created |
-| Twilio (SMS/OTP) | 🔴 Account not created |
-| WhatsApp Business API | 🔴 Not provisioned |
-| Persona (KYC) | 🔴 Not provisioned |
-| Doppler/Vault (secrets) | 🔴 Not provisioned |
-| Solana RPC provider | 🔴 Not provisioned |
-| Stripe / Checkout.com (cash-in GCC) | 🔴 Not provisioned |
+| Privy (embedded wallets) | ✅ Provisioned |
+| TransFi (off-ramp) | ✅ Provisioned |
+| Twilio (SMS/OTP) | ✅ Provisioned |
+| WhatsApp Business API | ✅ Provisioned |
+| Persona (KYC) | ✅ Provisioned |
+| OpenBao (secrets, on Sovereign) | ✅ Existing |
+| Solana RPC provider | ✅ Provisioned |
+| Stripe / Checkout.com (cash-in GCC) | ✅ Provisioned |
 
 ---
 

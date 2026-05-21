@@ -23,7 +23,13 @@ Generic engineering principles live in user-global [`~/.claude/CLAUDE.md`](https
 
 ## Repo Kind
 
-Standalone consumer fintech (not part of the OpenOva platform hierarchy — see user-global §0). Self-operated end-to-end: Kubernetes (Civo/Vultr) → microservices → mobile app + web claim.
+**Product repo (per user-global §0.C).** Ships Blueprints (`bp-ping:<semver>`) to the OpenOva Sovereign at [`openova-io/openova-private`](https://github.com/openova-io/openova-private). We do NOT operate our own K8s cluster, Istio mesh, or observability stack — the Sovereign provides them. See [ADR 0006](docs/adr/0006-deployment-via-openova-sovereign.md).
+
+**Cardinal facts:**
+- Code → CI build → `ghcr.io/ping-cash/<service>:<sha>` → Blueprint version bump PR against `openova-io/openova-private` → Flux reconciles
+- No local builds ship anywhere; CI is the only build path (per user-global §4.3)
+- All deployment goes through `openova-private`; we do NOT deploy directly anywhere else
+- Repo can be **temporarily flipped to public** for unlimited GitHub Actions iOS builds (`gh repo edit --visibility public`); secrets are in OpenBao on the Sovereign, not in the repo, so visibility toggling is safe
 
 ## Sub-Agent Cap
 

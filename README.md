@@ -99,6 +99,7 @@ ping-cash/
 - [0003](docs/adr/0003-cap-database-split.md) — Polyglot persistence (PostgreSQL/MongoDB/Redis)
 - [0004](docs/adr/0004-privy-mpc-wallets.md) — Privy MPC for embedded wallets
 - [0005](docs/adr/0005-transfi-primary-offramp.md) — TransFi as primary off-ramp provider
+- [0006](docs/adr/0006-deployment-via-openova-sovereign.md) — Deployment via OpenOva Sovereign (openova-private)
 - [ADR index](docs/adr/README.md)
 
 ### 🟢 Live state ([ledger/](docs/ledger/))

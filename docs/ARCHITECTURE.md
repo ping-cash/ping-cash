@@ -1539,146 +1539,133 @@ flowchart TB
 
 > **Source:** previously docs/NFR.md § "Kubernetes Infrastructure" + docs/ARCHITECTURE.md § "Infrastructure" (merged here on 2026-05-21).
 
-### Cluster Architecture
+Ping is a **product repo** that ships **Blueprints** (`bp-<name>:<semver>` OCI artifacts) onto the existing **OpenOva Sovereign** instance at [openova-io/openova-private](https://github.com/openova-io/openova-private). We do NOT operate our own Kubernetes cluster, our own Istio mesh, or our own observability stack — those are provided by the Sovereign. See [ADR 0006](adr/0006-deployment-via-openova-sovereign.md).
+
+### Deployment Topology
 
 ```mermaid
-flowchart TB
-    subgraph K8s["☸️ KUBERNETES CLUSTER"]
-        subgraph Ingress["ISTIO INGRESS"]
-            IstioGW[Istio Gateway]
-            CertMgr[Cert-Manager]
-            ExtDNS[External DNS]
-        end
-
-        subgraph Mesh["ISTIO SERVICE MESH"]
-            mTLS[Automatic mTLS]
-            Split[Traffic splitting]
-            Metrics[Kiali / Jaeger / Prom]
-        end
-
-        subgraph Apps["APPLICATION SERVICES"]
-            Auth[auth] & User[user] & Transfer[transfer] & Wallet[wallet]
-            Claim[claim] & Offramp[offramp] & Notify[notify] & FXSvc[fx]
-        end
-
-        subgraph Data["DATA SERVICES"]
-            PG[(PostgreSQL)]
-            Mongo[(MongoDB)]
-            Redis[(Redis)]
-            RP[(Redpanda)]
-        end
-
-        Ingress --> Mesh --> Apps --> Data
+flowchart LR
+    subgraph Ping["ping-cash/ping-cash (THIS REPO)"]
+        Src[Source code]
+        CI[GitHub Actions CI]
+        Img[ghcr.io/ping-cash/...:SHA]
+        BP[Blueprint bp-ping:semver]
     end
 
-    style K8s fill:#326ce5,color:#fff
-    style Mesh fill:#466bb0,color:#fff
-    style Data fill:#7c3aed,color:#fff
+    subgraph Priv["openova-io/openova-private (Sovereign)"]
+        Flux[Flux GitOps]
+        Cluster[K8s Cluster + Istio + Observability]
+    end
+
+    Src -->|push| CI
+    CI -->|matrix build| Img
+    CI -->|publish| BP
+    BP -->|version bump PR| Priv
+    Flux -->|reconcile| Cluster
+
+    style Ping fill:#10b981,color:#fff
+    style Priv fill:#003459,color:#fff
 ```
 
-### Provider Choice
+The Sovereign provides:
+- Kubernetes cluster (vCluster-isolated per tenant)
+- Istio service mesh with automatic mTLS
+- PostgreSQL (CNPG operator), MongoDB (replica set), Redis (Sentinel), Redpanda (3 brokers)
+- Observability: Prometheus + Grafana + Loki + Tempo + Kiali
+- Secrets management: OpenBao + External Secrets Operator
+- Container registry: Harbor (proxy-cached ghcr.io)
+- DNS + cert-manager + external-dns
+- PowerDNS authoritative + DNSSEC + lua-records for geo-failover
 
-| Provider | Monthly Cost (MVP) | Pros | Cons |
-|---|---|---|---|
-| **Civo** | $20 | Cheapest, K3s (fast), dev-friendly | Smaller ecosystem |
-| Vultr | $30 | Best resources/price, global | Newer K8s offering |
-| Linode | $34 | Akamai backing, reliable | Higher cost |
-| DigitalOcean | $36 | Great docs, easy | Most expensive |
+Ping's responsibility is to:
+1. Build container images in CI (one per service)
+2. Publish a versioned Blueprint that declares: which images, which Helm charts to compose, what config values to surface to the Sovereign
+3. Open a SHA-bump PR against `openova-io/openova-private` when a new Blueprint version ships
 
-**Plan:** Start with Civo ($20/mo), migrate to Vultr for production.
+The Sovereign's Flux picks up the PR merge and deploys.
 
-### Resource Sizing
+### What Ping Repo Owns vs Doesn't
 
-#### MVP (~$150/month)
+| Concern | Owner |
+|---|---|
+| Application code (services, mobile app) | **Ping repo** |
+| Service Helm charts (under `platform/<chart>/`) | **Ping repo** |
+| Blueprint manifests (`bp-ping/blueprint.yaml`) | **Ping repo** |
+| Container build (CI matrix per service) | **Ping repo** |
+| Image registry (ghcr.io) | Shared (GitHub) |
+| Kubernetes cluster lifecycle | OpenOva Sovereign |
+| Istio mesh + observability | OpenOva Sovereign |
+| DNS records (`*.ping.cash`) | OpenOva Sovereign (PowerDNS + Dynadot for apex) |
+| Secrets (Privy, TransFi, Twilio, WhatsApp, Persona keys) | OpenBao on the Sovereign; ESO mounts |
+| Backups, DR, multi-region failover | OpenOva Sovereign |
+
+### CI/CD Pipeline
 
 ```yaml
-nodes:
-  - type: small  # 2 vCPU, 4GB RAM
-    count: 3
-
-resources:
-  services:
-    auth: { cpu: 100m, memory: 128Mi, replicas: 1 }
-    user: { cpu: 100m, memory: 128Mi, replicas: 1 }
-    transfer: { cpu: 200m, memory: 256Mi, replicas: 1 }
-    wallet: { cpu: 100m, memory: 128Mi, replicas: 1 }
-    claim: { cpu: 100m, memory: 128Mi, replicas: 1 }
-    offramp: { cpu: 100m, memory: 128Mi, replicas: 1 }
-    notify: { cpu: 100m, memory: 128Mi, replicas: 1 }
-    fx: { cpu: 50m, memory: 64Mi, replicas: 1 }
-  data:
-    postgresql: { cpu: 500m, memory: 1Gi }
-    mongodb: { cpu: 500m, memory: 1Gi }
-    redis: { cpu: 100m, memory: 256Mi }
-    redpanda: { cpu: 500m, memory: 1Gi }
+# .github/workflows/build.yml (target shape)
+on:
+  push:
+    branches: [main]
+jobs:
+  matrix-build:
+    strategy:
+      matrix:
+        service: [auth, user, kyc, transfer, wallet, fx, ledger, claim, offramp, notify, mobile, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/build-push-action@v6
+        with:
+          tags: ghcr.io/ping-cash/${{ matrix.service }}:${{ github.sha }}
+  bump-blueprint:
+    needs: matrix-build
+    steps:
+      - run: ./scripts/bump-blueprint.sh ${{ github.sha }}
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          repository: openova-io/openova-private
+          title: "bump(ping): SHA ${{ github.sha }}"
 ```
 
-#### Growth (~$500/month, 1K daily transfers)
+### Public-Repo Toggle for iOS Builds
 
-```yaml
-nodes:
-  - type: medium  # 4 vCPU, 8GB RAM
-    count: 3
-resources:
-  services:
-    auth: { cpu: 200m, memory: 256Mi, replicas: 2 }
-    transfer: { cpu: 500m, memory: 512Mi, replicas: 2 }
-    # ... scaled appropriately
-  data:
-    postgresql: { cpu: 1, memory: 2Gi, replicas: 2 }
-    mongodb: { cpu: 1, memory: 2Gi, replicas: 3 }
-    redis: { cpu: 500m, memory: 1Gi, replicas: 3 }
-    redpanda: { cpu: 1, memory: 2Gi, replicas: 3 }
-```
+GitHub Actions gives **unlimited minutes to public repos** but caps free private-repo minutes. Expo iOS builds with full simulator boot take ~20 min each. To unblock unlimited iOS CI:
 
-#### Scale (~$3,000/month, 100K daily transfers)
+1. Temporarily flip the repo public via `gh repo edit --visibility public`
+2. Run the build batch
+3. Flip back to private if desired
 
-```yaml
-nodes:
-  - type: large  # 8 vCPU, 16GB RAM
-    count: 6
-  - type: medium  # spot for workers
-    count: 4
-    spot: true
+See [RUNBOOKS.md § iOS Build via Public Toggle](RUNBOOKS.md#ios-build-via-public-toggle).
 
-horizontalPodAutoscaler:
-  transfer-service:
-    minReplicas: 3
-    maxReplicas: 10
-    targetCPU: 70%
-```
-
-### Helm Chart Structure
+### Helm Chart Structure (per `platform/<chart>/` in this repo)
 
 ```
-helm/
-├── ping-platform/             # Umbrella chart
+platform/
+├── auth/               # Helm chart for auth-service
 │   ├── Chart.yaml
 │   ├── values.yaml
-│   └── charts/
-│       ├── auth-service/
-│       ├── user-service/
-│       ├── transfer-service/
-│       ├── wallet-service/
-│       ├── claim-service/
-│       ├── offramp-service/
-│       ├── notify-service/
-│       └── fx-service/
-├── ping-data/
-│   ├── postgresql/
-│   ├── mongodb/
-│   ├── redis/
-│   └── redpanda/
-└── ping-observability/
-    ├── prometheus/
-    ├── grafana/
-    ├── loki/
-    └── tempo/
+│   ├── DESIGN.md
+│   └── templates/
+├── user/
+├── kyc/
+├── transfer/
+├── wallet/
+├── fx/
+├── ledger/
+├── claim/
+├── offramp/
+└── notify/
+
+products/
+└── bp-ping/            # Blueprint that composes the above
+    ├── blueprint.yaml
+    └── README.md
 ```
+
+Charts are minimal: Deployment + Service + ConfigMap + a Kustomization overlay. No StatefulSets — databases come from the Sovereign's platform layer. No Istio CRDs declared in our charts — they're materialized by the Sovereign's mesh config.
 
 ### Secrets Management
 
-External Secrets Operator + Doppler/Vault:
+External Secrets Operator on the Sovereign reads from OpenBao. We declare what we need; the Sovereign provides the binding.
 
 ```yaml
 apiVersion: external-secrets.io/v1beta1
@@ -1687,24 +1674,26 @@ metadata:
   name: ping-api-secrets
 spec:
   secretStoreRef:
-    name: doppler
+    name: openbao-cluster        # provided by Sovereign
     kind: ClusterSecretStore
   target:
     name: ping-api-secrets
   data:
     - secretKey: PRIVY_APP_SECRET
-      remoteRef: { key: PRIVY_APP_SECRET }
+      remoteRef: { key: ping/privy/app_secret }
     - secretKey: DATABASE_URL
-      remoteRef: { key: DATABASE_URL }
+      remoteRef: { key: ping/postgres/dsn }
+    - secretKey: TWILIO_AUTH_TOKEN
+      remoteRef: { key: ping/twilio/auth_token }
+    - secretKey: TRANSFI_API_KEY
+      remoteRef: { key: ping/transfi/api_key }
+    - secretKey: WHATSAPP_ACCESS_TOKEN
+      remoteRef: { key: ping/whatsapp/access_token }
+    - secretKey: SOLANA_RPC_URL
+      remoteRef: { key: ping/solana/rpc_url }
 ```
 
-### Cost Optimization
-
-1. **Spot/Preemptible Nodes** — stateless workers (50% savings)
-2. **Reserved Capacity** — 1-year commit on databases (30% savings)
-3. **Right-sizing** — start small, scale on actual usage
-4. **Managed vs Self-hosted** — start managed, self-host at scale
-5. **CDN Caching** — reduce API calls
+The Sovereign operator (founder) provisions these paths in OpenBao before the first deploy.
 
 ---
 
