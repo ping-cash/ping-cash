@@ -2,7 +2,7 @@
 
 ## Overview
 
-Cash uses a polyglot persistence strategy, selecting databases based on CAP theorem requirements:
+Ping uses a polyglot persistence strategy, selecting databases based on CAP theorem requirements:
 
 ```mermaid
 flowchart LR
@@ -766,13 +766,13 @@ flowchart LR
 
 ```bash
 # Create migration
-pnpm --filter @cash/transfer-service db:migrate:create add_kyc_tier
+pnpm --filter @ping/transfer-service db:migrate:create add_kyc_tier
 
 # Apply migrations
-pnpm --filter @cash/transfer-service db:migrate:deploy
+pnpm --filter @ping/transfer-service db:migrate:deploy
 
 # Generate client
-pnpm --filter @cash/transfer-service db:generate
+pnpm --filter @ping/transfer-service db:generate
 ```
 
 ### MongoDB Migrations

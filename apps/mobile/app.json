@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Cash",
+    "name": "Ping",
     "slug": "cash",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -38,7 +38,7 @@
       [
         "expo-contacts",
         {
-          "contactsPermission": "Allow Cash to access your contacts to send money easily."
+          "contactsPermission": "Allow Ping to access your contacts to send money easily."
         }
       ]
     ],

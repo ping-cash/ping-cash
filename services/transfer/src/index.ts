@@ -1,4 +1,4 @@
-import { loadConfig } from '@cash/config';
+import { loadConfig } from '@ping/config';
 import { buildApp } from './app';
 import { logger } from './utils/logger';
 import { connectKafka, disconnectKafka } from './events/kafka';

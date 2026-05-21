@@ -1,18 +1,18 @@
 {
-  "name": "cash",
+  "name": "ping",
   "version": "0.1.0",
   "private": true,
   "description": "The cheapest way to send money anywhere",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sociable-cloud/cash.git"
+    "url": "https://github.com/ping-cash/ping-cash.git"
   },
   "license": "UNLICENSED",
   "scripts": {
     "dev": "turbo dev",
     "dev:services": "turbo dev --filter='./services/*'",
-    "dev:mobile": "pnpm --filter @cash/mobile dev",
-    "dev:mobile:tunnel": "pnpm --filter @cash/mobile tunnel",
+    "dev:mobile": "pnpm --filter @ping/mobile dev",
+    "dev:mobile:tunnel": "pnpm --filter @ping/mobile tunnel",
     "build": "turbo build",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e",

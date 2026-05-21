@@ -36,7 +36,7 @@ flowchart LR
     style CASHOUT fill:#ccffcc
 ```
 
-**The key insight: Cash-IN is the hard part, not cash-OUT.**
+**The key insight: Ping-IN is the hard part, not cash-OUT.**
 
 - GCash/Maya have excellent cash-OUT (they ARE the destination)
 - GCash/Maya have ZERO cash-IN in GCC countries
@@ -51,7 +51,7 @@ flowchart LR
 
 | Vendor | GCC Cash-In | US/EU Cash-In | PH Cash-Out | India Cash-Out | Africa Cash-Out | Stablecoin Rails | Speed | Low Fees | No-App Receive | Network Effects | Global Coverage | Compliance |
 |--------|:-----------:|:-------------:|:-----------:|:--------------:|:---------------:|:----------------:|:-----:|:--------:|:--------------:|:---------------:|:---------------:|:----------:|
-| **Cash (Us)** | 🟢 8 | 🟡 6 | 🟢 9 | 🟡 7 | 🟡 7 | 🟢 10 | 🟢 10 | 🟢 10 | 🟢 10 | 🟡 5* | 🟡 6 | 🟡 6 |
+| **Ping (Us)** | 🟢 8 | 🟡 6 | 🟢 9 | 🟡 7 | 🟡 7 | 🟢 10 | 🟢 10 | 🟢 10 | 🟢 10 | 🟡 5* | 🟡 6 | 🟡 6 |
 | **GCash** | 🔴 0 | 🔴 0 | 🟢 10 | 🔴 0 | 🔴 0 | 🔴 0 | 🟢 9 | 🟢 9 | 🔴 0 | 🟢 9 | 🔴 1 | 🟢 9 |
 | **Maya** | 🔴 0 | 🔴 0 | 🟢 10 | 🔴 0 | 🔴 0 | 🟠 3 | 🟢 9 | 🟢 9 | 🔴 0 | 🟢 8 | 🔴 1 | 🟢 9 |
 | **M-Pesa** | 🔴 0 | 🔴 1 | 🔴 0 | 🔴 0 | 🟢 10 | 🔴 0 | 🟢 9 | 🟢 8 | 🔴 0 | 🟢 10 | 🔴 1 | 🟢 9 |
@@ -67,7 +67,7 @@ flowchart LR
 | **Coinbase** | 🟠 2 | 🟢 10 | 🟠 2 | 🟠 2 | 🟠 2 | 🟢 10 | 🟢 9 | 🟡 7 | 🔴 0 | 🟡 5 | 🟡 7 | 🟢 9 |
 | **Paytm/UPI** | 🔴 0 | 🔴 0 | 🔴 0 | 🟢 10 | 🔴 0 | 🔴 0 | 🟢 10 | 🟢 10 | 🔴 0 | 🟢 10 | 🔴 0 | 🟢 9 |
 
-*\* Cash network effects are low today but designed to grow virally*
+*\* Ping network effects are low today but designed to grow virally*
 
 ### Capability Definitions
 
@@ -92,7 +92,7 @@ flowchart LR
                     GCC   US/EU  PH     India  Africa Stable Speed  Fees   NoApp  Network Global Comply
                     CashIn CashIn CashOut CashOut CashOut Rails        Low    Recv   Effect  Cover
 ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-Cash (Us)           ███8   ██6    ███9   ██7    ██7    ████10 ████10 ████10 ████10 ██5    ██6    ██6
+Ping (Us)           ███8   ██6    ███9   ██7    ██7    ████10 ████10 ████10 ████10 ██5    ██6    ██6
 GCash               ░░0    ░░0    ████10 ░░0    ░░0    ░░0    ███9   ███9   ░░0    ███9   ░1     ███9
 Maya                ░░0    ░░0    ████10 ░░0    ░░0    █3     ███9   ███9   ░░0    ███8   ░1     ███9
 M-Pesa              ░░0    ░1     ░░0    ░░0    ████10 ░░0    ███9   ███8   ░░0    ████10 ░1     ███9
@@ -114,7 +114,7 @@ Legend: ░ = 0-1 | █ = 2-4 | ██ = 5-7 | ███ = 8-9 | ████ = 
 
 ### Key Insights from the Matrix
 
-#### Where Cash Wins (Our Advantages)
+#### Where Ping Wins (Our Advantages)
 
 | Capability | Our Score | Best Competitor | Gap |
 |------------|-----------|-----------------|-----|
@@ -124,7 +124,7 @@ Legend: ░ = 0-1 | █ = 2-4 | ██ = 5-7 | ███ = 8-9 | ████ = 
 | **No-App Receive** | 10 | Western Union (8) | +2 (and we're cheaper) |
 | **GCC + Stablecoin** | Unique | None | No one else combines these |
 
-#### Where Cash is Weak (Must Improve)
+#### Where Ping is Weak (Must Improve)
 
 | Capability | Our Score | Target | How to Improve |
 |------------|-----------|--------|----------------|
@@ -156,7 +156,7 @@ quadrantChart
     quadrant-3 "Domestic Only"
     quadrant-4 "Expensive Legacy"
 
-    Cash: [0.15, 0.80]
+    Ping: [0.15, 0.80]
     Western Union: [0.85, 0.90]
     MoneyGram: [0.75, 0.80]
     Wise: [0.30, 0.70]
@@ -275,7 +275,7 @@ Time: 2 seconds
 
 ---
 
-## How Our Cash-IN Works
+## How Our Ping-IN Works
 
 ### Our Payment Stack
 
@@ -304,7 +304,7 @@ flowchart TD
 
 ### What We Have vs What GCash Would Need
 
-| Requirement | Cash | GCash Would Need |
+| Requirement | Ping | GCash Would Need |
 |-------------|------|------------------|
 | UAE Stripe/Checkout account | ✅ Have | Apply, integrate (3-6 months) |
 | Saudi payment processor | ✅ Have | Apply, stricter approval (6-12 months) |
@@ -342,12 +342,12 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Worker downloads Cash] --> B[Sends via link - FREE]
+    A[Worker downloads Ping] --> B[Sends via link - FREE]
     B --> C[Family claims money]
     C --> D[Family sees: Download for FREE next time]
-    D --> E[Family downloads Cash]
+    D --> E[Family downloads Ping]
     E --> F[Family tells friends abroad]
-    F --> G[Friends download Cash]
+    F --> G[Friends download Ping]
     G --> H[More in-network transfers]
     H --> I[Everyone saves money]
     I --> A
@@ -427,7 +427,7 @@ Their advantage:
 - Maybe better funded
 
 Our response:
-- Network effects (both sides using Cash)
+- Network effects (both sides using Ping)
 - Brand recognition
 - Regulatory relationships
 - 12-18 month head start
@@ -512,7 +512,7 @@ Our response:
 
 > "GCash and Maya are fantastic products - for the Philippines. But they can't collect money in Dubai. They're not licensed there, have no payment processing there, and their bank rail costs would force 2-3% fees.
 >
-> We built Cash on stablecoin rails from day one. Our cost to move $200 is less than a penny. That lets us offer zero fees for in-network transfers - something GCash structurally cannot match without a complete rebuild.
+> We built Ping on stablecoin rails from day one. Our cost to move $200 is less than a penny. That lets us offer zero fees for in-network transfers - something GCash structurally cannot match without a complete rebuild.
 >
 > Could they eventually compete? Yes, in 2-3 years with $5-10M investment. But by then, we'll have the network effects, brand, and regulatory relationships that make catching up painful.
 >

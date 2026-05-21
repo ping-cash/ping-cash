@@ -1,4 +1,4 @@
-# Cash
+# Ping
 
 **The cheapest way to send money anywhere.**
 
@@ -16,7 +16,7 @@ Sending money across borders is expensive and slow:
 | Bank wire | $25-50 | 3-5 days |
 | PayPal | $6-10 (3-5%) | Instant |
 | Wise | $2-4 (1-2%) | Hours |
-| **Cash** | **$1-2 (<1%)** | **Seconds** |
+| **Ping** | **$1-2 (<1%)** | **Seconds** |
 
 > 300 million migrant workers send $700 billion home every year, losing **$40+ billion to fees**.
 
@@ -26,7 +26,7 @@ Sending money across borders is expensive and slow:
 
 Others have solved parts of this. We combine the best:
 
-| Feature | WorldRemit | Remitly | Chipper Cash | **Cash** |
+| Feature | WorldRemit | Remitly | Chipper Cash | **Ping** |
 |---------|------------|---------|--------------|----------|
 | No app to receive | ❌ | ❌ | ❌ | ✅ |
 | Stablecoin rails | ❌ | ❌ | ✅ | ✅ |
@@ -51,7 +51,7 @@ flowchart LR
         C --> D[Tap Send]
     end
 
-    subgraph Cash["⚡ Cash Platform"]
+    subgraph Ping["⚡ Ping Platform"]
         D --> E[Debit Wallet]
         E --> F[Create Claim Link]
         F --> G[Send WhatsApp]
@@ -64,7 +64,7 @@ flowchart LR
         J --> K[Money in GCash/Bank]
     end
 
-    style Cash fill:#10b981,color:#fff
+    style Ping fill:#10b981,color:#fff
 ```
 
 ### Detailed User Journey
@@ -74,7 +74,7 @@ sequenceDiagram
     autonumber
     participant S as Sender
     participant App as Cash App
-    participant API as Cash API
+    participant API as Ping API
     participant Chain as Blockchain
     participant WA as WhatsApp
     participant R as Recipient
@@ -153,7 +153,7 @@ flowchart TB
         GBR[🇬🇧 UK]
     end
 
-    subgraph Cash["⚡ CASH"]
+    subgraph Ping["⚡ PING"]
         Bridge((Stablecoin<br/>Bridge))
     end
 
@@ -351,7 +351,7 @@ flowchart LR
         OffRamp[TransFi<br/>Local Licenses]
     end
 
-    subgraph Cash["Cash Handles Crypto"]
+    subgraph Ping["Ping Handles Crypto"]
         Move[Move Stablecoins<br/>Between Wallets]
     end
 
@@ -362,7 +362,7 @@ flowchart LR
         OffRamp --> Out[Fiat Out]
     end
 
-    style Cash fill:#10b981,color:#fff
+    style Ping fill:#10b981,color:#fff
 ```
 
 We **never touch fiat directly**, minimizing regulatory burden.
@@ -382,7 +382,7 @@ We **never touch fiat directly**, minimizing regulatory burden.
 
 ```mermaid
 gantt
-    title Cash Platform Roadmap
+    title Ping Platform Roadmap
     dateFormat  YYYY-MM
     axisFormat  %b %Y
 
@@ -468,7 +468,7 @@ quadrantChart
     Wise: [0.4, 0.6]
     Remitly: [0.5, 0.7]
     Crypto Wallets: [0.2, 0.2]
-    Cash: [0.15, 0.85]
+    Ping: [0.15, 0.85]
 ```
 
 | Company | Strengths | Weaknesses | Our Advantage |
@@ -494,7 +494,7 @@ docker >= 24.0.0
 
 ```bash
 # Clone repository
-git clone https://github.com/sociable-cloud/cash.git
+git clone https://github.com/ping-cash/ping-cash.git
 cd cash
 
 # Install dependencies
@@ -535,4 +535,4 @@ Proprietary - All rights reserved.
 
 ---
 
-**Cash** - Because sending money shouldn't cost more than the message.
+**Ping** - Because sending money shouldn't cost more than the message.

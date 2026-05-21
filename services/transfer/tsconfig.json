@@ -1,5 +1,5 @@
 {
-  "extends": "@cash/config/typescript/node.json",
+  "extends": "@ping/config/typescript/node.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src"

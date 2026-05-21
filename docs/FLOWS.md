@@ -10,7 +10,7 @@ This document illustrates the sender and receiver journeys for different transfe
 
 ```mermaid
 flowchart TD
-    Start([Sender initiates transfer]) --> CheckRecipient{Recipient on Cash?}
+    Start([Sender initiates transfer]) --> CheckRecipient{Recipient on Ping?}
 
     CheckRecipient -->|Yes| FreeTransfer[FREE In-Network<br/>USDC to USDC]
 
@@ -96,7 +96,7 @@ sequenceDiagram
     autonumber
     participant S as Sender (Dubai)
     participant App as Cash App
-    participant CW as Cash Wallet (Solana)
+    participant CW as Ping Wallet (Solana)
     participant DEX as DEX (Jupiter/Uniswap)
     participant PH as PHPC (Polygon)
     participant CP as Coins.ph
@@ -153,7 +153,7 @@ sequenceDiagram
     autonumber
     participant S as Sender (Dubai)
     participant App as Cash App
-    participant CW as Cash Wallet (Solana)
+    participant CW as Ping Wallet (Solana)
     participant CP as Coins.ph
     participant R as Recipient (Philippines)
     participant GC as GCash
@@ -197,14 +197,14 @@ sequenceDiagram
 
 ## Journey 3: Claim Link - No App Receiver (TransFi, 1% fee)
 
-For recipients without Cash app or Coins.ph - fully app-less experience.
+For recipients without Ping app or Coins.ph - fully app-less experience.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant S as Sender (Dubai)
     participant App as Cash App
-    participant CW as Cash Wallet (Solana)
+    participant CW as Ping Wallet (Solana)
     participant TF as TransFi
     participant R as Recipient (Philippines)
     participant WA as WhatsApp
@@ -215,7 +215,7 @@ sequenceDiagram
 
     S->>App: Open app, enter phone +63917...
     S->>App: Enter amount: $200
-    App->>App: Recipient not on Cash or Coins.ph
+    App->>App: Recipient not on Ping or Coins.ph
     App->>App: Route: Claim link via TransFi (1% fee)
     S->>App: Confirm send
 
@@ -255,7 +255,7 @@ sequenceDiagram
 
 ## Journey 4: In-Network Transfer (FREE)
 
-Both sender and recipient have Cash app - zero fees.
+Both sender and recipient have Ping app - zero fees.
 
 ```mermaid
 sequenceDiagram
@@ -267,11 +267,11 @@ sequenceDiagram
     participant RApp as Recipient Cash App
     participant R as Recipient (Philippines)
 
-    Note over S,R: BOTH USERS HAVE CASH APP - FREE TRANSFER
+    Note over S,R: BOTH USERS HAVE PING APP - FREE TRANSFER
 
     S->>SApp: Open app, select recipient (contact)
-    SApp->>SApp: Detect: Recipient has Cash wallet
-    SApp->>S: FREE transfer - both on Cash!
+    SApp->>SApp: Detect: Recipient has Ping wallet
+    SApp->>S: FREE transfer - both on Ping!
     S->>SApp: Enter amount: $200
     S->>SApp: Confirm send
 
@@ -311,7 +311,7 @@ flowchart TD
     end
 
     subgraph Routing["SMART ROUTING"]
-        R1{Recipient has Cash?}
+        R1{Recipient has Ping?}
         R2{Recipient has Coins.ph?}
         R3{PHPC available?}
         R4[TransFi Fallback]
@@ -394,7 +394,7 @@ stateDiagram-v2
     Processing --> Success: Money sent!
     Success --> [*]
 
-    DownloadApp --> AppStore: Download Cash
+    DownloadApp --> AppStore: Download Ping
     AppStore --> CreateAccount: Sign up
     CreateAccount --> ReceiveFree: Future transfers FREE
 ```
@@ -524,7 +524,7 @@ flowchart LR
 ```mermaid
 flowchart TD
     subgraph Wave1["WAVE 1: Senders"]
-        W1A[Worker downloads Cash]
+        W1A[Worker downloads Ping]
         W1B[Sends via claim link]
     end
 
@@ -535,9 +535,9 @@ flowchart TD
     end
 
     subgraph Wave3["WAVE 3: Viral Growth"]
-        W3A[Family downloads Cash]
+        W3A[Family downloads Ping]
         W3B[Tells friends abroad]
-        W3C[Friends download Cash]
+        W3C[Friends download Ping]
     end
 
     subgraph Wave4["WAVE 4: Network Effect"]

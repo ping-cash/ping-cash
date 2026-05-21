@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { getConfig } from '@cash/config';
+import { getConfig } from '@ping/config';
 import { logger } from './logger';
 
 const config = getConfig();

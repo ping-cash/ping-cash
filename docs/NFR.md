@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document defines the technical excellence standards for Cash - a world-class, globally scalable remittance platform. We prioritize:
+This document defines the technical excellence standards for Ping - a world-class, globally scalable remittance platform. We prioritize:
 
 - **Scale-ready from day one** - Architecture that handles 1M+ daily transactions
 - **Cost-efficient bootstrap** - Start at ~$100/month, scale to enterprise
@@ -69,7 +69,7 @@ We use **Domain-Driven Design (DDD)** to identify bounded contexts:
 
 ```mermaid
 flowchart TB
-    subgraph Platform["CASH PLATFORM"]
+    subgraph Platform["PING PLATFORM"]
         subgraph Gateway["🚪 ISTIO SERVICE MESH"]
             GW[mTLS • Rate Limiting • JWT • Traffic Mgmt]
         end

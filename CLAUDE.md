@@ -1,19 +1,21 @@
-# Cash Project Memory
+# Ping Project Memory
 
 ## Project Overview
 
-**Cash** - The cheapest way to send money anywhere. A stablecoin-powered remittance platform targeting migrant workers in GCC countries sending money home.
+**Ping** - A worldwide peer-to-peer social money network. Send money to anyone — friends, family, colleagues, neighbors — instantly and for free between users, with minimal sub-1% fees only on cash-out. Initial go-to-market: migrant-worker corridors (GCC → Philippines, India, Bangladesh, Egypt, Kenya).
+
+**Brand:** Ping
+**Primary domain:** ping.cash
+**Repository:** https://github.com/ping-cash/ping-cash
 
 **Key Differentiators:**
-- **Zero fees in-network** - free transfers between Cash users
+- **Zero fees in-network** - free transfers between Ping users
 - No app needed to receive (claim via link)
 - Minimal cash-out fees (0.5-1%) vs 5-7% traditional
 - Instant delivery (seconds vs days)
 - Stablecoin rails (USDC on Solana)
 
 **Revenue Model:** Treasury yield on user balances + FX spread + minimal cash-out fees
-
-**Repository:** https://github.com/sociable-cloud/cash
 
 ## Tech Stack
 
@@ -66,13 +68,13 @@
 ## Project Structure
 
 ```
-sociable-cash/
+ping/
 ├── packages/
-│   ├── types/           # Shared TypeScript types (@cash/types)
-│   ├── config/          # Environment config & validation (@cash/config)
-│   └── utils/           # Shared utilities (@cash/utils)
+│   ├── types/           # Shared TypeScript types (@ping/types)
+│   ├── config/          # Environment config & validation (@ping/config)
+│   └── utils/           # Shared utilities (@ping/utils)
 ├── services/
-│   └── transfer/        # Transfer service (template) (@cash/transfer-service)
+│   └── transfer/        # Transfer service (template) (@ping/transfer-service)
 │       ├── src/
 │       │   ├── routes/
 │       │   ├── services/
@@ -159,10 +161,6 @@ pnpm dev
 | Twilio Verify | Phone OTP | https://www.twilio.com/docs/verify |
 | WhatsApp Business | Notifications | https://developers.facebook.com/docs/whatsapp |
 
-## GitHub Token
-
-Token for pushing: `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`
-
 ## Current Status
 
 - [x] Project scaffolding complete
@@ -188,7 +186,7 @@ Token for pushing: `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`
 ## Key Business Decisions
 
 ### Fee Structure
-- **Zero fees in-network** - transfers between Cash users are free
+- **Zero fees in-network** - transfers between Ping users are free
 - **Cash-in fees** - passed through from payment providers (Apple Pay 1.5-2.5%, Card 2-3%, Bank 0.5-1%, USDC direct FREE)
 - **Cash-out fees** - our revenue: Mobile wallet 0.5%, Bank 0.75%, Cash pickup 1%
 

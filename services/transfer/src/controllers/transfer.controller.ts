@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import type { CreateTransferRequest, Transfer, TransferSummary, PaginationParams } from '@cash/types';
+import type { CreateTransferRequest, Transfer, TransferSummary, PaginationParams } from '@ping/types';
 import { TransferService } from '../services/transfer.service';
 import { AppError } from '../utils/errors';
 

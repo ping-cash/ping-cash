@@ -28,7 +28,7 @@ export default function RootLayout() {
             },
           }}
         >
-          <Stack.Screen name="index" options={{ title: 'Cash', headerShown: false }} />
+          <Stack.Screen name="index" options={{ title: 'Ping', headerShown: false }} />
         </Stack>
       </SafeAreaProvider>
     </QueryClientProvider>

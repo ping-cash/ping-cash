@@ -1,6 +1,6 @@
 # Development Environment Setup
 
-This document covers the complete development environment setup for the Cash platform, including lessons learned and workarounds for common issues.
+This document covers the complete development environment setup for the Ping platform, including lessons learned and workarounds for common issues.
 
 ---
 

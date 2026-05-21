@@ -1,5 +1,5 @@
 {
-  "name": "@cash/transfer-service",
+  "name": "@ping/transfer-service",
   "version": "0.1.0",
   "private": true,
   "description": "Transfer orchestration service",
@@ -17,13 +17,13 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
-    "docker:build": "docker build -t cash/transfer-service .",
-    "docker:push": "docker push cash/transfer-service"
+    "docker:build": "docker build -t ping/transfer-service .",
+    "docker:push": "docker push ping/transfer-service"
   },
   "dependencies": {
-    "@cash/config": "workspace:*",
-    "@cash/types": "workspace:*",
-    "@cash/utils": "workspace:*",
+    "@ping/config": "workspace:*",
+    "@ping/types": "workspace:*",
+    "@ping/utils": "workspace:*",
     "@fastify/cors": "^9.0.0",
     "@fastify/helmet": "^11.0.0",
     "@fastify/rate-limit": "^9.0.0",

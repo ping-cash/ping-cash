@@ -1,12 +1,12 @@
-# Cash vs Domestic E-Wallets (GCash, Maya, etc.)
+# Ping vs Domestic E-Wallets (GCash, Maya, etc.)
 
 ## The Key Distinction
 
-**GCash and Maya are domestic e-wallets. Cash is a cross-border remittance platform.**
+**GCash and Maya are domestic e-wallets. Ping is a cross-border remittance platform.**
 
-This is the most common confusion we encounter. People in the Philippines use GCash daily and wonder: "Why do I need Cash when I already have GCash?"
+This is the most common confusion we encounter. People in the Philippines use GCash daily and wonder: "Why do I need Ping when I already have GCash?"
 
-The answer: **GCash is for receiving and spending money in the Philippines. Cash is for sending money TO the Philippines cheaper and faster than anything else.**
+The answer: **GCash is for receiving and spending money in the Philippines. Ping is for sending money TO the Philippines cheaper and faster than anything else.**
 
 ---
 
@@ -26,7 +26,7 @@ flowchart LR
         R3[Wise]
     end
 
-    subgraph Cash["Cash Flow (Cheap)"]
+    subgraph Ping["Ping Flow (Cheap)"]
         C1[Cash App]
         C2[Claim Link]
     end
@@ -46,7 +46,7 @@ flowchart LR
     W3 --> C1 --> C2 --> B1
 
     style Traditional fill:#ffcccc
-    style Cash fill:#ccffcc
+    style Ping fill:#ccffcc
 ```
 
 **The key insight**: GCash/Maya are **endpoints**, not remittance platforms. They're where money lands, not how it travels across borders.
@@ -63,11 +63,11 @@ flowchart LR
 | **Maya** | E-wallet, banking, crypto | Philippines only | Similar to GCash + banking features |
 | **GrabPay** | E-wallet, transport | Southeast Asia | Pay for rides, food delivery |
 | **M-Pesa** | Mobile money | Kenya, Tanzania, etc. | Send money, pay bills, banking |
-| **Cash** | Cross-border remittance | Global → 40+ countries | Send money internationally, cheap |
+| **Ping** | Cross-border remittance | Global → 40+ countries | Send money internationally, cheap |
 
 ### Feature Comparison
 
-| Feature | **Cash** | **GCash** | **Maya** | **Wise** |
+| Feature | **Ping** | **GCash** | **Maya** | **Wise** |
 |---------|----------|-----------|----------|----------|
 | **Send internationally** | Yes | No | Limited | Yes |
 | **Receive internationally** | Yes | Yes (via partners) | Yes (via partners) | Yes |
@@ -111,9 +111,9 @@ Family needs: Valid ID for pickup, or GCash account
 ```
 
 ```
-OPTION C: Using Cash (Both have app)
+OPTION C: Using Ping (Both have app)
 ─────────────────────────────────
-1. Open Cash app
+1. Open Ping app
 2. Send to family member: $200
 3. Pay fee: $0 (in-network FREE)
 4. FX rate: 56.2 PHP/USD (mid-market)
@@ -125,9 +125,9 @@ Total cost: $1 (0.5%)
 ```
 
 ```
-OPTION D: Using Cash (Recipient has no app)
+OPTION D: Using Ping (Recipient has no app)
 ─────────────────────────────────
-1. Open Cash app
+1. Open Ping app
 2. Send via link to WhatsApp: $200
 3. Pay fee: $0 (in-network FREE)
 4. Family clicks link, enters OTP
@@ -145,16 +145,16 @@ Family needs: Just a phone number and WhatsApp
 | Western Union | $10 | $6 | **$16 (8%)** | $184 |
 | Remitly | $4 | $3 | **$7 (3.5%)** | $193 |
 | Wise | $2 | $2 | **$4 (2%)** | $196 |
-| **Cash (in-network)** | $0 | $0 | **$0 (0%)** | $200 |
-| **Cash (to GCash)** | $1 | $0 | **$1 (0.5%)** | $199 |
+| **Ping (in-network)** | $0 | $0 | **$0 (0%)** | $200 |
+| **Ping (to GCash)** | $1 | $0 | **$1 (0.5%)** | $199 |
 
 ---
 
-## Why GCash Users Should Care About Cash
+## Why GCash Users Should Care About Ping
 
 ### For Senders (Workers Abroad)
 
-| Pain Point | With Traditional + GCash | With Cash |
+| Pain Point | With Traditional + GCash | With Ping |
 |------------|-------------------------|-----------|
 | "Fees are eating my salary" | 3-7% per transfer | 0-1% per transfer |
 | "Takes too long" | Hours to days | Seconds |
@@ -163,7 +163,7 @@ Family needs: Just a phone number and WhatsApp
 
 ### For Receivers (Family in Philippines)
 
-| Pain Point | With GCash Alone | With Cash |
+| Pain Point | With GCash Alone | With Ping |
 |------------|-----------------|-----------|
 | "I need to download apps" | Need sender's app + GCash | Just click a link |
 | "I need full verification" | Yes, for receiving | No, for claiming |
@@ -187,12 +187,12 @@ flowchart LR
 
 Every transfer: **$7 lost to fees**
 
-### Cash Flow (When both have Cash)
+### Ping Flow (When both have Ping)
 
 ```mermaid
 flowchart LR
-    A[Sender in Dubai] -->|$200 - $0 fees| B[Cash]
-    B -->|$200| C[Cash]
+    A[Sender in Dubai] -->|$200 - $0 fees| B[Ping]
+    B -->|$200| C[Ping]
     C -->|$200| D[Family]
 
     E[Family] -->|Can send back FREE| F[Sender]
@@ -207,12 +207,12 @@ Every transfer: **$0 lost to fees**
 
 ```mermaid
 flowchart TD
-    A[Worker downloads Cash] --> B[Sends $200 via link]
+    A[Worker downloads Ping] --> B[Sends $200 via link]
     B --> C[Family claims via link]
     C --> D[Family sees: 'Download app for FREE transfers']
-    D --> E[Family downloads Cash]
+    D --> E[Family downloads Ping]
     E --> F[Family tells friends]
-    F --> G[Friends download Cash]
+    F --> G[Friends download Ping]
     G --> H[More in-network transfers]
     H --> I[Everyone saves money]
     I --> A
@@ -231,16 +231,16 @@ flowchart TD
 | Pay at stores | QR payments everywhere in PH |
 | Pay bills | Electricity, water, internet |
 | Buy load | Phone credits |
-| Cash in/out | Thousands of partner locations |
+| Ping in/out | Thousands of partner locations |
 | GCredit | Lending/credit features |
 | GSave | Savings accounts |
 | GInsure | Insurance products |
 
 **We don't try to replace GCash for domestic use.** We complement it for international transfers.
 
-### Cash Strengths (What GCash Can't Do)
+### Ping Strengths (What GCash Can't Do)
 
-| Feature | Why Cash is Better |
+| Feature | Why Ping is Better |
 |---------|-------------------|
 | Send from abroad | GCash can't send from Dubai |
 | Zero in-network fees | GCash partners charge 3-7% |
@@ -253,29 +253,29 @@ flowchart TD
 
 ## Common Questions
 
-### "My family already has GCash, why do they need Cash?"
+### "My family already has GCash, why do they need Ping?"
 
-They don't **need** to download Cash. You can send them money via a claim link, and they can cash out directly to their GCash account. But if they DO download Cash, future transfers are **completely free**.
+They don't **need** to download Ping. You can send them money via a claim link, and they can cash out directly to their GCash account. But if they DO download Ping, future transfers are **completely free**.
 
-### "Can I send from Cash to GCash?"
+### "Can I send from Ping to GCash?"
 
-Yes! Cash supports cash-out to GCash (0.5% fee). The receiver clicks the claim link, chooses GCash, and money arrives in seconds.
+Yes! Ping supports cash-out to GCash (0.5% fee). The receiver clicks the claim link, chooses GCash, and money arrives in seconds.
 
 ### "What about Maya/PayMaya?"
 
 Same story. Maya is a domestic e-wallet. We can cash out to Maya accounts. The comparison is identical to GCash.
 
-### "Is Cash trying to replace GCash?"
+### "Is Ping trying to replace GCash?"
 
 No. We're different products:
 - **GCash** = Your wallet for daily life in the Philippines
-- **Cash** = The cheapest way to send money to the Philippines
+- **Ping** = The cheapest way to send money to the Philippines
 
-Think of it like: GCash is your local bank account. Cash is how money gets there from abroad.
+Think of it like: GCash is your local bank account. Ping is how money gets there from abroad.
 
-### "Why would GCash users switch to receiving via Cash?"
+### "Why would GCash users switch to receiving via Ping?"
 
-They don't "switch" - they still use GCash for everything else. They just tell their family abroad to use Cash instead of Remitly/WU. The money still ends up in GCash, just with lower fees.
+They don't "switch" - they still use GCash for everything else. They just tell their family abroad to use Ping instead of Remitly/WU. The money still ends up in GCash, just with lower fees.
 
 ---
 
@@ -283,7 +283,7 @@ They don't "switch" - they still use GCash for everything else. They just tell t
 
 ### Philippines
 
-| App | Type | Cross-Border | Cash Alternative |
+| App | Type | Cross-Border | Ping Alternative |
 |-----|------|--------------|------------------|
 | GCash | E-wallet | Receive only | Yes, we cash out to GCash |
 | Maya | E-wallet + Bank | Receive only | Yes, we cash out to Maya |
@@ -292,7 +292,7 @@ They don't "switch" - they still use GCash for everything else. They just tell t
 
 ### Kenya
 
-| App | Type | Cross-Border | Cash Alternative |
+| App | Type | Cross-Border | Ping Alternative |
 |-----|------|--------------|------------------|
 | M-Pesa | Mobile money | Receive only | Yes, we cash out to M-Pesa |
 | Airtel Money | Mobile money | Receive only | Yes, supported |
@@ -300,7 +300,7 @@ They don't "switch" - they still use GCash for everything else. They just tell t
 
 ### India
 
-| App | Type | Cross-Border | Cash Alternative |
+| App | Type | Cross-Border | Ping Alternative |
 |-----|------|--------------|------------------|
 | Google Pay | UPI | Receive only | Yes, we support UPI |
 | PhonePe | UPI | Receive only | Yes, supported |
@@ -311,7 +311,7 @@ They don't "switch" - they still use GCash for everything else. They just tell t
 
 ## Summary
 
-| Aspect | GCash/Maya/M-Pesa | Cash |
+| Aspect | GCash/Maya/M-Pesa | Ping |
 |--------|-------------------|------|
 | **What it is** | Domestic e-wallet | Cross-border remittance |
 | **Best for** | Daily payments in your country | Sending money internationally |
@@ -327,7 +327,7 @@ They don't "switch" - they still use GCash for everything else. They just tell t
 
 ### One-liner for skeptics
 
-> "GCash is for spending money in the Philippines. Cash is for **sending** money to the Philippines - for free."
+> "GCash is for spending money in the Philippines. Ping is for **sending** money to the Philippines - for free."
 
 ### Elevator pitch
 
@@ -338,6 +338,6 @@ They don't "switch" - they still use GCash for everything else. They just tell t
 | Objection | Response |
 |-----------|----------|
 | "GCash is free" | "GCash is free for domestic transfers. You're paying Remitly/WU 3-7% to GET money into GCash from abroad." |
-| "I already use GCash" | "Great! We send TO GCash. Use Cash to send, your family cashes out to their GCash. Same endpoint, 80% cheaper to send." |
+| "I already use GCash" | "Great! We send TO GCash. Use Ping to send, your family cashes out to their GCash. Same endpoint, 80% cheaper to send." |
 | "My family won't download another app" | "They don't have to. We send a WhatsApp link. They click, enter OTP, choose GCash, done." |
 | "I trust GCash more" | "Their money still goes to GCash. We're just the cheaper, faster highway to get it there." |

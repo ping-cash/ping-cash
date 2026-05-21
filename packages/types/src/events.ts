@@ -1,5 +1,5 @@
 // ============================================
-// Cash Platform - Event Types (CloudEvents)
+// Ping Platform - Event Types (CloudEvents)
 // ============================================
 
 import type {

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Cash API follows REST conventions with JSON payloads. All endpoints are versioned and require authentication unless specified.
+Ping API follows REST conventions with JSON payloads. All endpoints are versioned and require authentication unless specified.
 
 ```mermaid
 flowchart LR
@@ -737,7 +737,7 @@ X-Verification-Token: eyJhbGciOiJIUzI1NiIs...
       "currency": "PHP"
     },
     "estimatedTime": "Instant",
-    "reference": "CASH-ABC123"
+    "reference": "PING-ABC123"
   }
 }
 ```
@@ -754,7 +754,7 @@ GET /claims/:code/status
   "offramp": {
     "status": "completed",
     "completedAt": "2025-01-15T10:05:00Z",
-    "reference": "CASH-ABC123"
+    "reference": "PING-ABC123"
   }
 }
 ```
@@ -949,7 +949,7 @@ POST /fx/quote
 
 ### Webhook Signature
 
-Verify webhooks using the `X-Cash-Signature` header:
+Verify webhooks using the `X-Ping-Signature` header:
 
 ```javascript
 const crypto = require('crypto');
@@ -973,11 +973,11 @@ function verifyWebhook(payload, signature, secret) {
 ### JavaScript/TypeScript
 
 ```bash
-npm install @cash/sdk
+npm install @ping/sdk
 ```
 
 ```typescript
-import { CashClient } from '@cash/sdk';
+import { CashClient } from '@ping/sdk';
 
 const client = new CashClient({
   apiKey: 'your-api-key',
@@ -995,11 +995,11 @@ const transfer = await client.transfers.create({
 ### React Native
 
 ```bash
-npm install @cash/react-native-sdk
+npm install @ping/react-native-sdk
 ```
 
 ```typescript
-import { CashProvider, useTransfer } from '@cash/react-native-sdk';
+import { CashProvider, useTransfer } from '@ping/react-native-sdk';
 
 function App() {
   return (

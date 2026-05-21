@@ -1,6 +1,6 @@
 # Cash-In & Cash-Out Guide
 
-This document details all funding (cash-in) and withdrawal (cash-out) options available in the Cash platform.
+This document details all funding (cash-in) and withdrawal (cash-out) options available in the Ping platform.
 
 ---
 
@@ -8,7 +8,7 @@ This document details all funding (cash-in) and withdrawal (cash-out) options av
 
 ### Overview
 
-Users can fund their Cash wallet through multiple methods. The wallet holds USDC on Solana, but users interact with familiar payment methods.
+Users can fund their Ping wallet through multiple methods. The wallet holds USDC on Solana, but users interact with familiar payment methods.
 
 ```mermaid
 flowchart LR
@@ -28,7 +28,7 @@ flowchart LR
         CEX[Exchange Withdrawal]
     end
 
-    Instant --> Wallet[(Cash Wallet<br/>USDC on Solana)]
+    Instant --> Wallet[(Ping Wallet<br/>USDC on Solana)]
     SameDay --> Wallet
     Crypto --> Wallet
 ```
@@ -257,7 +257,7 @@ flowchart TB
 | Method | Provider | Speed | Our Fee | Min | Max |
 |--------|----------|-------|---------|-----|-----|
 | **MTN MoMo** | TransFi | Instant | 0.5% | $5 | $1,000 |
-| **Vodafone Cash** | TBD | Instant | 0.5% | $5 | $500 |
+| **Vodafone Ping** | TBD | Instant | 0.5% | $5 | $500 |
 | **Bank Transfer** | TransFi | 1-24 hrs | 0.75% | $50 | $2,500 |
 
 #### Ethiopia
@@ -301,7 +301,7 @@ flowchart TB
 | Method | Provider | Speed | Our Fee | Min | Max |
 |--------|----------|-------|---------|-----|-----|
 | **Bank Transfer** | TransFi | 1-24 hrs | 0.75% | $50 | $5,000 |
-| **Vodafone Cash** | TBD | Instant | 0.5% | $10 | $500 |
+| **Vodafone Ping** | TBD | Instant | 0.5% | $10 | $500 |
 | **Orange Money** | TBD | Instant | 0.5% | $10 | $500 |
 | **InstaPay** | TBD | Instant | 0.5% | $10 | $1,000 |
 
@@ -362,7 +362,7 @@ In addition to recipients claiming via web, **senders can also cash out** throug
 flowchart TB
     subgraph App["Mobile App"]
         B["Balance: $500 USDC"]
-        B --> CO["Tap 'Cash Out'"]
+        B --> CO["Tap 'Ping Out'"]
         CO --> L{"Where?"}
         L -->|"Here in GCC"| GCC["GCC Options"]
         L -->|"Send Home"| Home["Home Country Options"]
@@ -456,7 +456,7 @@ Some countries have regulatory limits:
 
 ## Summary
 
-Cash provides comprehensive cash-in and cash-out coverage:
+Ping provides comprehensive cash-in and cash-out coverage:
 
 - **Cash-in**: Apple Pay, Google Pay, Cards, Bank Transfer, USDC direct
 - **Cash-out**: 40+ countries, 100+ methods (mobile wallets, banks, cash pickup)

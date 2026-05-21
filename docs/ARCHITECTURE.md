@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the technical architecture for Cash Phase 1 MVP, covering:
+This document describes the technical architecture for Ping Phase 1 MVP, covering:
 - System components and their interactions
 - Data flows for key user journeys
 - Technology choices and rationale
@@ -657,7 +657,7 @@ docker >= 24.0.0
 
 ```bash
 # Clone repository
-git clone https://github.com/sociable-cloud/cash.git
+git clone https://github.com/ping-cash/ping-cash.git
 cd cash
 
 # Install dependencies

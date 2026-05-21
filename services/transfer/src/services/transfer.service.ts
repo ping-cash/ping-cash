@@ -1,10 +1,10 @@
-import type { Transfer, TransferStatus, TransferSummary, Currency, PaginationResult } from '@cash/types';
-import { generateId, generateClaimCode, hashPhone, now, addDuration } from '@cash/utils';
-import { constants, getConfig } from '@cash/config';
+import type { Transfer, TransferStatus, TransferSummary, Currency, PaginationResult } from '@ping/types';
+import { generateId, generateClaimCode, hashPhone, now, addDuration } from '@ping/utils';
+import { constants, getConfig } from '@ping/config';
 
 import { TransferRepository } from '../repositories/transfer.repository';
 import { publishEvent } from '../events/producer';
-import { EventTypes } from '@cash/types/events';
+import { EventTypes } from '@ping/types/events';
 import { AppError } from '../utils/errors';
 import { logger } from '../utils/logger';
 

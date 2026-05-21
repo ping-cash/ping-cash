@@ -14,7 +14,7 @@ export default function Home() {
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>💸</Text>
-      <Text style={styles.title}>Cash</Text>
+      <Text style={styles.title}>Ping</Text>
       <Text style={styles.subtitle}>The cheapest way to send money anywhere</Text>
 
       {/* Backend Status */}

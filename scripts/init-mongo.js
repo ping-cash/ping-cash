@@ -42,4 +42,4 @@ db.notifications.createIndex({ phone: 1 });
 db.notifications.createIndex({ status: 1 });
 db.notifications.createIndex({ createdAt: -1 });
 
-print('MongoDB initialized successfully for Cash platform');
+print('MongoDB initialized successfully for Ping platform');

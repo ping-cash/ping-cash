@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 
 /**
- * API Client for Cash Backend Services
+ * API Client for Ping Backend Services
  *
  * In development:
  * - If running on physical device via Expo Go, use your computer's IP

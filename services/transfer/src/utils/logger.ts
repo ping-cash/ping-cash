@@ -1,5 +1,5 @@
 import pino from 'pino';
-import { getConfig } from '@cash/config';
+import { getConfig } from '@ping/config';
 
 const config = getConfig();
 

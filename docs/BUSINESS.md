@@ -2,9 +2,9 @@
 
 ## Executive Summary
 
-Cash is a stablecoin-powered remittance platform targeting migrant workers in GCC countries sending money home. Our core value proposition:
+Ping is a stablecoin-powered remittance platform targeting migrant workers in GCC countries sending money home. Our core value proposition:
 
-- **Zero fees within network** - users can send to other Cash users for free
+- **Zero fees within network** - users can send to other Ping users for free
 - **Minimal cash-out fees** - 0.5-1% when leaving the network
 - **Instant delivery** - seconds, not days
 - **No app needed to receive** - claim via link
@@ -20,8 +20,8 @@ Cash is a stablecoin-powered remittance platform targeting migrant workers in GC
 | **Wise** | UK | Bank rails | 0.5-2% | 1-3 days | Mid-market FX rate, transparent pricing |
 | **Remitly** | US | Bank + mobile wallets | 0-$4.99 | Minutes-days | Fast mobile wallet delivery |
 | **WorldRemit** | UK | Multi-channel | 1-3% | Instant-days | 150+ countries, cash pickup |
-| **Western Union** | US | Cash network | 3-7% | Minutes | 500K+ agent locations worldwide |
-| **MoneyGram** | US | Cash + digital | 2-5% | Minutes | Walmart partnership |
+| **Western Union** | US | Ping network | 3-7% | Minutes | 500K+ agent locations worldwide |
+| **MoneyGram** | US | Ping + digital | 2-5% | Minutes | Walmart partnership |
 
 ### Africa-Focused Players
 
@@ -60,7 +60,7 @@ quadrantChart
     Remitly: [0.5, 0.6]
     Sendwave: [0.8, 0.85]
     Strike: [0.95, 0.95]
-    Cash: [0.95, 0.98]
+    Ping: [0.95, 0.98]
 ```
 
 ### Our Competitive Advantages
@@ -80,13 +80,13 @@ quadrantChart
 
 ### Our Fee Philosophy
 
-**Zero fees within the Cash network.** We only charge when money leaves our ecosystem.
+**Zero fees within the Ping network.** We only charge when money leaves our ecosystem.
 
 ```mermaid
 flowchart TB
     subgraph Free["FREE - Zero Fees"]
-        F1[Send to Cash user]
-        F2[Receive to Cash wallet]
+        F1[Send to Ping user]
+        F2[Receive to Ping wallet]
         F3[Internal transfers]
         F4[Balance checks]
         F5[FX conversion in-app]
@@ -113,7 +113,7 @@ flowchart TB
 
 ### Detailed Fee Comparison
 
-| Action | Cash | Wise | Remitly | Western Union |
+| Action | Ping | Wise | Remitly | Western Union |
 |--------|------|------|---------|---------------|
 | Send in-network | **FREE** | N/A | N/A | N/A |
 | FX conversion | **FREE** | 0.5-1% | Included | 2-4% |
@@ -151,11 +151,11 @@ pie title Revenue Streams
 
 ### 1. Treasury Yield (45% of Revenue)
 
-**What it is**: When users hold USDC in Cash wallets, we deploy that capital to earn yield.
+**What it is**: When users hold USDC in Ping wallets, we deploy that capital to earn yield.
 
 **How it works**:
 ```
-User Balance in Cash:    $10,000,000 (aggregate)
+User Balance in Ping:    $10,000,000 (aggregate)
                               ↓
 We hold as:              USDC in treasury
                               ↓
@@ -199,7 +199,7 @@ Spread:                      0.36% (~20 pips)
 | Western Union | 2-4% |
 | Remitly | 1-2% |
 | Wise | 0.5-1% |
-| **Cash** | **0.3-0.5%** |
+| **Ping** | **0.3-0.5%** |
 
 **Revenue calculation**:
 ```
@@ -243,7 +243,7 @@ $1M monthly cash-out volume
 
 ### 5. B2B / API Access (5% of Revenue - Future)
 
-For businesses that want to embed Cash:
+For businesses that want to embed Ping:
 
 | Product | Pricing |
 |---------|---------|
@@ -406,7 +406,7 @@ The GCC (Gulf Cooperation Council) is one of the largest remittance source regio
 
 ## Summary
 
-Cash is positioned to capture a significant share of the $126B GCC outward remittance market by:
+Ping is positioned to capture a significant share of the $126B GCC outward remittance market by:
 
 1. **Zero in-network fees** - unique value proposition
 2. **Stablecoin rails** - instant, cheap, 24/7

@@ -11,6 +11,6 @@ GRANT ALL PRIVILEGES ON DATABASE cash TO cash;
 -- Log successful initialization
 DO $$
 BEGIN
-  RAISE NOTICE 'PostgreSQL initialized successfully for Cash platform';
+  RAISE NOTICE 'PostgreSQL initialized successfully for Ping platform';
 END
 $$;

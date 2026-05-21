@@ -23,13 +23,13 @@ COPY packages/utils ./packages/utils
 COPY services/transfer ./services/transfer
 
 # Build packages
-RUN pnpm --filter @cash/types build
-RUN pnpm --filter @cash/config build
-RUN pnpm --filter @cash/utils build
+RUN pnpm --filter @ping/types build
+RUN pnpm --filter @ping/config build
+RUN pnpm --filter @ping/utils build
 
 # Generate Prisma client and build service
-RUN pnpm --filter @cash/transfer-service db:generate
-RUN pnpm --filter @cash/transfer-service build
+RUN pnpm --filter @ping/transfer-service db:generate
+RUN pnpm --filter @ping/transfer-service build
 
 # Production stage
 FROM node:20-alpine AS runner
