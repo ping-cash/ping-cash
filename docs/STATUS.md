@@ -40,21 +40,21 @@ All major architectural decisions are documented in ADRs 0001-0017 (see [docs/ad
 
 | Pillar | Status | Notes |
 |---|---|---|
-| 1. Auth (phone OTP → JWT → Privy wallet) | 🔴 NOT STARTED | First service to build |
-| 2. User profiles + Ping Points balance | 🔴 NOT STARTED | Database-backed in Phase 1 |
-| 3. KYC integration (Tier 1/2/3) | 🔴 NOT STARTED | Via dynolabs-io/kyc shared SDK |
-| 4. Transfer orchestration | 🟡 SCAFFOLD | Template service in `services/transfer/`; not wired |
-| 5. Wallet (Privy MPC + Solana USDC) | 🔴 NOT STARTED | Privy account not provisioned |
-| 6. Earn Vault auto-stake | 🔴 NOT STARTED | Solana smart contract + delegated authority flow |
-| 7. Claim service (link + OTP + cash-out selection) | 🔴 NOT STARTED | |
-| 8. Off-ramp (TransFi → GCash/M-Pesa/etc.) | 🔴 NOT STARTED | TransFi KYB pending |
-| 9. Notify (WhatsApp/SMS) | 🔴 NOT STARTED | Twilio + WhatsApp Business API account pending |
-| 10. FX engine (0.4% cost-covering, Pyth oracle) | 🔴 NOT STARTED | |
-| 11. Compliance (Chainalysis sanctions screening) | 🔴 NOT STARTED | |
-| 12. Gamification (welcome-stake milestone tracking) | 🔴 NOT STARTED | |
-| 13. Mobile app (React Native + Expo) | 🟡 SCAFFOLD | Expo scaffold in `apps/mobile/` |
-| 14. Web claim flow (Next.js) | 🔴 NOT STARTED | |
-| 15. CI matrix workflow (per-service build → Blueprint → SHA-PR) | 🟡 STUB | Old workflow exists; needs full rebuild |
+| 1. Auth (phone OTP → JWT → Privy wallet) | 🟡 CODE-COMPLETE | `services/auth/` + chart + tests; awaiting Sovereign deploy + walk |
+| 2. User profiles + Ping Points balance | 🟡 CODE-COMPLETE | `services/user/` with Prisma schema + welcome-stake + tier service |
+| 3. KYC integration (Tier 1/2/3) | 🔴 NOT STARTED | Separate repo dynolabs-io/kyc (per ADR 0011) — needs creation |
+| 4. Transfer orchestration | 🟡 CODE-COMPLETE | Existing template + new fee engine wired |
+| 5. Wallet (Privy MPC + Solana USDC) | 🟡 CODE-COMPLETE | `services/wallet/` Solana indexer + vault intent builder |
+| 6. Earn Vault auto-stake | 🔴 NOT STARTED | Anchor program pending — Phase 2 (post-Cayman + audit) |
+| 7. Claim service (link + OTP + cash-out selection) | 🟡 CODE-COMPLETE | `services/claim/` full state machine |
+| 8. Off-ramp (TransFi → GCash/M-Pesa/etc.) | 🟡 CODE-COMPLETE | `services/offramp/` with TransFi + Wise adapters + failover |
+| 9. Notify (WhatsApp/SMS) | 🟡 CODE-COMPLETE | `services/notify/` with 12 templates + WA/SMS/Push channels |
+| 10. FX engine (0.4% cost-covering, Pyth oracle) | 🟡 CODE-COMPLETE | `services/fx/` with Pyth + Switchboard + 0.3% disagreement check |
+| 11. Compliance (Chainalysis sanctions screening) | 🟡 CODE-COMPLETE | `services/compliance/` with KYT + OFAC name screen |
+| 12. Gamification (welcome-stake milestone tracking) | 🟡 CODE-COMPLETE | `services/gamification/` with 5-milestone engine |
+| 13. Mobile app (React Native + Expo) | 🟡 CODE-COMPLETE | All 4 tabs (Home/Activity/Earn/Profile) + signup/verify/send |
+| 14. Web claim flow (Next.js) | 🟡 CODE-COMPLETE | `apps/web-claim/` 5-stage flow |
+| 15. CI matrix workflow (per-service build → Blueprint → SHA-PR) | 🟡 CODE-COMPLETE | `.github/workflows/build.yml` matrix + bp-ping render + Sovereign PR |
 
 ---
 
