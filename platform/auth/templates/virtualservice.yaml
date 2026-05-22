@@ -1,0 +1,57 @@
+{{- if .Values.istio.virtualService.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: ping-auth
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: auth
+    app.kubernetes.io/part-of: ping
+spec:
+  hosts:
+    {{- range .Values.istio.virtualService.hosts }}
+    - {{ . | quote }}
+    {{- end }}
+  gateways:
+    - istio-system/ingress
+  http:
+    - match:
+        - uri:
+            prefix: {{ .Values.istio.virtualService.matchPrefix }}
+      route:
+        - destination:
+            host: {{ .Release.Name }}.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.service.port }}
+      timeout: 10s
+      retries:
+        attempts: 2
+        perTryTimeout: 5s
+        retryOn: connect-failure,refused-stream,5xx
+---
+{{- if .Values.istio.destinationRule.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: ping-auth
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: auth
+    app.kubernetes.io/part-of: ping
+spec:
+  host: {{ .Release.Name }}.{{ .Release.Namespace }}.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+    outlierDetection:
+      consecutive5xxErrors: {{ .Values.istio.destinationRule.circuitBreaker.consecutive5xxErrors }}
+      interval: {{ .Values.istio.destinationRule.circuitBreaker.interval }}
+      baseEjectionTime: {{ .Values.istio.destinationRule.circuitBreaker.baseEjectionTime }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,82 @@
+# Default values for ping-auth.
+# Overridden by the Blueprint at deploy time.
+
+# Image — set by CI matrix build to ghcr.io/ping-cash/auth-service:<sha>
+image:
+  repository: ghcr.io/ping-cash/auth-service
+  tag: ""  # Filled by Blueprint at version bump
+  pullPolicy: IfNotPresent
+
+replicas: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+service:
+  port: 3001
+  targetPort: 3001
+
+# OpenBao secret paths — sourced via External Secrets Operator on the Sovereign
+secrets:
+  external:
+    enabled: true
+    storeName: openbao-cluster
+    paths:
+      twilioAccountSid: ping/twilio/account_sid
+      twilioAuthToken: ping/twilio/auth_token
+      twilioVerifySid: ping/twilio/verify_sid
+      privyAppId: ping/privy/app_id
+      privyAppSecret: ping/privy/app_secret
+      jwtSecret: ping/auth/jwt_secret
+      redisUrl: ping/redis/url
+
+# Istio mesh integration
+istio:
+  virtualService:
+    enabled: true
+    hosts:
+      - api.ping.cash
+    matchPrefix: /auth
+  destinationRule:
+    enabled: true
+    circuitBreaker:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+
+# Observability
+metrics:
+  enabled: true
+  port: 9090
+  path: /metrics
+
+# Health checks
+healthcheck:
+  liveness:
+    path: /healthz
+    initialDelaySeconds: 5
+    periodSeconds: 30
+  readiness:
+    path: /readyz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+# Rate limits enforced at service level (in addition to Istio rate limiting)
+rateLimit:
+  initPerIp:
+    max: 5
+    windowSeconds: 600
+  verifyPerSession:
+    max: 5
+
+# HorizontalPodAutoscaler
+autoscaling:
+  enabled: false  # Enable after initial walks; manual replicas for first weeks
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70

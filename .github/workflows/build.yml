@@ -1,0 +1,350 @@
+name: Build & Deploy
+
+# Per ADR 0006 (Deployment via OpenOva Sovereign):
+#   Code → CI matrix-builds → ghcr.io images → Blueprint published →
+#   SHA-bump PR opened against openova-io/openova-private → Flux reconciles.
+#
+# Per PRINCIPLES § 3 (CI is the only build path):
+#   Every container image that runs on shared infra MUST be produced by CI
+#   from a committed git SHA. No local docker build, no manual re-tagging.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      force_blueprint_bump:
+        description: 'Force Blueprint version bump even if no service changed'
+        required: false
+        default: 'false'
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/ping-cash
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────
+  # STAGE 1 — Quality gates (lint, typecheck, test)
+  # ────────────────────────────────────────────────────────────────────
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}', cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}', cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    # Ephemeral test DBs scoped to this CI job only (NOT bastion-local infra)
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ping
+          POSTGRES_PASSWORD: ping
+          POSTGRES_DB: ping_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_URL: postgresql://ping:ping@localhost:5432/ping_test
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}', cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
+
+  # ────────────────────────────────────────────────────────────────────
+  # STAGE 2 — Discover services to build (dynamic matrix)
+  # ────────────────────────────────────────────────────────────────────
+
+  discover-services:
+    name: Discover services
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      services: ${{ steps.find.outputs.services }}
+      has-services: ${{ steps.find.outputs.has-services }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: find
+        name: Find services with Dockerfiles
+        run: |
+          # Find every service that has a Dockerfile
+          services=$(find services -maxdepth 2 -name Dockerfile -exec dirname {} \; | \
+                     sed 's|^services/||' | jq -R . | jq -sc .)
+          echo "services=$services" >> "$GITHUB_OUTPUT"
+          if [ "$services" = "[]" ]; then
+            echo "has-services=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-services=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Discovered services: $services"
+
+  # ────────────────────────────────────────────────────────────────────
+  # STAGE 3 — Matrix-build container images
+  # ────────────────────────────────────────────────────────────────────
+
+  build-images:
+    name: Build ${{ matrix.service }}
+    needs: [discover-services]
+    if: needs.discover-services.outputs.has-services == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.discover-services.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}-service
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          provenance: true
+          sbom: true
+
+  # ────────────────────────────────────────────────────────────────────
+  # STAGE 4 — Build mobile app (separate; Expo iOS later)
+  # ────────────────────────────────────────────────────────────────────
+
+  build-mobile:
+    name: Build mobile app
+    needs: [lint, typecheck, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}', cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ping/mobile build || true
+      # iOS build happens separately via ios-build.yml when repo is public
+      # (per ADR 0006 § iOS Build Toggle)
+
+  # ────────────────────────────────────────────────────────────────────
+  # STAGE 5 — Publish Blueprint manifest
+  # ────────────────────────────────────────────────────────────────────
+
+  publish-blueprint:
+    name: Publish Blueprint
+    needs: [build-images]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need full history for semver derivation
+
+      - name: Derive Blueprint version
+        id: version
+        run: |
+          # Semver derived from current date + short SHA
+          # Format: vYYYY.MM.DD-<short-sha>
+          DATE=$(date -u +%Y.%m.%d)
+          SHA=${GITHUB_SHA::7}
+          VERSION="${DATE}-${SHA}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Blueprint version: $VERSION"
+
+      - name: Render Blueprint manifest
+        run: |
+          mkdir -p artifacts
+          # Substitute SHA into the Blueprint manifest template
+          if [ -f products/bp-ping/blueprint.yaml ]; then
+            sed -e "s|__SHA__|${GITHUB_SHA}|g" \
+                -e "s|__VERSION__|${{ steps.version.outputs.version }}|g" \
+                products/bp-ping/blueprint.yaml > artifacts/blueprint.yaml
+          else
+            echo "::warning::products/bp-ping/blueprint.yaml not found; skipping render"
+            exit 0
+          fi
+
+      - name: Upload Blueprint artifact
+        uses: actions/upload-artifact@v4
+        if: hashFiles('artifacts/blueprint.yaml') != ''
+        with:
+          name: blueprint-${{ steps.version.outputs.version }}
+          path: artifacts/blueprint.yaml
+          retention-days: 90
+
+      # TODO: Push Blueprint as OCI artifact to ghcr.io/ping-cash/bp-ping:<version>
+      # Requires oras / cosign tooling — implement after Blueprint manifest is authored.
+
+  # ────────────────────────────────────────────────────────────────────
+  # STAGE 6 — Open SHA-bump PR against openova-io/openova-private
+  # ────────────────────────────────────────────────────────────────────
+
+  bump-sovereign:
+    name: Bump Sovereign manifest
+    needs: [publish-blueprint]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out openova-private
+        uses: actions/checkout@v4
+        with:
+          repository: openova-io/openova-private
+          token: ${{ secrets.SOVEREIGN_DEPLOY_PAT }}
+          path: openova-private
+
+      - name: Bump Ping Blueprint SHA in Sovereign manifest
+        working-directory: openova-private
+        run: |
+          # Path convention: clusters/<sovereign>/apps/ping/helmrelease.yaml
+          # The Sovereign operator (founder) confirms the exact path on first deploy
+          TARGET="clusters/contabo-mkt/apps/ping/helmrelease.yaml"
+          if [ ! -f "$TARGET" ]; then
+            echo "::warning::Sovereign target $TARGET not found — will create on first deploy"
+            mkdir -p "$(dirname "$TARGET")"
+          fi
+
+          # Stub the helmrelease.yaml; founder finalizes path + structure
+          cat > "$TARGET" <<EOF
+          # Auto-generated by ping-cash/ping-cash CI
+          # SHA: ${GITHUB_SHA}
+          # Blueprint version: ${{ needs.publish-blueprint.outputs.version }}
+          apiVersion: helm.toolkit.fluxcd.io/v2beta1
+          kind: HelmRelease
+          metadata:
+            name: ping
+            namespace: ping
+          spec:
+            interval: 5m
+            chart:
+              spec:
+                chart: bp-ping
+                version: ${{ needs.publish-blueprint.outputs.version }}
+                sourceRef:
+                  kind: HelmRepository
+                  name: ping-cash
+                  namespace: flux-system
+            values:
+              imageTag: ${GITHUB_SHA}
+          EOF
+
+      - name: Create SHA-bump PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          path: openova-private
+          token: ${{ secrets.SOVEREIGN_DEPLOY_PAT }}
+          commit-message: |
+            bump(ping): SHA ${{ github.sha }}
+
+            Bumps Ping Blueprint to version ${{ needs.publish-blueprint.outputs.version }}
+            from upstream commit ${{ github.sha }}.
+
+            Refs ping-cash/ping-cash#1
+          branch: bump/ping-${{ github.sha }}
+          delete-branch: true
+          title: "bump(ping): ${{ needs.publish-blueprint.outputs.version }}"
+          body: |
+            ## Automated Blueprint bump
+
+            **Source commit:** ping-cash/ping-cash@${{ github.sha }}
+            **Blueprint version:** ${{ needs.publish-blueprint.outputs.version }}
+
+            ### What this PR does
+            Updates the Ping HelmRelease manifest to point at the new Blueprint version
+            built by CI from the source commit above.
+
+            Flux will pick this up on merge and reconcile within ~60 seconds.
+
+            ### Sovereign operator checklist
+            - [ ] Verify image pull from `ghcr.io/ping-cash/*-service:${{ github.sha }}` succeeds
+            - [ ] Verify Flux reconciliation completes without errors
+            - [ ] Operator walks affected surface on Sovereign dev environment
+            - [ ] Flip TRUST.md entry from UNVERIFIED to VERIFIED-PASS with screenshot
+
+            ### References
+            - ADR 0006 — Deployment via OpenOva Sovereign
+            - Upstream PR / commit: ping-cash/ping-cash@${{ github.sha }}
+
+            ---
+            🤖 Generated by ping-cash CI pipeline
+          base: main
+          labels: |
+            ping
+            blueprint-bump
+            automated
