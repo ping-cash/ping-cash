@@ -1,0 +1,8 @@
+apiVersion: v2
+name: ping-web-claim
+description: Ping web claim flow (Next.js)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+annotations:
+  catalyst.openova.io/no-upstream: "true"

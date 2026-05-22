@@ -46,7 +46,7 @@ spec:
 
     - name: user-service
       chart: platform/user
-      enabled: false  # Activated when chart is authored (refs #6)
+      enabled: true
 
     # KYC is a SEPARATE repo (dynolabs-io/kyc) per ADR 0011 — not included here.
     # Ping calls it via SDK; no chart needed in this Blueprint.
@@ -56,49 +56,49 @@ spec:
     # ────────────────────────────────────────────────────────────
     - name: transfer-service
       chart: platform/transfer
-      enabled: false  # Refs #8
+      enabled: true
 
     - name: wallet-service
       chart: platform/wallet
-      enabled: false  # Refs #9
+      enabled: true
 
     - name: fx-service
       chart: platform/fx
-      enabled: false  # Refs #10
+      enabled: true
 
     - name: ledger-service
       chart: platform/ledger
-      enabled: false  # Refs #11
+      enabled: true
 
     # ────────────────────────────────────────────────────────────
     # Delivery context
     # ────────────────────────────────────────────────────────────
     - name: claim-service
       chart: platform/claim
-      enabled: false  # Refs #12
+      enabled: true
 
     - name: offramp-service
       chart: platform/offramp
-      enabled: false  # Refs #13
+      enabled: true
 
     - name: notify-service
       chart: platform/notify
-      enabled: false  # Refs #14
+      enabled: true
 
     # ────────────────────────────────────────────────────────────
     # Gamification + token + market making
     # ────────────────────────────────────────────────────────────
     - name: gamification-service
       chart: platform/gamification
-      enabled: false  # Refs #18
+      enabled: true
 
     - name: earn-vault-svc
       chart: platform/earn-vault
-      enabled: false  # Refs #16
+      enabled: false  # Phase 2 (Anchor program + svc indexer)
 
     - name: token-svc
       chart: platform/token
-      enabled: false  # Refs #17
+      enabled: true
 
     - name: swap-svc
       chart: platform/swap
@@ -110,7 +110,14 @@ spec:
 
     - name: compliance-svc
       chart: platform/compliance
-      enabled: false  # Refs #21
+      enabled: true
+
+    # ────────────────────────────────────────────────────────────
+    # User-facing apps
+    # ────────────────────────────────────────────────────────────
+    - name: web-claim
+      chart: platform/web-claim
+      enabled: true
 
   # Sovereign-side dependencies (provided by openova-private)
   dependencies:

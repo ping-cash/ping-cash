@@ -1,0 +1,14 @@
+image: { repository: ghcr.io/ping-cash/web-claim, tag: "" }
+replicas: 2
+resources:
+  requests: { cpu: 100m, memory: 256Mi }
+  limits:   { cpu: 500m, memory: 512Mi }
+service: { port: 3100, targetPort: 3100 }
+istio:
+  virtualService:
+    enabled: true
+    hosts: [ping.cash]
+    matchPrefix: /c
+healthcheck:
+  liveness: { path: /, initialDelaySeconds: 10, periodSeconds: 30 }
+  readiness: { path: /, initialDelaySeconds: 5, periodSeconds: 10 }
