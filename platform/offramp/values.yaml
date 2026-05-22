@@ -1,0 +1,26 @@
+image: { repository: ghcr.io/ping-cash/offramp-service, tag: "" }
+replicas: 2
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 256Mi }
+service:
+  port: 3007
+  targetPort: 3007
+secrets:
+  external:
+    enabled: true
+    storeName: openbao-cluster
+    paths:
+      transfiApiKey: ping/transfi/api_key
+      transfiApiSecret: ping/transfi/api_secret
+      transfiWebhookSecret: ping/transfi/webhook_secret
+      wiseApiKey: ping/wise/api_key
+      wiseWebhookSecret: ping/wise/webhook_secret
+istio:
+  virtualService:
+    enabled: true
+    hosts: [api.ping.cash]
+    matchPrefix: /offramp
+healthcheck:
+  liveness: { path: /healthz, initialDelaySeconds: 5, periodSeconds: 30 }
+  readiness: { path: /readyz, initialDelaySeconds: 5, periodSeconds: 10 }
