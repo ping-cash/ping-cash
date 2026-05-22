@@ -1,0 +1,76 @@
+// ledger-service schema — double-entry accounting
+//
+// Per ARCHITECTURE.md § Data Layer (PostgreSQL CP for financial data):
+//   ledger_entries must always balance: SUM(DEBIT) - SUM(CREDIT) = 0 per
+//   transaction_id. This is enforced by a database trigger.
+//
+// Per ARCHITECTURE.md § Outbox Pattern: every state-changing operation
+// writes both a ledger entry AND an outbox event in the same transaction;
+// a background publisher drains outbox to Redpanda.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+// Append-only double-entry ledger.
+// Every transaction has 2+ entries summing to zero (debits == credits).
+model LedgerEntry {
+  id              String    @id @default(uuid()) @db.Uuid
+
+  // Transaction grouping — all entries with the same transactionId balance
+  transactionId   String    @db.Uuid
+  transactionType String    // transfer | fee | yield | offramp | refund | welcome_grant
+
+  // Account
+  accountId       String    @db.Uuid   // User wallet ID OR platform account ID
+  accountType     String    // user_wallet | platform_fee | platform_markup | provider_cost | yield_pool | foundation_reserve
+
+  // Entry direction + amount
+  entryType       String    // DEBIT | CREDIT
+  amount          Decimal   @db.Decimal(20, 8)
+  currency        String    @default("USDC") // USDC | PHP | INR | PING | ...
+
+  // Running balance (for fast read; eventually-consistent with sum over history)
+  balanceBefore   Decimal   @db.Decimal(20, 8)
+  balanceAfter    Decimal   @db.Decimal(20, 8)
+
+  // Metadata
+  description     String?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+
+  @@index([transactionId])
+  @@index([accountId, createdAt])
+  @@index([accountId, currency, createdAt])
+  @@index([transactionType])
+}
+
+// Outbox table for reliable event publishing (per ARCHITECTURE.md Outbox Pattern)
+model OutboxEvent {
+  id              String    @id @default(uuid()) @db.Uuid
+  topic           String    // Kafka topic — e.g., ledger.events, transfer.events
+  eventType       String    // Specific event — e.g., LedgerEntriesCommitted
+
+  // CloudEvents envelope payload (per ARCHITECTURE.md Event Schema)
+  payload         Json
+  correlationId   String?   // For distributed tracing
+  causationId     String?   // Event that caused this event
+
+  // Publish state
+  published       Boolean   @default(false)
+  publishedAt     DateTime?
+  retryCount      Int       @default(0)
+  lastError       String?
+  nextRetryAt     DateTime?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([published, createdAt])
+  @@index([correlationId])
+  @@index([nextRetryAt])
+}

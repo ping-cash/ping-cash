@@ -1,0 +1,38 @@
+{
+  "name": "@ping/ledger-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Double-entry accounting + outbox publisher",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch --onSuccess \"node dist/index.js\"",
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "clean": "rm -rf dist",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@ping/config": "workspace:*",
+    "@ping/types": "workspace:*",
+    "@ping/utils": "workspace:*",
+    "@fastify/cors": "^9.0.0",
+    "@fastify/helmet": "^11.0.0",
+    "@fastify/jwt": "^8.0.0",
+    "@prisma/client": "^5.10.0",
+    "fastify": "^4.26.0",
+    "kafkajs": "^2.2.4",
+    "pino": "^8.19.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "prisma": "^5.10.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.3.0"
+  }
+}

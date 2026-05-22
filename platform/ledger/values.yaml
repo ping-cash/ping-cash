@@ -1,0 +1,24 @@
+image:
+  repository: ghcr.io/ping-cash/ledger-service
+  tag: ""
+  pullPolicy: IfNotPresent
+replicas: 1  # outbox poller is single-instance for at-least-once safety
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 512Mi }
+service:
+  port: 3005
+  targetPort: 3005
+secrets:
+  external:
+    enabled: true
+    storeName: openbao-cluster
+    paths:
+      postgresUrl: ping/ledger-svc/postgres_url
+      kafkaBrokers: ping/redpanda/brokers
+istio:
+  virtualService:
+    enabled: false  # ledger-service is internal-only; no external host
+healthcheck:
+  liveness: { path: /healthz, initialDelaySeconds: 5, periodSeconds: 30 }
+  readiness: { path: /readyz, initialDelaySeconds: 5, periodSeconds: 10 }
