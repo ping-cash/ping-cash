@@ -25,26 +25,36 @@
 
 ---
 
-## Quick Start
+## How This Repo Ships
+
+Code lives here. Builds happen in GitHub Actions. Deployments happen via Flux on the OpenOva Sovereign at [openova-io/openova-private](https://github.com/openova-io/openova-private). There is no local backend stack.
+
+```
+push → CI matrix-builds container per service → ghcr.io/ping-cash/<svc>:<sha>
+     → Blueprint bp-ping:<semver> published
+     → SHA-bump PR opened against openova-io/openova-private
+     → Flux on the Sovereign reconciles
+     → operator walks the surface on the Sovereign dev environment
+```
+
+See [ADR 0006](docs/adr/0006-deployment-via-openova-sovereign.md) for the deployment model.
+
+## Dev Loop
 
 ```bash
 git clone https://github.com/ping-cash/ping-cash.git
 cd ping-cash
 
-# Install
+# Install workspace dependencies (TypeScript tooling only — no databases)
 pnpm install
 
-# Start local infra (Postgres, Mongo, Redis, Redpanda, MailHog)
-pnpm docker:up
-
-# Run database migrations
-pnpm db:migrate
-
-# Start dev servers
-pnpm dev
+# Edit code; CI runs the same checks on push
+pnpm typecheck
+pnpm lint
+pnpm test
 ```
 
-For detailed dev environment setup (Expo on iPhone behind corporate VPN, SOCKS proxies, etc.) see [docs/RUNBOOKS.md](docs/RUNBOOKS.md).
+Mobile-app UI work (Expo, simulators, physical-device testing) — see [`apps/mobile/README.md`](apps/mobile/README.md). For network-tunnel setup behind a corporate VPN, see [docs/RUNBOOKS.md § Network Configuration](docs/RUNBOOKS.md#network-configuration).
 
 ---
 
@@ -64,7 +74,6 @@ ping-cash/
 ├── apps/                 ← client apps
 │   └── mobile/           ← @ping/mobile (React Native + Expo)
 ├── scripts/              ← init scripts (Postgres, Mongo)
-├── docker-compose.yml    ← local infra
 ├── turbo.json
 └── pnpm-workspace.yaml
 ```

@@ -9,13 +9,10 @@
   },
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "turbo dev",
-    "dev:services": "turbo dev --filter='./services/*'",
     "dev:mobile": "pnpm --filter @ping/mobile dev",
     "dev:mobile:tunnel": "pnpm --filter @ping/mobile tunnel",
     "build": "turbo build",
     "test": "turbo test",
-    "test:e2e": "turbo test:e2e",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
     "typecheck": "turbo typecheck",
@@ -23,12 +20,6 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "turbo clean && rm -rf node_modules",
     "db:generate": "turbo db:generate",
-    "db:migrate": "turbo db:migrate",
-    "db:push": "turbo db:push",
-    "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
-    "docker:build": "turbo docker:build",
-    "docker:push": "turbo docker:push",
     "prepare": "husky"
   },
   "devDependencies": {

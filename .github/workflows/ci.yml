@@ -56,9 +56,9 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: cash
-          POSTGRES_PASSWORD: cash
-          POSTGRES_DB: cash_test
+          POSTGRES_USER: ping
+          POSTGRES_PASSWORD: ping
+          POSTGRES_DB: ping_test
         ports:
           - 5432:5432
         options: >-
@@ -78,7 +78,7 @@ jobs:
           --health-retries 5
 
     env:
-      POSTGRES_URL: postgresql://cash:cash@localhost:5432/cash_test
+      POSTGRES_URL: postgresql://ping:ping@localhost:5432/ping_test
       REDIS_URL: redis://localhost:6379
 
     steps:

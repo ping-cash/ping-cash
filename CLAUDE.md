@@ -39,20 +39,19 @@ Default ceiling = 5 (per user-global §5). Reserve the 5th slot for high-confide
 
 ## Dev Commands
 
+There is no local backend stack. Code → push → CI builds → Flux deploys to the Sovereign → operator walks on the dev environment.
+
 ```bash
-pnpm install              # Install all workspaces
-pnpm docker:up            # Local infra (Postgres, Mongo, Redis, Redpanda, MailHog)
-pnpm db:migrate           # Run Prisma migrations
-pnpm dev                  # All services (turbo)
-pnpm dev:services         # Backend services only
-pnpm dev:mobile           # Expo (mobile app)
-pnpm dev:mobile:tunnel    # Expo via localtunnel (for iPhone access through corporate VPN)
-pnpm test                 # All tests
-pnpm typecheck            # All TS typechecks
-pnpm lint                 # All lints
+pnpm install              # Install workspace TS deps (no databases)
+pnpm typecheck            # Same check CI runs
+pnpm lint
+pnpm test                 # Unit tests (no external services required)
+
+pnpm dev:mobile           # Expo simulator for UI work
+pnpm dev:mobile:tunnel    # Expo via localtunnel (iPhone behind corporate VPN)
 ```
 
-Full operator how-tos (port mappings, network workarounds, troubleshooting) → [docs/RUNBOOKS.md](docs/RUNBOOKS.md).
+Mobile-app specifics → [`apps/mobile/README.md`](apps/mobile/README.md). Network-tunnel setup → [`docs/RUNBOOKS.md § Network Configuration`](docs/RUNBOOKS.md#network-configuration).
 
 ---
 
@@ -88,10 +87,10 @@ Full list in [docs/GLOSSARY.md § Banned Terms](docs/GLOSSARY.md#banned-terms-do
 
 | Issue | Workaround | Tracking |
 |---|---|---|
-| PostgreSQL port 5432 collides with SSH tunnel on dev VM | Docker Compose exposes Postgres on `5433` externally; internal port still 5432 | [docs/RUNBOOKS.md § Local Development](docs/RUNBOOKS.md#local-development) |
 | Expo behind corporate VPN can't be accessed from iPhone | SSH SOCKS proxy + localtunnel (NOT ngrok — auth-required) | [docs/RUNBOOKS.md § Network Configuration](docs/RUNBOOKS.md#network-configuration) |
 | pnpm strict `node_modules` breaks Metro bundler | Add `node-linker=hoisted` to `.npmrc` | [docs/RUNBOOKS.md § Lessons Learned](docs/RUNBOOKS.md#lessons-learned-dev-env) |
 | `@babel/runtime` peer dep missing for Expo | `pnpm add @babel/runtime` in `apps/mobile` | Same |
+| iOS GHA build cap on private repos | Temporarily flip repo public: `gh repo edit --visibility public` | [ADR 0006 § iOS Build Toggle](docs/adr/0006-deployment-via-openova-sovereign.md#ios-build-toggle) |
 
 ---
 

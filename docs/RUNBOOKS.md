@@ -1,184 +1,120 @@
 # Runbooks
 
-**WHAT:** Operator how-tos for everyday development, deployment, and recovery tasks. The "I-need-to-do-X-right-now" reference.
+**WHAT:** Operator how-tos for development, build, deploy, and recovery tasks. The "I-need-to-do-X-right-now" reference.
 
 **AUTHORITY:** 📐 PERMANENT.
 
-This document was consolidated on 2026-05-21 from:
-- `docs/DEV-ENVIRONMENT.md` (development environment setup)
-
-Per-incident playbooks (specific failures, postmortems) live in [runbooks/](runbooks/) — this file is for *generic* operator procedures.
+Per-incident playbooks (specific failures, postmortems) live in [`runbooks/`](runbooks/) — this file is for *generic* operator procedures.
 
 ---
 
 ## Table of Contents
 
-1. [Machine Requirements](#machine-requirements)
-2. [First-Time Setup](#first-time-setup)
-3. [Local Development](#local-development)
-4. [Mobile App (Expo)](#mobile-app-expo)
-5. [Network Configuration](#network-configuration)
-6. [Quick Reference](#quick-reference)
-7. [Troubleshooting](#troubleshooting)
-8. [Common Operator Tasks](#common-operator-tasks)
+1. [Mental Model: How Code Ships](#mental-model-how-code-ships)
+2. [Dev Loop for Code Authoring](#dev-loop-for-code-authoring)
+3. [Mobile App (Expo)](#mobile-app-expo)
+4. [Network Configuration (Corporate VPN)](#network-configuration-corporate-vpn)
+5. [Deploying to the Sovereign](#deploying-to-the-sovereign)
+6. [iOS Build via Public Toggle](#ios-build-via-public-toggle)
+7. [Common Operator Tasks](#common-operator-tasks)
+8. [Troubleshooting](#troubleshooting)
 9. [Lessons Learned (Dev Env)](#lessons-learned-dev-env)
 
 ---
 
-## Machine Requirements
-
-> **Source:** previously docs/DEV-ENVIRONMENT.md § "Machine Requirements" (merged here on 2026-05-21).
-
-| Resource | Minimum | Recommended |
-|---|---|---|
-| CPU | 2 cores | 4 cores |
-| RAM | 8 GB | 16 GB |
-| Disk | 20 GB free | 40 GB free |
-| OS | Ubuntu 22.04 | Ubuntu 22.04 |
-
-### Memory Budget
+## Mental Model: How Code Ships
 
 ```
-PostgreSQL:        ~200 MB
-MongoDB:           ~300 MB
-Redis:             ~100 MB
-Redpanda:          ~1 GB (configured limit)
-Redpanda Console:  ~100 MB
-MailHog:           ~50 MB
-────────────────────────
-Subtotal:          ~1.75 GB
-
-+ Node.js services: ~500 MB
-+ Expo Metro:       ~500 MB
-────────────────────────
-Grand Total:       ~2.75 GB
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────────────────┐
+│  Edit code      │ →  │  Push to main   │ →  │  GitHub Actions CI          │
+│  on bastion     │    │                 │    │  • matrix-build per service │
+│  (TS only,      │    │                 │    │  • image → ghcr.io          │
+│   no DBs)       │    │                 │    │  • publish Blueprint        │
+└─────────────────┘    └─────────────────┘    │  • PR to openova-private    │
+                                              └──────────┬──────────────────┘
+                                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│   openova-io/openova-private (the Sovereign)                                │
+│   ├── Founder reviews + merges Blueprint SHA-bump PR                        │
+│   ├── Flux reconciles                                                       │
+│   └── Ping services deploy on the Sovereign's vCluster                      │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   ▼
+                       ┌────────────────────────┐
+                       │  Operator walks the    │
+                       │  surface on the        │
+                       │  Sovereign dev env     │
+                       │  → screenshot          │
+                       │  → flip ledger row to  │
+                       │     VERIFIED-PASS      │
+                       └────────────────────────┘
 ```
 
-### Required Tools
+There is no local Postgres / MongoDB / Redis / Redpanda on the dev bastion. Everything that needs a real database runs against the Sovereign's dev namespace.
 
-```bash
-sudo apt-get update && sudo apt-get install -y docker-compose-plugin
-npm install -g pnpm
-
-# Verify
-docker compose version  # v5.0.0+
-pnpm --version          # v9.0.0+
-node --version          # v20+
-```
+See [ADR 0006](adr/0006-deployment-via-openova-sovereign.md) for the full architecture.
 
 ---
 
-## First-Time Setup
+## Dev Loop for Code Authoring
 
 ```bash
+# Clone (already done if you're reading this on the bastion)
 git clone https://github.com/ping-cash/ping-cash.git
 cd ping-cash
 
-# Install
+# Install workspace TS dependencies (no DBs, no servers)
 pnpm install
 
-# Start infra (PostgreSQL, MongoDB, Redis, Redpanda, MailHog)
-pnpm docker:up
+# Edit code in your IDE
 
-# Run database migrations
-pnpm db:migrate
+# Run the same checks CI will run
+pnpm typecheck
+pnpm lint
+pnpm test                # unit tests only (no external services)
 
-# Start dev servers
-pnpm dev
+# Commit + push
+git add <files>
+git commit -m "feat(<scope>): <summary>"
+git push                 # CI takes over
 ```
 
----
+### Unit-Test Scope
 
-## Local Development
+Unit tests in this repo run **without any external service**. They stub:
+- HTTP clients (Privy, TransFi, Twilio, WhatsApp, Persona, Stripe, Solana RPC)
+- Database access (per-service Prisma `__mocks__/` or in-memory equivalents)
+- Kafka producers (the outbox is unit-testable; the publisher isn't)
 
-### Port Mappings
-
-| Service | Internal | External | Notes |
-|---|---|---|---|
-| PostgreSQL | 5432 | **5433** | Changed to avoid SSH tunnel conflict |
-| MongoDB | 27017 | 27017 | |
-| Redis | 6379 | 6379 | |
-| Redpanda (Kafka) | 9092 | 19092 | |
-| Redpanda Console | 8080 | 8080 | Web UI |
-| MailHog SMTP | 1025 | 1025 | Email testing |
-| MailHog Web | 8025 | 8025 | |
-
-### Credentials (Local Dev Only)
-
-| Service | Username | Password |
-|---|---|---|
-| PostgreSQL | ping | ping |
-| MongoDB | ping | ping |
-
-> **Never use these credentials in any environment outside local dev.** Production secrets live in Doppler/Vault and are mounted via External Secrets Operator — see [ARCHITECTURE.md § Secrets Management](ARCHITECTURE.md#secrets-management).
-
-### Frontend-Only Mode
-
-If you're only working on mobile UI, skip the backend services:
-
-```bash
-cd apps/mobile
-npx expo start --port 8081
-lt --port 8081  # For iPhone access (see Network Configuration)
-```
-
-The mobile app will show **Backend Status: Disconnected** — this is expected and the UI still works.
-
-### Stop Everything
-
-```bash
-pnpm docker:down
-pkill -f "expo start"
-pkill -f "lt --port"
-```
+Integration / E2E tests run against the **Sovereign dev environment** via a CI job that re-deploys the current SHA, waits for readiness, and walks the deterministic test paths defined in [DOD.md § Deterministic Test](DOD.md#deterministic-test-smoke-for-each-pillar).
 
 ---
 
 ## Mobile App (Expo)
 
-### Project Setup
+The mobile app is built by CI and bundled into the Blueprint. For local UI iteration:
 
 ```bash
 cd apps/mobile
 pnpm install
-pnpm add @babel/runtime  # Required runtime dependency
+pnpm add @babel/runtime   # known peer-dep gap
+
+# Standard simulator mode
+pnpm dev
+
+# Tunnel mode (for physical phone behind corporate VPN — see next section)
+pnpm tunnel
 ```
 
-### Running
-
-```bash
-# From project root
-pnpm dev:mobile         # Standard mode
-pnpm dev:mobile:tunnel  # Tunnel mode (external access)
-
-# Or directly
-cd apps/mobile
-npx expo start
-npx expo start --tunnel
-```
-
-### Environment URLs
-
-| Service | URL |
-|---|---|
-| Expo Metro | http://localhost:8081 |
-| Expo Web | http://localhost:8081 |
-| Localtunnel | https://xxx.loca.lt |
-| PostgreSQL | localhost:5433 |
-| MongoDB | localhost:27017 |
-| Redis | localhost:6379 |
-| Redpanda Console | http://localhost:8080 |
-| MailHog | http://localhost:8025 |
+The mobile app's `lib/api.ts` defaults to `https://api.dev.ping.cash` (Sovereign dev environment). Override via `app.json` `extra.apiUrl` for one-off testing — but never commit a different value.
 
 ---
 
-## Network Configuration
+## Network Configuration (Corporate VPN)
 
 > **Source:** previously docs/DEV-ENVIRONMENT.md § "Network Configuration" (merged here on 2026-05-21).
 
-### Corporate Network with VirtualBox + Corporate VPN
-
-Scenario: Windows host → VirtualBox VM on host-only network (192.168.47.x) → iPhone on WiFi (192.168.100.x), Corporate VPN (Cisco AnyConnect) blocking direct connections.
+For testing Expo on a physical iPhone when the dev bastion is behind a corporate VPN (Cisco AnyConnect, etc.) that blocks direct connections from your phone's network:
 
 ### Solution: SSH SOCKS Proxy + Localtunnel
 
@@ -198,7 +134,7 @@ ss -tlnp | grep 1080
 curl -x socks5://127.0.0.1:1080 https://httpbin.org/ip
 ```
 
-**Step 2: Install & Configure Proxychains**
+**Step 2: Install + configure Proxychains**
 
 ```bash
 sudo apt-get install -y proxychains4
@@ -209,7 +145,6 @@ proxy_dns
 tcp_read_time_out 15000
 tcp_connect_time_out 8000
 
-# Skip local addresses
 localnet 127.0.0.0/255.0.0.0
 localnet 10.0.0.0/255.0.0.0
 localnet 172.16.0.0/255.240.0.0
@@ -220,17 +155,12 @@ socks5 127.0.0.1 1080
 EOF
 ```
 
-**Step 3: Use Localtunnel Instead of Ngrok**
-
-Ngrok requires authentication. Localtunnel creates a reverse tunnel (VM connects OUT) — usually works without proxychains.
+**Step 3: Use Localtunnel** (NOT ngrok — ngrok now requires auth)
 
 ```bash
 npm install -g localtunnel
 
-# Start Expo first
 npx expo start --port 8081 &
-
-# Start localtunnel
 lt --port 8081
 # → "your url is: https://random-words-here.loca.lt"
 ```
@@ -238,98 +168,60 @@ lt --port 8081
 **Step 4: Access from iPhone**
 
 1. Open Safari on iPhone
-2. Go to: `https://random-words-here.loca.lt`
-3. Click the "Click to Continue" button (localtunnel anti-abuse)
+2. Visit `https://random-words-here.loca.lt`
+3. Tap "Click to Continue" (localtunnel anti-abuse)
 4. Expo dev tools load
 
-### Why Ngrok Failed
+### Why Ngrok Fails
 
-1. **Auth required:** Recent ngrok versions require account authentication
-2. **Proxy issues:** Expo's bundled `@expo/ngrok` doesn't respect proxy env vars
-3. **Child process:** Ngrok spawns as separate process, doesn't inherit proxychains wrapper
-
-### Alternative Solutions
-
-**Option A: Windows Port Forwarding** (if you have Windows admin)
-
-```powershell
-# Run as Administrator
-netsh interface portproxy add v4tov4 `
-  listenport=8081 listenaddress=192.168.100.9 `
-  connectport=8081 connectaddress=192.168.47.20
-
-netsh advfirewall firewall add rule name="Expo" `
-  dir=in action=allow protocol=tcp localport=8081
-```
-
-Then on VM:
-
-```bash
-REACT_NATIVE_PACKAGER_HOSTNAME=192.168.100.9 npx expo start
-```
-
-iPhone connects to `exp://192.168.100.9:8081`.
-
-**Option B: Reverse SSH Tunnel** (if you have a public server)
-
-```bash
-ssh -R 0.0.0.0:8081:localhost:8081 your-server.com
-```
+1. Recent ngrok requires account authentication
+2. Expo's bundled `@expo/ngrok` doesn't respect proxy env vars
+3. Ngrok spawns as separate process, doesn't inherit `proxychains` wrapper
 
 ---
 
-## Quick Reference
+## Deploying to the Sovereign
 
-### Start Development Environment
+Deploy = merge a Blueprint SHA-bump PR on `openova-io/openova-private`. The PR is created automatically by CI on every push to `main`. The founder reviews + merges. Flux reconciles within ~60s.
 
-```bash
-# 1. Start infrastructure
-pnpm docker:up
+### Manual Re-Trigger
 
-# 2. Start backend services (when implemented)
-pnpm dev:services
-
-# 3. Start mobile app
-cd apps/mobile
-npx expo start --port 8081
-
-# 4. Tunnel for iPhone access
-lt --port 8081
-# Use the URL provided; password is your VM's public IP: curl -s https://ifconfig.me
-```
-
-### Diagnostic Commands
+If CI didn't auto-create the PR (e.g., a workflow file was edited but the matrix didn't run):
 
 ```bash
-# Check port usage
-sudo ss -tlnp | grep :PORT
+# Find the latest GHCR images for this SHA
+gh api repos/ping-cash/ping-cash/actions/runs --jq '.workflow_runs[0]'
 
-# Check docker containers
-docker compose ps
-docker logs ping-postgres
-
-# Check SSH tunnel
-ps aux | grep "ssh -fN"
-
-# Test SOCKS proxy
-curl -x socks5://127.0.0.1:1080 https://httpbin.org/ip
-
-# Test localtunnel connectivity
-curl https://your-tunnel-url.loca.lt
+# Bump manually (script lives in scripts/bump-blueprint.sh once written)
+./scripts/bump-blueprint.sh <sha>
 ```
+
+### Rollback
+
+Rollback = revert the bump-PR on `openova-io/openova-private`. Flux re-reconciles to the prior SHA within ~60s.
 
 ---
 
-## Troubleshooting
+## iOS Build via Public Toggle
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| `Cannot resolve module @babel/runtime` | Missing peer dependency | `pnpm add @babel/runtime` in `apps/mobile`, then `rm -rf node_modules/.cache && npx expo start --clear` |
-| `ngrok tunnel took too long to connect` | Network restrictions / auth required | Use localtunnel with proxychains (see Network Configuration) |
-| PostgreSQL container exits with "Permission denied" | Init script not readable | `chmod 644 scripts/init-postgres.sql && docker compose down && docker volume rm ping_postgres_data && docker compose up -d` |
-| `Address already in use` for port 5432 | SSH tunnel using the port | Change port in `docker-compose.yml` to `5433:5432` |
-| Expo web preview not working | Missing web deps | `npx expo install react-native-web react-dom` |
-| Metro bundler can't resolve modules | pnpm strict node_modules structure | Add `node-linker=hoisted` to `.npmrc` |
+iOS Expo builds take ~20 minutes each. GitHub Actions caps free private-repo minutes (~2000/month) but provides **unlimited minutes for public repos**. The Ping repo is built to tolerate temporary public visibility:
+
+- Source code is acceptable to publish — the brand strategy, ADRs, and architecture are not competitive secrets
+- Secrets (Privy, TransFi, Twilio, WhatsApp, Persona, Stripe keys) live in **OpenBao on the Sovereign**, NEVER in this repo
+- No PATs / API keys are checked in (verified during the 2026-05-21 rebrand)
+
+```bash
+# Before a build batch
+gh repo edit ping-cash/ping-cash --visibility public
+
+# Run the iOS build workflow
+gh workflow run ios-build.yml
+
+# After: optionally flip back
+gh repo edit ping-cash/ping-cash --visibility private
+```
+
+> **Never** flip public if there's uncommitted work that hasn't been reviewed for secrets. Run `git diff` and `git ls-files | xargs grep -lE '(ghp_|sk_|pk_|secret_)' --include='*'` first.
 
 ---
 
@@ -337,59 +229,86 @@ curl https://your-tunnel-url.loca.lt
 
 ### Add a New Backend Service
 
-1. Scaffold from `services/transfer` template
-2. Update `pnpm-workspace.yaml` (already covers `services/*`)
+1. Scaffold from `services/transfer/` template
+2. `pnpm-workspace.yaml` already covers `services/*` — no edit needed
 3. Add Prisma schema in `services/<name>/prisma/`
-4. Add Dockerfile + GitHub Actions matrix entry
-5. Update `docs/ARCHITECTURE.md` Service Catalog table
-6. File ADR in `docs/adr/` if the service introduces a new pattern
+4. Add `platform/<name>/` Helm chart (mirror existing pattern)
+5. Add the service to the matrix in `.github/workflows/build.yml`
+6. Add the chart reference to `products/bp-ping/blueprint.yaml`
+7. Update [`docs/ARCHITECTURE.md § Service Catalog`](ARCHITECTURE.md#service-catalog)
+8. File an ADR in `docs/adr/` if the service introduces a new architectural pattern
+9. Push → CI builds the new image → Blueprint version bumps → SHA-PR opens → founder merges → Flux deploys
 
 ### Bump a Dependency
 
 ```bash
-pnpm up -r <package>          # All workspaces
-pnpm up -r --filter @ping/transfer-service <package>  # Single workspace
+pnpm up -r <package>                                       # All workspaces
+pnpm up -r --filter @ping/transfer-service <package>       # Single workspace
+git commit -am "chore: bump <package>"
+git push
+# CI re-runs lint + typecheck + test; rebuilds images on the new SHA
 ```
 
 ### Rotate a Secret
 
-1. Update value in Doppler/Vault (do NOT commit to repo)
-2. Trigger External Secrets Operator sync (typically <60s)
-3. Rolling-restart consumer pods if needed
+Secrets live in OpenBao on `openova-private`. To rotate:
+
+1. Founder updates the value in OpenBao (e.g., `vault kv put ping/twilio/auth_token value=<new>`)
+2. External Secrets Operator on the Sovereign picks up the change (~60s)
+3. Rolling-restart consumer pods if the service caches the secret in-memory:
+   ```bash
+   gh workflow run rolling-restart.yml --field service=auth
+   ```
 
 ### Database Migrations
 
-PostgreSQL (Prisma):
+Migrations run as a Helm pre-install/pre-upgrade Job (defined in each chart's `templates/migration-job.yaml`). To trigger manually outside the deploy flow:
+
 ```bash
-pnpm --filter @ping/transfer-service db:migrate:create add_kyc_tier
-pnpm --filter @ping/transfer-service db:migrate:deploy
-pnpm --filter @ping/transfer-service db:generate
+gh workflow run db-migrate.yml --field service=transfer
 ```
 
-MongoDB (one-shot scripts in `migrations/`):
+The Job runs `prisma migrate deploy` against the Sovereign's CNPG instance using the connection string mounted from the `database-url` ExternalSecret.
+
+### Run Integration / E2E Tests
+
+Triggered by CI on push to `main`. To run on-demand against the current dev environment:
+
 ```bash
-node migrations/001_add_kyc_tier.js
+gh workflow run e2e.yml --field environment=dev
 ```
 
-### Cluster Lifecycle
+The workflow deploys the current SHA (if not already deployed) and walks the deterministic test paths.
 
-Use Civo/Vultr console for now. Future: Crossplane Compositions for declarative cluster lifecycle (see [adr/](adr/) for decision records).
+---
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `Cannot resolve module @babel/runtime` | Missing peer dependency in mobile app | `pnpm add @babel/runtime` in `apps/mobile`, then `rm -rf node_modules/.cache && npx expo start --clear` |
+| `ngrok tunnel took too long to connect` | Network restrictions / auth required | Use localtunnel with proxychains (see [Network Configuration](#network-configuration-corporate-vpn)) |
+| Metro bundler can't resolve modules | pnpm strict node_modules structure | Add `node-linker=hoisted` to `.npmrc` |
+| CI matrix job failed for one service | Test or lint regression | Check the failing job in GHA; fix locally; push fix; CI re-runs |
+| Blueprint SHA-bump PR never opens | CI workflow file changed but matrix didn't run | Manually trigger `bump-blueprint.yml` or re-run the failed workflow |
+| Flux not reconciling after Sovereign-side merge | Flux controller lag or chart validation error | On the Sovereign: `flux get kustomizations -n ping` (founder action) |
+| Pod CrashLoopBackOff after deploy | Missing ExternalSecret value or wrong env var | Check pod logs via Sovereign Grafana / Loki; verify OpenBao path exists |
 
 ---
 
 ## Lessons Learned (Dev Env)
 
-> **Source:** previously docs/DEV-ENVIRONMENT.md § "Summary of Lessons Learned" (merged here on 2026-05-21).
+> **Source:** previously docs/DEV-ENVIRONMENT.md § "Summary of Lessons Learned" (merged here on 2026-05-21, updated 2026-05-22 for Sovereign-deploy model).
 
-1. **Port conflicts.** Always check existing port usage before starting containers: `sudo ss -tlnp | grep -E ':(5432|27017|6379|8080)'`
-2. **File permissions.** Docker mounted files need appropriate read permissions even with `:ro` mode.
-3. **Ngrok limitations.** Modern ngrok requires auth; use localtunnel as alternative.
-4. **Proxy routing.** Use proxychains for applications that don't respect env proxy vars.
-5. **Localnet exclusions.** Configure proxychains to skip localhost connections.
-6. **Babel runtime.** Expo apps may need explicit `@babel/runtime` dependency.
-7. **Cache clearing.** When bundling fails: `rm -rf node_modules/.cache .expo`
-8. **Localtunnel reverse tunnels.** Localtunnel connects OUT from VM, simpler than forward proxying.
-9. **pnpm + Metro.** pnpm's strict `node_modules` structure breaks Metro; add `node-linker=hoisted` to `.npmrc`.
-10. **Reverse tunnels save complexity.** Prefer over forward proxying when working through corporate firewalls.
+1. **Builds always go through CI.** Never `docker build` on the bastion — the resulting image isn't reproducible from a committed SHA, violating the IaC-First principle ([PRINCIPLES § 3](PRINCIPLES.md#3-ci-is-the-only-build-path)).
+2. **Deploys always go through Flux.** Never `kubectl apply` against the Sovereign — drift will be reconciled away, and the change is invisible to the audit trail.
+3. **Ngrok requires auth.** Use localtunnel as the alternative for Expo physical-device testing.
+4. **Proxy routing matters.** Use proxychains for applications that don't respect env proxy vars.
+5. **Babel runtime.** Expo apps may need explicit `@babel/runtime` dependency.
+6. **Cache clearing.** When bundling fails: `rm -rf node_modules/.cache .expo`
+7. **Localtunnel reverse tunnels** simplify corporate-firewall workarounds (VM connects OUT instead of inbound).
+8. **pnpm + Metro.** pnpm's strict `node_modules` structure breaks Metro; add `node-linker=hoisted` to `.npmrc`.
+9. **iOS build minutes.** Temporary public-repo toggle gives unlimited GitHub Actions minutes for iOS builds (see [iOS Build via Public Toggle](#ios-build-via-public-toggle)).
+10. **No local databases.** The dev bastion is for code authoring only — Postgres/Mongo/Redis/Redpanda run on the Sovereign.
 
-For deeper post-incident lessons, see [lessons-learned/](lessons-learned/).
+For deeper post-incident lessons, see [`lessons-learned/`](lessons-learned/).

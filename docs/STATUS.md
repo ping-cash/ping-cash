@@ -35,9 +35,7 @@
 | Shared config package | ✅ DONE | `packages/config` (`@ping/config`) |
 | Shared utils package | ✅ DONE | `packages/utils` (`@ping/utils`) |
 | Transfer service template | ✅ DONE | `services/transfer` (`@ping/transfer-service`) |
-| Docker Compose for local infra | ✅ DONE | `docker-compose.yml` (Postgres, Mongo, Redis, Redpanda, MailHog) |
-| Init scripts (Postgres + Mongo) | ✅ DONE | `scripts/init-postgres.sql`, `scripts/init-mongo.js` |
-| GitHub Actions CI | ✅ DONE | `.github/workflows/ci.yml` |
+| GitHub Actions CI | 🟡 STUB | `.github/workflows/ci.yml` exists; needs full matrix-build + Blueprint-publish + Sovereign-PR pipeline |
 | Mobile app scaffold (Expo) | ✅ DONE | `apps/mobile/` |
 | Docs canonical structure | ✅ DONE | `docs/` (this consolidation, 2026-05-21) |
 
@@ -128,6 +126,14 @@ All external service accounts confirmed provisioned by founder (2026-05-21). Rea
 ---
 
 ## Recent Changes
+
+### 2026-05-22 — Remove docker-compose; CI/Flux-only dev model
+
+- Deleted `docker-compose.yml` and `scripts/init-*.{sql,js}` (no local infrastructure)
+- Removed `docker:up` / `docker:down` from `package.json`
+- Rewrote `docs/RUNBOOKS.md` to describe code → CI → Flux → Sovereign workflow
+- Updated `README.md`, `CLAUDE.md`, `apps/mobile/README.md` to match the Sovereign-deploy model
+- Reframed: dev bastion is for code authoring only; databases run on the Sovereign
 
 ### 2026-05-21 — Rebrand Cash → Ping; Doc Consolidation
 
