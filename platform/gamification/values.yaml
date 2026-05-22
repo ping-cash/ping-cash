@@ -1,0 +1,10 @@
+image: { repository: ghcr.io/ping-cash/gamification-service, tag: "" }
+replicas: 2
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 256Mi }
+service: { port: 3009, targetPort: 3009 }
+istio: { virtualService: { enabled: false } }
+healthcheck:
+  liveness: { path: /healthz, initialDelaySeconds: 5, periodSeconds: 30 }
+  readiness: { path: /readyz, initialDelaySeconds: 5, periodSeconds: 10 }
