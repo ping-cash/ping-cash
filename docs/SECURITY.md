@@ -297,16 +297,77 @@ Default-deny ingress + egress at namespace level. Each service explicitly allows
 
 ---
 
+## Smart Contract Security (Earn Vault + Phase 2 contracts)
+
+### Threat model
+
+| Threat | Impact | Mitigation |
+|---|---|---|
+| Vault exploit drains user deposits | Critical — user funds at risk | OtterSec / Halborn audit; multi-protocol diversification (max 40% any single venue); Nexus Mutual insurance ($1M+) |
+| Reentrancy attack | Critical | Anchor's CPI safety + reentrancy guards in code |
+| Underlying DeFi protocol exploit (Kamino, Marginfi, Aave, Drift) | Up to 40% of vault TVL | Diversification across 4 venues; per-protocol position monitoring |
+| Oracle manipulation (Pyth feeds) | High — wrong prices feed POMM | Secondary Switchboard oracle cross-check; reject if delta > 0.3% |
+| MEV / sandwich attack on swaps | Medium | Jupiter MEV-protected mode; randomized execution windows |
+| Squads multisig key compromise | Critical — POMM redirect, treasury drain | Hardware wallets enforced for all 5 signers; ceremony procedures for high-value txs |
+| Smart contract upgrade rug | Critical | 7-day timelock on ALL parameter changes; 30-day timelock on contract upgrades; public on-chain proposals |
+| Token treasury sales destabilizing $PING | Medium | Capped 1%/quarter; on-chain timelock; 7-day public notice |
+| Welcome stake Sybil farming | Medium — token dilution | KYC Tier 1 required; phone uniqueness; ML fraud scoring; first-transfer $10+ requirement |
+
+### Audit pipeline (mandatory pre-mainnet)
+
+```
+PHASE A: Smart contract development
+  ├── Anchor / Rust development with formal-verification-friendly patterns
+  ├── Internal review (architect-level)
+  └── Internal testing (unit + integration on Solana devnet)
+
+PHASE B: External audit
+  ├── OtterSec OR Halborn lead audit ($50-80K)
+  ├── 4-6 week engagement
+  ├── Issue triage + remediation
+  └── Public audit report published
+
+PHASE C: Bug bounty (pre-mainnet)
+  ├── Immunefi listing 14 days before mainnet
+  ├── $50K-$100K bounties for critical findings
+  └── Ramp to $250K-$500K post-launch
+
+PHASE D: Mainnet launch
+  ├── Initial deployment with capped TVL ($1M-$5M)
+  ├── 4-week observation period
+  ├── Cap progressively raised based on stability
+  └── Nexus Mutual insurance coverage live
+
+PHASE E: Ongoing
+  ├── Quarterly re-audit of any contract changes
+  ├── Permanent Immunefi bug bounty program
+  └── Real-time on-chain monitoring (forta-style)
+```
+
+### Squads multisig procedures
+
+- **5 signers**, all founders + key engineering + compliance lead
+- **Hardware wallets enforced** (Ledger / Trezor) for all signers
+- **3-of-5 threshold** for routine operations (treasury sales, parameter changes)
+- **4-of-5 threshold** for high-value operations (large transfers from Stability Reserve, contract upgrade)
+- **Ceremony procedures** documented for any tx > $100K — separate physical locations, video record, time delays
+
 ## Compliance Roadmap
 
 | Requirement | Status | Owner |
 |---|---|---|
-| KYC tiered onboarding (Persona) | 🔴 Not started | Compliance |
-| AML transaction monitoring | 🔴 Not started | Compliance |
-| Sanctions screening (OFAC, UN, EU) | 🔴 Not started | Compliance |
-| Privacy policy + ToS | 🔴 Not drafted | Legal |
+| KYC tiered onboarding (Persona via `dynolabs-io/kyc`) | 🔴 Not started | Compliance via shared service (per [ADR 0011](adr/0011-kyc-shared-service.md)) |
+| AML transaction monitoring | 🔴 Not started | Compliance + `compliance-svc` |
+| Sanctions screening (OFAC, UN, EU via Chainalysis KYT) | 🔴 Not started | `compliance-svc` |
+| Privacy policy + ToS | 🔴 Not drafted | Legal (crypto-fintech counsel) |
 | GDPR data-subject request flow | 🔴 Not built | Engineering |
 | SOC 2 Type I audit | 🔴 Not initiated | Compliance |
 | Penetration test | 🔴 Not scheduled | Security |
-| Bug bounty program | 🔴 Not launched | Security |
-| GCC money transmission licenses | 🔴 See [BUSINESS-STRATEGY.md § Barrier 2](BUSINESS-STRATEGY.md#barrier-2-licensing-per-country) | Founder |
+| Bug bounty program (Immunefi) | 🔴 Not launched | Security |
+| OtterSec / Halborn smart contract audit | 🔴 Phase 2 | Security (Foundation funds) |
+| Nexus Mutual insurance | 🔴 Phase 2 | Treasury |
+| GCC money transmission licenses | 🔴 Year 2+ if needed | Founder (currently ride on partners) |
+| VARA crypto license (UAE) | 🔴 Year 2 with DMCC entity | Founder |
+| Reg D / Reg S exempt offering documentation (token sale) | 🔴 Phase 2 | Legal |
+| Geo-blocking US persons | 🔴 At Phase 2 launch | Engineering |
+| Liechtenstein TVTG or EU MiCA registration | 🔴 Phase 2 (whichever cheaper) | Legal |

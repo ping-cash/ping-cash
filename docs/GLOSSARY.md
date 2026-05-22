@@ -21,6 +21,66 @@
 | **Sender** | The person initiating a transfer; always has a Ping account |
 | **Off-ramp** | A provider that converts USDC → local fiat (TransFi is primary) |
 | **On-ramp** | A provider that converts fiat → USDC (Stripe, Checkout.com, bank rails) |
+| **Provider cost** | The portion of a fee that goes to an external partner (TransFi, Lean, Stripe, etc.). Always paid in USDC. Cannot be discounted. |
+| **Ping markup** | The portion of a fee that Ping retains as margin. Discountable by tier + pay-in-PING. The only portion that gets burned as $PING. |
+| **Merciful pricing** | Founder principle: charge only enough to cover real provider costs. FX spread fixed at 0.4% (per ADR 0016), not 2-5% like incumbents. |
+| **Phase 1 / Phase 2** | Pre-token platform launch (Ping Points) vs. token-live platform ($PING) — per ADR 0015 |
+| **Ping Points (PP)** | Phase-1 internal credit, database-tracked, non-token, 1 PP = 1 future $PING. Converts 1:1 to $PING at TGE. |
+| **TGE** | Token Generation Event — the moment $PING is minted and distributed on Solana mainnet. |
+
+## $PING Token + Tier System
+
+| Term | Meaning |
+|---|---|
+| **$PING** | Solana SPL Token-2022, 1B supply cap, Ping's utility token. Issued by Ping Foundation (Cayman). |
+| **Welcome stake** | 1,200 $PING granted on first verified outbound transfer ≥ $10. 200 unlocked + 1,000 conditionally locked. Per ADR 0010. |
+| **Tier basis** | Sum of held $PING + locked welcome stake + vault-distributed $PING. Determines tier. |
+| **Bronze / Silver / Gold / Platinum** | Tier names. Thresholds 0 / 1,000 / 10,000 / 100,000 $PING. Discounts 0% / 50% / 75% / 90% on Ping markup. |
+| **Pay-in-PING** | Mode where user pays the Ping markup portion of a fee in $PING instead of USDC. Gets 75% off the (tier-discounted) markup. $PING used is burned. |
+| **Clawback** | Reconciliation at sell-time: looks back 365 days of fees paid, computes fair tier, burns excess discount taken. Per ADR 0013. |
+| **Conditional unlock** | Welcome stake locked portion (1,000 PING) unlocks 200 at a time when user hits milestones (referrals, transfers, retention). 2y backstop. |
+
+## Earn Vault + Custody
+
+| Term | Meaning |
+|---|---|
+| **Earn Vault** | Non-custodial Solana smart contract that auto-stakes user USDC into DeFi for yield. Per ADR 0012. |
+| **vUSDC** | Receipt token issued 1:1 by Earn Vault when user deposits USDC. Hides from user UX — they see only USDC balance. |
+| **Auto-stake** | Default ON for all users: incoming USDC is auto-staked into the Earn Vault (via one-time delegated authority). |
+| **Atomic unstake-and-send** | When user sends USDC, the unstake + transfer happens in a single Solana transaction (~1 second). |
+| **Delegated authority** | User signs once at signup giving the Earn Vault smart contract permission to move their USDC. Can be revoked anytime. |
+| **Harvest** | Daily on-chain operation: vault collects yield from underlying DeFi, splits 40% Ping / 60% user, distributes $PING to depositors. |
+| **Underlying protocols** | The DeFi protocols the vault deploys to: Kamino, Marginfi, Aave Solana, Drift. Plus 5% liquid buffer. |
+
+## Market Making + Reserves
+
+| Term | Meaning |
+|---|---|
+| **POMM** | Protocol-Owned Market Making — algorithmic on-chain contract that intervenes in $PING/USDC pool to dampen volatility within ±15% EMA band. Per ADR 0009. |
+| **Stability Reserve** | USDC accumulated from POMM operations + 50% of treasury-yield buyback. Squads multisig + Streamflow-locked. Used to buy $PING dips. |
+| **Foundation $PING Reserve** | $PING accumulated by POMM (when buying dips) + 50% of treasury-yield buyback. Used to sell $PING peaks (counter-cyclical). |
+| **Internal swap** | Ping's market-maker contract that fills user $PING buy/sell orders against its own inventory at 0.3% spread (each side). Hedges via Jupiter. Per ADR 0009. |
+| **Burn address** | `1nc1nerator1111111111111111111111111111111` — Solana's well-known burn address. Used for all $PING deflationary burns. |
+| **5-layer deflation stack** | (1) 5% revenue buyback-burn, (2) Fee-payment burn, (3) Treasury-yield buyback, (4) Early-unstake penalty burn, (5) Hard supply cap + halving. Per ADR 0008. |
+
+## Multi-Token + DEX
+
+| Term | Meaning |
+|---|---|
+| **Multi-token receive** | Per ADR 0007: Ping wallets accept any SPL token; auto-swap non-USDC to USDC via Jupiter on receipt. Enables $GRID integration etc. |
+| **Jupiter** | Solana's primary DEX aggregator. Ping uses for swap routing + inventory rebalancing. |
+| **Raydium CLMM** | Concentrated-liquidity AMM where $PING/USDC pool is seeded. LP locked 4y then burned. |
+| **Pyth** | Real-time price oracle on Solana. Used for $PING reference price + USDC depeg monitoring. |
+
+## Entities
+
+| Term | Meaning |
+|---|---|
+| **Ping Foundation (Cayman)** | Phase-2 entity that issues $PING token + holds Foundation Treasury. Squads multisig governance. Per ADR 0014. |
+| **Ping Oman Entity** | Existing operating entity. Handles GCC corridor + TransFi/Lean/Tarabut KYB. |
+| **Ping Turkey Entity** | Existing operating entity. Handles Turkish corridor + Stripe Turkey + EU rails. |
+| **Squads multisig** | 3-of-5 multisig on Solana for governance. Controls Ping fee account, treasury, POMM pause. |
+| **Streamflow** | Solana vesting contract used for LP lock + welcome stake conditional unlocks + team vesting. |
 
 ---
 

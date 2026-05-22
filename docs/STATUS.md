@@ -1,28 +1,77 @@
 # Status — What's Built Today vs Design
 
-**WHAT:** Snapshot of current implementation reality, dated per section. Replaces the old "Current Status" checklist that lived in CLAUDE.md.
+**WHAT:** Snapshot of current implementation reality, dated per section.
 
 **AUTHORITY:** 📐 PERMANENT-refreshable. Updated on every CODE-COMPLETE PR.
 
-**Last refreshed:** 2026-05-21
+**Last refreshed:** 2026-05-23
+
+---
+
+## Architectural Decisions — LOCKED ✅
+
+All major architectural decisions are documented in ADRs 0001-0017 (see [docs/adr/](adr/)). Highlights:
+
+| Area | Decision | ADR |
+|---|---|---|
+| Stablecoin rails | USDC on Solana primary | [0001](adr/0001-stablecoin-rails-on-solana.md) |
+| Service mesh | Istio (over Kong/Traefik) | [0002](adr/0002-istio-service-mesh.md) |
+| Data layer | PostgreSQL (CP) + MongoDB (AP) + Redis | [0003](adr/0003-cap-database-split.md) |
+| Wallets | Privy MPC default, external supported | [0004](adr/0004-privy-mpc-wallets.md), [0017](adr/0017-custody-model.md) |
+| Off-ramp | TransFi primary, Wise/Flutterwave/Yellow Card/Thunes failover | [0005](adr/0005-transfi-primary-offramp.md) |
+| Deployment | Blueprint → openova-private Sovereign via Flux | [0006](adr/0006-deployment-via-openova-sovereign.md) |
+| Multi-token receive | Auto-swap to USDC via Jupiter | [0007](adr/0007-multi-token-receive-via-jupiter.md) |
+| Tokenomics | $PING — 1B supply, halving, 5-layer deflation | [0008](adr/0008-ping-tokenomics.md) |
+| Market making | POMM + internal swap with spread | [0009](adr/0009-pomm-internal-swap.md) |
+| Welcome stake | 1,200 $PING: 200 unlocked + 1,000 conditional | [0010](adr/0010-welcome-stake.md) |
+| KYC | Shared dynolabs-io/kyc service | [0011](adr/0011-kyc-shared-service.md) |
+| Earn Vault | Auto-stake, $PING-denominated yield, 40/60 split | [0012](adr/0012-earn-vault.md) |
+| Tier mechanics | Instant on buy + 365-day clawback at sell | [0013](adr/0013-tier-and-clawback.md) |
+| Entity structure | Turkey + Oman + Cayman Foundation | [0014](adr/0014-entity-structure.md) |
+| Phased launch | Ping Points (P1) → $PING token (P2) | [0015](adr/0015-phased-launch-ping-points-to-token.md) |
+| FX pricing | 0.4% cost-covering (merciful) | [0016](adr/0016-fx-cost-covering-pricing.md) |
+| Custody model | Non-custodial + delegated-authority vault | [0017](adr/0017-custody-model.md) |
 
 ---
 
 ## Phase 1 MVP — Pillar Status
 
+🟢 = operator-walked on fresh prov · 🟡 = code lands but not yet walked · 🔴 = not yet implemented
+
 | Pillar | Status | Notes |
 |---|---|---|
-| 1. Auth (phone OTP → JWT → Privy wallet) | 🔴 NOT STARTED | Templates exist; service to be built next |
-| 2. User profiles + contact sync | 🔴 NOT STARTED | |
-| 3. Transfer orchestration | 🟡 SCAFFOLD | Template service in `services/transfer/` with routes + Prisma schema; no production wiring |
-| 4. Wallet (Privy MPC + Solana USDC) | 🔴 NOT STARTED | Privy account not provisioned |
-| 5. Claim service (link + OTP + cash-out selection) | 🔴 NOT STARTED | |
-| 6. Off-ramp (TransFi → GCash/M-Pesa/etc.) | 🔴 NOT STARTED | TransFi account not provisioned |
-| 7. Notify (WhatsApp/SMS) | 🔴 NOT STARTED | Twilio + WhatsApp Business API not provisioned |
-| 8. Mobile app (React Native + Expo) | 🟡 SCAFFOLD | Expo scaffold in `apps/mobile/`; one home screen, no auth flow |
-| 9. Web claim flow (Next.js) | 🔴 NOT STARTED | |
+| 1. Auth (phone OTP → JWT → Privy wallet) | 🔴 NOT STARTED | First service to build |
+| 2. User profiles + Ping Points balance | 🔴 NOT STARTED | Database-backed in Phase 1 |
+| 3. KYC integration (Tier 1/2/3) | 🔴 NOT STARTED | Via dynolabs-io/kyc shared SDK |
+| 4. Transfer orchestration | 🟡 SCAFFOLD | Template service in `services/transfer/`; not wired |
+| 5. Wallet (Privy MPC + Solana USDC) | 🔴 NOT STARTED | Privy account not provisioned |
+| 6. Earn Vault auto-stake | 🔴 NOT STARTED | Solana smart contract + delegated authority flow |
+| 7. Claim service (link + OTP + cash-out selection) | 🔴 NOT STARTED | |
+| 8. Off-ramp (TransFi → GCash/M-Pesa/etc.) | 🔴 NOT STARTED | TransFi KYB pending |
+| 9. Notify (WhatsApp/SMS) | 🔴 NOT STARTED | Twilio + WhatsApp Business API account pending |
+| 10. FX engine (0.4% cost-covering, Pyth oracle) | 🔴 NOT STARTED | |
+| 11. Compliance (Chainalysis sanctions screening) | 🔴 NOT STARTED | |
+| 12. Gamification (welcome-stake milestone tracking) | 🔴 NOT STARTED | |
+| 13. Mobile app (React Native + Expo) | 🟡 SCAFFOLD | Expo scaffold in `apps/mobile/` |
+| 14. Web claim flow (Next.js) | 🔴 NOT STARTED | |
+| 15. CI matrix workflow (per-service build → Blueprint → SHA-PR) | 🟡 STUB | Old workflow exists; needs full rebuild |
 
-🟢 = operator-walked on fresh prov · 🟡 = code lands but not yet walked · 🔴 = not yet implemented
+---
+
+## Phase 2 — Token Pillars
+
+| Pillar | Status | Notes |
+|---|---|---|
+| Cayman Foundation incorporated | 🔴 NOT STARTED | Phase 2 prerequisite (Months 3-6) |
+| Crypto-fintech counsel engaged | 🔴 NOT STARTED | Phase 2 prerequisite |
+| $PING SPL token contract (Anchor) | 🔴 NOT STARTED | Anchor program development |
+| OtterSec / Halborn audit | 🔴 NOT STARTED | |
+| Raydium CLMM pool seeded | 🔴 NOT STARTED | $250K USDC + 50M $PING at TGE |
+| Jupiter Launchpad listing | 🔴 NOT STARTED | |
+| POMM smart contract | 🔴 NOT STARTED | |
+| Internal swap smart contract | 🔴 NOT STARTED | |
+| Welcome stake migration job (Ping Points → on-chain Streamflow) | 🔴 NOT STARTED | Migration cron at TGE |
+| Earn Vault $PING yield distribution | 🔴 NOT STARTED | Switches on at TGE |
 
 ---
 
@@ -35,9 +84,10 @@
 | Shared config package | ✅ DONE | `packages/config` (`@ping/config`) |
 | Shared utils package | ✅ DONE | `packages/utils` (`@ping/utils`) |
 | Transfer service template | ✅ DONE | `services/transfer` (`@ping/transfer-service`) |
-| GitHub Actions CI | 🟡 STUB | `.github/workflows/ci.yml` exists; needs full matrix-build + Blueprint-publish + Sovereign-PR pipeline |
+| GitHub Actions CI (stub) | 🟡 STUB | `.github/workflows/ci.yml`; needs full matrix-build + Blueprint pipeline |
 | Mobile app scaffold (Expo) | ✅ DONE | `apps/mobile/` |
-| Docs canonical structure | ✅ DONE | `docs/` (this consolidation, 2026-05-21) |
+| Docs canonical structure | ✅ DONE | `docs/` (consolidated 2026-05-21) |
+| 17 ADRs covering all architectural decisions | ✅ DONE (2026-05-23) | `docs/adr/0001`-`0017` |
 
 ---
 
@@ -47,39 +97,61 @@
 |---|---|
 | `README.md` (1-page entry with tree-view) | ✅ |
 | `CLAUDE.md` (agent orientation, repo-specific only) | ✅ |
-| `docs/ARCHITECTURE.md` (consolidated technical design) | ✅ |
-| `docs/BUSINESS-STRATEGY.md` (positioning + GTM + competitive) | ✅ |
+| `docs/ARCHITECTURE.md` | ✅ Updated with token + vault + POMM (2026-05-23) |
+| `docs/BUSINESS-STRATEGY.md` | ✅ Updated with finalized fees + tokenomics (2026-05-23) |
 | `docs/PRINCIPLES.md` (engineering rules + anti-patterns) | ✅ |
 | `docs/DOD.md` (definition of done) | ✅ |
 | `docs/STATUS.md` (this file) | ✅ |
 | `docs/RUNBOOKS.md` (operator how-tos) | ✅ |
 | `docs/SECURITY.md` (threat model + secrets) | ✅ |
 | `docs/SRE.md` (SLOs + observability) | ✅ |
-| `docs/GLOSSARY.md` (terms + banned terms) | ✅ |
+| `docs/GLOSSARY.md` (terms + banned terms) | ✅ Expanded with token + vault terms (2026-05-23) |
 | `docs/ROADMAP.md` (phased delivery timeline) | ✅ |
-| `docs/adr/` (architecture decision records — index + seed ADRs) | ✅ |
-| `docs/ledger/TRUST.md` + `TRACKER.md` (live state) | ✅ (placeholder) |
-| `docs/lessons-learned/` (operator field notes) | ✅ (placeholder) |
-| `docs/runbooks/` (per-incident playbooks) | ✅ (placeholder) |
-| `docs/proposals/` (in-flight design proposals) | ✅ (placeholder) |
-| `docs/sessions/` (date-stamped session artifacts) | ✅ (this rebrand session captured) |
-| `docs/archive/` (frozen/superseded content) | ✅ (domain research artifacts moved here) |
+| `docs/adr/` — 17 ADRs | ✅ Complete |
+| `docs/ledger/TRUST.md` + `TRACKER.md` (live state) | ✅ |
 
 ---
 
-## Brand + Domain
+## Entity Structure
 
-| Item | Status |
-|---|---|
-| Brand name selected | ✅ Ping |
-| Primary domain | ⚠ `ping.cash` SELECTED — registration pending at registrar |
-| GitHub org/repo | ✅ `github.com/ping-cash/ping-cash` |
-| Defensive `.com` / `.app` / `.io` / `.money` | 🔴 NOT REGISTERED |
-| App Store / Play Store listings | 🔴 NOT FILED |
+Per [ADR 0014](adr/0014-entity-structure.md):
+
+| Entity | Status | Use |
+|---|---|---|
+| Ping Oman | ✅ Existing | Primary operations — GCC corridor, TransFi/Lean/Tarabut/Tap/Thawani |
+| Ping Turkey | ✅ Existing | Secondary operations — Turkish corridor, Stripe Turkey, iyzico, Wise EU |
+| Ping Foundation (Cayman) | 🔴 NOT INCORPORATED | Phase 2 prerequisite for $PING token |
+| UAE DMCC (optional Year 2) | 🔴 Deferred | For VARA crypto license + UAE-native fintech access |
+| Singapore Pte Ltd (optional Year 2+) | 🔴 Deferred | For Asia operations scale |
 
 ---
 
-## Infrastructure
+## External Service Accounts
+
+Status per [ADR 0014](adr/0014-entity-structure.md):
+
+| Service | Status | Entity for KYB |
+|---|---|---|
+| Privy MPC Wallets | ✅ Provisioned | Either entity |
+| Solana RPC (Helius / QuickNode) | ✅ Provisioned | Either |
+| TransFi (cash-out) | 🟡 KYB to apply | Oman |
+| Lean Technologies (GCC open banking) | 🟡 KYB to apply | Oman |
+| Tarabut Gateway (parallel to Lean) | 🟡 KYB to apply | Oman |
+| Tap Payments (Kuwait/Bahrain/Oman) | 🟡 KYB to apply | Oman |
+| Thawani (Oman native) | 🟡 KYB to apply | Oman |
+| Stripe Turkey + Apple Pay/Google Pay | 🟡 KYB to apply | Turkey |
+| iyzico / Param / BKM (Turkish rails) | 🟡 KYB to apply | Turkey |
+| Bitlo / Paribu (TL ↔ USDC) | 🟡 KYB to apply | Turkey |
+| Wise Business API (EU/UK/US) | 🟡 KYB to apply | Either |
+| Twilio (SMS/OTP) | 🟡 To open | Either |
+| WhatsApp Business API | 🟡 To open | Either |
+| Persona (KYC — via dynolabs-io/kyc) | 🟡 To open | dynolabs-io/kyc service |
+| Chainalysis KYT (compliance) | 🟡 To open | Either |
+| OpenBao (secrets on Sovereign) | ✅ Existing | n/a (Sovereign-provided) |
+
+---
+
+## Infrastructure (from openova-private Sovereign)
 
 Per [ADR 0006](adr/0006-deployment-via-openova-sovereign.md), Ping deploys to the existing OpenOva Sovereign at `openova-io/openova-private`. We don't operate any of the infrastructure below — the Sovereign provides it:
 
@@ -102,38 +174,39 @@ Per [ADR 0006](adr/0006-deployment-via-openova-sovereign.md), Ping deploys to th
 |---|---|
 | `platform/<service>/` Helm charts (one per microservice) | 🔴 NOT WRITTEN |
 | `products/bp-ping/blueprint.yaml` (Blueprint manifest) | 🔴 NOT WRITTEN |
-| `.github/workflows/build.yml` (matrix build + Blueprint publish + Sovereign SHA bump) | 🟡 Stub `ci.yml` exists; needs full pipeline |
-| `ExternalSecret` resources for Privy/TransFi/Twilio/WhatsApp/Persona | 🔴 NOT WRITTEN |
-| OpenBao secret paths populated (founder-side on Sovereign) | 🔴 Founder action needed |
+| `.github/workflows/build.yml` (matrix + Blueprint + Sovereign SHA-bump) | 🟡 Stub `ci.yml` exists |
+| `ExternalSecret` resources | 🔴 NOT WRITTEN |
+| OpenBao secret paths populated | 🔴 Founder action needed |
 
 ---
 
-## External Services
+## Brand + Domain
 
-All external service accounts confirmed provisioned by founder (2026-05-21). Real clients wired from day one. Credentials live in OpenBao on `openova-private`; Ping pods consume via ESO-mounted Secrets.
-
-| Service | Status |
+| Item | Status |
 |---|---|
-| Privy (embedded wallets) | ✅ Provisioned |
-| TransFi (off-ramp) | ✅ Provisioned |
-| Twilio (SMS/OTP) | ✅ Provisioned |
-| WhatsApp Business API | ✅ Provisioned |
-| Persona (KYC) | ✅ Provisioned |
-| OpenBao (secrets, on Sovereign) | ✅ Existing |
-| Solana RPC provider | ✅ Provisioned |
-| Stripe / Checkout.com (cash-in GCC) | ✅ Provisioned |
+| Brand name selected | ✅ Ping |
+| Primary domain | ⚠ `ping.cash` SELECTED — registration pending at registrar |
+| GitHub org/repo | ✅ `github.com/ping-cash/ping-cash` |
+| Defensive `.com` / `.app` / `.io` / `.money` | 🔴 NOT REGISTERED |
+| App Store / Play Store listings | 🔴 NOT FILED |
 
 ---
 
 ## Recent Changes
+
+### 2026-05-23 — Token + Vault + POMM Locked
+
+- Wrote ADRs 0007-0017 covering: multi-token receive, $PING tokenomics, POMM + internal swap, welcome stake, KYC shared service, Earn Vault, tier + clawback, entity structure, phased launch, FX merciful pricing, custody model
+- Updated `ARCHITECTURE.md` with token + vault + POMM sections + new service catalog entries
+- Updated `BUSINESS-STRATEGY.md` with finalized fee structure + 0.4% FX commitment
+- Expanded `GLOSSARY.md` with all new tokenomics + vault + entity terms
+- All architectural decisions now LOCKED. No further design — execution phase.
 
 ### 2026-05-22 — Remove docker-compose; CI/Flux-only dev model
 
 - Deleted `docker-compose.yml` and `scripts/init-*.{sql,js}` (no local infrastructure)
 - Removed `docker:up` / `docker:down` from `package.json`
 - Rewrote `docs/RUNBOOKS.md` to describe code → CI → Flux → Sovereign workflow
-- Updated `README.md`, `CLAUDE.md`, `apps/mobile/README.md` to match the Sovereign-deploy model
-- Reframed: dev bastion is for code authoring only; databases run on the Sovereign
 
 ### 2026-05-21 — Rebrand Cash → Ping; Doc Consolidation
 
@@ -141,7 +214,23 @@ All external service accounts confirmed provisioned by founder (2026-05-21). Rea
 - Migrated GitHub repo: `sociable-cloud/cash` (deleted) → `ping-cash/ping-cash` (new)
 - Renamed local folder: `/home/openova/repos/cash` → `/home/openova/repos/ping`
 - Workspace packages renamed: `@cash/*` → `@ping/*`
-- Consolidated `docs/` tree from 10 flat files into canonical structure
-- Created subdirectories: `adr/`, `ledger/`, `lessons-learned/`, `runbooks/`, `proposals/`, `sessions/`, `archive/`
-- Archived domain research artifacts (`domain_search_results.csv`, `domain_ranking_full.txt`) to `docs/archive/2026-05-21-*`
-- Session log: [`docs/sessions/2026-05-21-rebrand-and-doc-consolidation.md`](sessions/2026-05-21-rebrand-and-doc-consolidation.md)
+- Consolidated `docs/` tree from 10 flat files into canonical §11 structure
+
+---
+
+## What's Next (autonomous build sequence)
+
+Per founder direction (2026-05-23) — full autonomous mode, definition of done = usable end product:
+
+1. ✅ Documentation complete
+2. **GitHub: File umbrella issue + per-service issues** (TaskList items #40, #41)
+3. **Code: Rebuild CI matrix workflow** (#42)
+4. **Code: Build auth-service (foundation)** (#43)
+5. Code: Build user-service + KYC integration
+6. Code: Build wallet-service + Earn Vault smart contract
+7. Code: Build transfer-service + claim-service + offramp-service
+8. Code: Build mobile app (React Native flows from wireframes)
+9. Code: Build web claim flow (Next.js)
+10. Deploy: Blueprint to openova-private; Flux reconciles
+11. Walk: operator validates each pillar on fresh prov + screenshot
+12. Continue until end-product DoD met

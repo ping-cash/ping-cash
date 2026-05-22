@@ -55,14 +55,21 @@ All external service accounts are provisioned (2026-05-21). Deployment target is
 | Pillar | Code | Test | Walk | Ledger | Docs | Overall |
 |---|---|---|---|---|---|---|
 | 1. Auth | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
-| 2. User | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
-| 3. Transfer | 🟡 (scaffold) | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
-| 4. Wallet | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
-| 5. Claim | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
-| 6. Off-ramp | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
-| 7. Notify | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
-| 8. Mobile App | 🟡 (scaffold) | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
-| 9. Web Claim | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 2. User + Ping Points | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 3. KYC (via shared service) | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 4. Transfer | 🟡 (scaffold) | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 5. Wallet + Earn Vault | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 6. FX (0.4% Pyth-oracle) | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 7. Ledger (double-entry) | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 8. Claim | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 9. Off-ramp | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 10. Notify | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 11. Compliance (sanctions) | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 12. Gamification | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 13. Mobile App | 🟡 (scaffold) | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 14. Web Claim | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| 15. CI / Blueprint pipeline | 🟡 (stub) | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 |
+| **Architectural decisions (17 ADRs)** | 🟢 | n/a | 🟢 | 🟢 | 🟢 | 🟢 |
 | **Docs structure** | 🟢 | n/a | 🟢 | 🟢 | 🟢 | 🟢 |
 
 🟢 PASS · 🟡 PARTIAL · 🔴 NOT STARTED
@@ -73,7 +80,10 @@ All external service accounts are provisioned (2026-05-21). Deployment target is
 
 | Date | What | PR / Commit | Walked? |
 |---|---|---|---|
-| 2026-05-21 | Docs canonical-shape consolidation | (this commit) | 🟢 |
+| 2026-05-23 | 11 new ADRs (0007-0017) covering token, vault, POMM, tier, entity, custody | (pending commit) | 🟢 |
+| 2026-05-23 | ARCHITECTURE.md + BUSINESS-STRATEGY.md + GLOSSARY.md updates with finalized design | (pending commit) | 🟢 |
+| 2026-05-22 | Remove docker-compose; CI/Flux-only dev model | 9119b01 | 🟢 |
+| 2026-05-21 | Docs canonical-shape consolidation | 19a7fd0 | 🟢 |
 | 2026-05-21 | Rebrand Cash → Ping; migrate to ping-cash/ping-cash | 5662f96 | 🟢 |
 | 2026-05-21 | Initial repo scaffold (Turborepo + shared packages + transfer template + Expo) | b48efde and prior | 🟡 (code-complete, not walked) |
 

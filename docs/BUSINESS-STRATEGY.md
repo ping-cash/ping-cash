@@ -32,7 +32,11 @@ This document was consolidated on 2026-05-21 from:
 
 ## Positioning
 
-**Ping** is a worldwide P2P social money network. Send money to anyone — friends, family, colleagues, neighbors — instantly and for free between users, with minimal sub-1% fees only when money exits the network.
+**Ping** is a worldwide P2P social money network with a built-in non-custodial savings vault. Send money to anyone — friends, family, colleagues, neighbors — instantly and for free between users, with cost-covering sub-1% fees only when money exits the network.
+
+**Founder principle: merciful pricing.** Ping charges only enough to cover real provider costs. The FX spread is 0.4% — covering real cost, not extracting margin (per [ADR 0016](adr/0016-fx-cost-covering-pricing.md)). This is brand-defining vs Western Union (3% FX) and even Wise (0.7% FX).
+
+**Yield share via Earn Vault.** Per [ADR 0012](adr/0012-earn-vault.md), user USDC auto-stakes into a non-custodial vault that earns ~5% APY across Kamino / Marginfi / Aave / Drift. Yield is split 40% Ping / 60% user (paid in $PING — creating continuous buy pressure on the token).
 
 **Initial GTM beachhead:** Migrant-worker remittance corridors (GCC → Philippines, India, Bangladesh, Pakistan, Egypt, Kenya), where traditional rails charge 5-7% and take days. **Long-term brand:** global social-money layer, not a corridor-specific remittance app.
 
@@ -84,10 +88,21 @@ flowchart TB
 | Action | Ping | Wise | Remitly | Western Union |
 |---|---|---|---|---|
 | Send in-network | **FREE** | N/A | N/A | N/A |
-| FX conversion | **FREE** | 0.5-1% | Included | 2-4% |
-| Cash-out to mobile wallet | **0.5%** | N/A | 1-2% | 3-5% |
+| FX conversion | **0.4% (cost-covering, per ADR 0016)** | 0.5-1% | Included | 2-4% |
+| Cash-out to mobile wallet | **0.5%** (provider cost + Ping markup) | N/A | 1-2% | 3-5% |
 | Cash-out to bank | **0.75%** | 0.5% | 1-2% | 2-3% |
-| **Total for $100 send** | **$0.50** | $1.50 | $3.99 | $7.00 |
+| **Total for $100 send** | **$0.50** + 0.4% FX = ~$0.90 | $1.50 + 0.5% FX | $3.99 + included FX | $7.00 + 3% FX |
+
+### Tier discounts on Ping markup (the platform-fee portion)
+
+| Tier | Min held + locked $PING | Discount on Ping markup | Stacks with pay-in-PING (additional 75% off) |
+|---|---|---|---|
+| Bronze | 0 | 0% | n/a |
+| Silver | ≥ 1,000 | 50% off | ✅ |
+| Gold | ≥ 10,000 | 75% off | ✅ |
+| Platinum | ≥ 100,000 | 90% off (capped at provider cost) | ✅ |
+
+The **provider cost is always pass-through USDC** (e.g., $1.20 to TransFi on $400 cash-out). Discounts apply only to Ping's markup component. Per [ADR 0008](adr/0008-ping-tokenomics.md) and [ADR 0013](adr/0013-tier-and-clawback.md).
 
 ### Why Zero In-Network Fees?
 
@@ -156,7 +171,7 @@ Spread:                      0.36% (~20 pips)
 | Western Union | 2-4% |
 | Remitly | 1-2% |
 | Wise | 0.5-1% |
-| **Ping** | **0.3-0.5%** |
+| **Ping** | **0.4% (cost-covering, fixed per ADR 0016 — "merciful pricing")** |
 
 How we get competitive rates:
 1. Circle USDC → local currency via institutional liquidity providers

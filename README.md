@@ -109,6 +109,17 @@ ping-cash/
 - [0004](docs/adr/0004-privy-mpc-wallets.md) — Privy MPC for embedded wallets
 - [0005](docs/adr/0005-transfi-primary-offramp.md) — TransFi as primary off-ramp provider
 - [0006](docs/adr/0006-deployment-via-openova-sovereign.md) — Deployment via OpenOva Sovereign (openova-private)
+- [0007](docs/adr/0007-multi-token-receive-via-jupiter.md) — Multi-token receive via Jupiter auto-swap
+- [0008](docs/adr/0008-ping-tokenomics.md) — $PING utility token design
+- [0009](docs/adr/0009-pomm-internal-swap.md) — POMM + internal swap with spread capture
+- [0010](docs/adr/0010-welcome-stake.md) — Welcome stake (locked + conditional unlock)
+- [0011](docs/adr/0011-kyc-shared-service.md) — KYC as a shared cross-product service
+- [0012](docs/adr/0012-earn-vault.md) — Earn Vault (auto-stake, $PING-denominated yield)
+- [0013](docs/adr/0013-tier-and-clawback.md) — Tier mechanics + 365-day clawback
+- [0014](docs/adr/0014-entity-structure.md) — Entity structure (Turkey + Oman + Cayman)
+- [0015](docs/adr/0015-phased-launch-ping-points-to-token.md) — Phased launch (Ping Points → $PING)
+- [0016](docs/adr/0016-fx-cost-covering-pricing.md) — FX cost-covering pricing (0.4%)
+- [0017](docs/adr/0017-custody-model.md) — Custody model (non-custodial + delegated authority)
 - [ADR index](docs/adr/README.md)
 
 ### 🟢 Live state ([ledger/](docs/ledger/))

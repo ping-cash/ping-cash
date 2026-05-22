@@ -43,6 +43,17 @@ What did we reject, and why?
 | [0004](0004-privy-mpc-wallets.md) | Privy MPC for embedded wallets | Accepted | 2026-05-21 |
 | [0005](0005-transfi-primary-offramp.md) | TransFi as primary off-ramp provider | Accepted | 2026-05-21 |
 | [0006](0006-deployment-via-openova-sovereign.md) | Deployment via OpenOva Sovereign (openova-private) | Accepted | 2026-05-21 |
+| [0007](0007-multi-token-receive-via-jupiter.md) | Multi-token receive via Jupiter auto-swap | Accepted | 2026-05-23 |
+| [0008](0008-ping-tokenomics.md) | $PING utility token design (1B, halving, 5-layer deflation) | Accepted | 2026-05-23 |
+| [0009](0009-pomm-internal-swap.md) | Protocol-Owned Market Making + internal swap with spread capture | Accepted | 2026-05-23 |
+| [0010](0010-welcome-stake.md) | Welcome stake — locked + conditional unlock via gamification | Accepted | 2026-05-23 |
+| [0011](0011-kyc-shared-service.md) | KYC as a shared cross-product service (dynolabs-io/kyc) | Accepted | 2026-05-23 |
+| [0012](0012-earn-vault.md) | Earn Vault — auto-stake with $PING-denominated yield | Accepted | 2026-05-23 |
+| [0013](0013-tier-and-clawback.md) | Tier mechanics with instant buy + 365-day sell clawback | Accepted | 2026-05-23 |
+| [0014](0014-entity-structure.md) | Entity structure — Turkey + Oman + Cayman Foundation | Accepted | 2026-05-23 |
+| [0015](0015-phased-launch-ping-points-to-token.md) | Phased launch — Ping Points (Phase 1) → $PING token (Phase 2) | Accepted | 2026-05-23 |
+| [0016](0016-fx-cost-covering-pricing.md) | FX cost-covering pricing (0.4% spread) | Accepted | 2026-05-23 |
+| [0017](0017-custody-model.md) | Custody model — non-custodial wallets + delegated-authority vault | Accepted | 2026-05-23 |
 
 ---
 

@@ -54,6 +54,30 @@ Every new PR against a surface flips it back to 🔴 UNVERIFIED.
 | GitHub repo migration | 🟢 VERIFIED-PASS | 2026-05-21 | Initial commit pushed to `ping-cash/ping-cash`; old `sociable-cloud/cash` deleted |
 | Local folder rename | 🟢 VERIFIED-PASS | 2026-05-21 | `/home/openova/repos/cash` → `/home/openova/repos/ping`; auto-memory migrated |
 | Domain selected | 🟢 VERIFIED-PASS | 2026-05-21 | `ping.cash` chosen from 7,030-candidate search; research artifacts in [`archive/`](../archive/) |
+| CI/Flux-only dev model documented | 🟢 VERIFIED-PASS | 2026-05-22 | `docker-compose.yml` deleted, RUNBOOKS rewritten |
+| All 17 ADRs covering architecture | 🟢 VERIFIED-PASS | 2026-05-23 | `docs/adr/0001`-`0017` all written + indexed |
+
+## Architectural Decision Records (ADRs)
+
+| ADR | Surface | State |
+|---|---|---|
+| 0001 — Stablecoin rails on Solana | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0002 — Istio service mesh | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0003 — Polyglot persistence (Postgres + Mongo + Redis) | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0004 — Privy MPC wallets | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0005 — TransFi primary off-ramp | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0006 — Deployment via Sovereign | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0007 — Multi-token receive via Jupiter | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0008 — $PING tokenomics | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0009 — POMM + internal swap | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0010 — Welcome stake | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0011 — KYC shared service | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0012 — Earn Vault | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0013 — Tier + clawback | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0014 — Entity structure | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0015 — Phased launch | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0016 — FX cost-covering | 🟢 VERIFIED-PASS | Doc-only decision |
+| 0017 — Custody model | 🟢 VERIFIED-PASS | Doc-only decision |
 
 ---
 

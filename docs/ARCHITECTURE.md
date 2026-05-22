@@ -19,16 +19,17 @@ This document was consolidated on 2026-05-21 from the following predecessor file
 1. [System Overview](#system-overview)
 2. [Bounded Contexts (DDD)](#bounded-contexts-ddd)
 3. [Service Catalog](#service-catalog)
-4. [Design Patterns](#design-patterns)
-5. [Data Layer](#data-layer)
-6. [User Journeys](#user-journeys)
-7. [Route Selection Logic](#route-selection-logic)
-8. [API Reference](#api-reference)
-9. [Cash-In / Cash-Out Integration](#cash-in--cash-out-integration)
-10. [Caching Strategy](#caching-strategy)
-11. [Event-Driven Architecture](#event-driven-architecture)
-12. [Infrastructure (Kubernetes)](#infrastructure-kubernetes)
-13. [UX Requirements](#ux-requirements)
+4. [$PING Token + Earn Vault + POMM (NEW)](#ping-token--earn-vault--pomm)
+5. [Design Patterns](#design-patterns)
+6. [Data Layer](#data-layer)
+7. [User Journeys](#user-journeys)
+8. [Route Selection Logic](#route-selection-logic)
+9. [API Reference](#api-reference)
+10. [Cash-In / Cash-Out Integration](#cash-in--cash-out-integration)
+11. [Caching Strategy](#caching-strategy)
+12. [Event-Driven Architecture](#event-driven-architecture)
+13. [Infrastructure (Kubernetes)](#infrastructure-kubernetes)
+14. [UX Requirements](#ux-requirements)
 
 ---
 
@@ -170,16 +171,22 @@ flowchart TB
 
 | Service | Bounded Context | Responsibility | Database | Event Topic |
 |---|---|---|---|---|
-| `auth-service` | Identity | Phone verification, JWT tokens | Redis | `auth.events` |
-| `user-service` | Identity | User profiles, contacts | MongoDB | `user.events` |
-| `kyc-service` | Identity | Identity verification | PostgreSQL | `kyc.events` |
-| `transfer-service` | Payment | Transfer orchestration | PostgreSQL | `transfer.events` |
-| `wallet-service` | Payment | Balance, blockchain ops | MongoDB | `wallet.events` |
-| `fx-service` | Payment | Exchange rates, quotes | Redis | `fx.events` |
-| `ledger-service` | Payment | Double-entry accounting | PostgreSQL | `ledger.events` |
-| `claim-service` | Delivery | Claim links, verification | MongoDB | `claim.events` |
-| `offramp-service` | Delivery | Cash-out orchestration | PostgreSQL | `offramp.events` |
+| `auth-service` | Identity | Phone verification, JWT tokens, Privy wallet bind | Redis | `auth.events` |
+| `user-service` | Identity | User profiles, contacts, Ping Points balance (Phase 1) | MongoDB | `user.events` |
+| `kyc-service` | Identity | Tier 1/2/3 via shared `dynolabs-io/kyc` SDK (per ADR 0011) | PostgreSQL | `kyc.events` |
+| `transfer-service` | Payment | Transfer orchestration, fee calc with tier discount | PostgreSQL | `transfer.events` |
+| `wallet-service` | Payment | Balance indexer, vault interaction, Privy MPC + external | MongoDB | `wallet.events` |
+| `fx-service` | Payment | Rates, quotes, **0.4% cost-covering spread (per ADR 0016)** | Redis | `fx.events` |
+| `ledger-service` | Payment | Double-entry accounting, audit trail | PostgreSQL | `ledger.events` |
+| `claim-service` | Delivery | Claim links, OTP verification, recipient flow | MongoDB | `claim.events` |
+| `offramp-service` | Delivery | Cash-out orchestration via TransFi/Wise/Cebuana | PostgreSQL | `offramp.events` |
 | `notify-service` | Delivery | WhatsApp, SMS, Push | MongoDB | `notify.events` |
+| `gamification-service` | Identity | Welcome stake milestone tracking, conditional unlocks | PostgreSQL | `gamification.events` |
+| `earn-vault-svc` | Payment | Non-custodial vault — see ADR 0012; Phase 1 uses USDC; Phase 2 distributes $PING | Solana state + indexer | `vault.events` |
+| `token-svc` | Payment | $PING price oracle reader, tier basis calculator, clawback computer | PostgreSQL | `token.events` |
+| `swap-svc` | Payment | Internal swap with 0.3% spread, Jupiter hedging — see ADR 0009 | Solana state | `swap.events` |
+| `pomm-svc` | Payment | Protocol-Owned Market Making algorithmic intervention | Solana state | `pomm.events` |
+| `compliance-svc` | Delivery | Sanctions screening (Chainalysis), AML monitoring | PostgreSQL | `compliance.events` |
 
 ### Auth Service
 
@@ -278,6 +285,106 @@ flowchart LR
 | Async Event | Transfer created | Kafka topic |
 | Async Command | Send notification | Kafka with reply topic |
 | Saga | Transfer + Claim + Offramp | Choreography via events |
+
+---
+
+## $PING Token + Earn Vault + POMM
+
+> Full details in [ADR 0008](adr/0008-ping-tokenomics.md), [ADR 0009](adr/0009-pomm-internal-swap.md), [ADR 0012](adr/0012-earn-vault.md), [ADR 0013](adr/0013-tier-and-clawback.md), [ADR 0017](adr/0017-custody-model.md). Summary below.
+
+### Token mechanics
+
+`$PING` is a Solana SPL Token-2022 utility token issued by the **Ping Foundation (Cayman)**.
+
+| Parameter | Value |
+|---|---|
+| Symbol | $PING |
+| Supply cap | 1,000,000,000 (1B) |
+| Decimals | 9 |
+| Distribution | 40% community (activity-earned), 15% B2B grants, 15% team, 10% treasury, 10% investors, 5% Foundation reserve, 5% LP |
+| Emission | Halving every 2 years; zero after Year 5 |
+| Burn | 5-layer deflation stack (per ADR 0008 § Deflation Stack) |
+
+### Tier system
+
+| Tier | Held + locked $PING | Discount on platform markup |
+|---|---|---|
+| Bronze | 0 | 0% |
+| Silver | ≥ 1,000 | 50% |
+| Gold | ≥ 10,000 | 75% |
+| Platinum | ≥ 100,000 | 90% (capped at provider cost) |
+
+- Tier is **instant** on buy
+- **Pay-in-PING discount** stacks: 75% off the (already-discounted) markup
+- **365-day clawback** at sell-time enforces fair-tier reconciliation (per ADR 0013)
+- **Welcome stake** (1,200 PING, locked, fee-only) granted on first verified outbound — per ADR 0010
+
+### Earn Vault (auto-stake, non-custodial)
+
+```
+User wallet (Privy MPC OR external)
+   ▼
+Auto-stake delegation (one-time signature)
+   ▼
+EARN VAULT smart contract (Solana, audited, open-source)
+   ├── User-deposits PDA (aggregated USDC)
+   └── Ping-fee PDA (Squads multisig)
+   ▼
+Deployed across DeFi:
+   ├── Kamino    40%
+   ├── Marginfi  25%
+   ├── Aave SOL  20%
+   ├── Drift     10%
+   └── Liquid     5%
+   ▼
+Daily harvest():
+   ├── 40% → Ping fee account (USDC)
+   └── 60% → Jupiter buy $PING → distribute to depositors
+```
+
+User receives vUSDC (1:1 receipt token). Spending auto-unstakes atomically (~1 second). User can revoke delegation at any time.
+
+### POMM (Protocol-Owned Market Making)
+
+Algorithmic on-chain market-maker contract that dampens $PING volatility within EMA ±15% bands.
+
+```
+Reference: Pyth oracle USDC/$PING + 7-day EMA
+
+If price > EMA × 1.15: POMM sells $PING from Foundation reserve → Stability Reserve USDC
+If price < EMA × 0.85: POMM buys $PING using Stability Reserve USDC
+
+Caps: 0.5% pool liquidity per intervention, 5% per 24h
+Pause: Squads 3-of-5 (emergency only)
+Public: pomm.ping.cash live dashboard
+```
+
+### Internal swap (spread capture)
+
+```
+User buys/sells $PING via Ping app:
+  Quote: Pyth oracle × (1 ± 0.3% spread)
+  Fill: From Ping inventory (if available, ~99% of trades)
+  Hedge: Jupiter swap when inventory drifts > 20%
+
+Spread captured by Ping: 0.6% round-trip on speculator volume.
+```
+
+### Phased launch (Phase 1 vs Phase 2)
+
+Per [ADR 0015](adr/0015-phased-launch-ping-points-to-token.md):
+
+| Capability | Phase 1 (Months 0-6) | Phase 2 (Months 4-12) |
+|---|---|---|
+| Platform features (transfers, cash-out, KYC) | ✅ Live | ✅ Live |
+| Earn Vault auto-stake | ✅ USDC only | ✅ USDC + $PING yield |
+| Welcome stake | ✅ Ping Points (database) | ✅ $PING (on-chain Streamflow) |
+| Tier system | ✅ DB-tracked points | ✅ On-chain $PING |
+| Fee discount in token | ✅ Ping Points | ✅ $PING burned |
+| $PING tradable / withdrawable | ❌ | ✅ |
+| 1:1 conversion at TGE | n/a | All Ping Points → $PING automatically |
+
+Phase 1 starts day-of-platform-launch. Phase 2 begins when Cayman Foundation incorporated + smart contracts audited.
 
 ---
 
