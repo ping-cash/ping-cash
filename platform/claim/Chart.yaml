@@ -1,0 +1,9 @@
+apiVersion: v2
+name: ping-claim
+description: Ping claim-service — claim links + OTP + recipient flow
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+annotations:
+  catalyst.openova.io/no-upstream: "true"
+  catalyst.openova.io/source: "ping-cash/ping-cash"

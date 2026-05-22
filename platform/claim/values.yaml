@@ -1,0 +1,28 @@
+image:
+  repository: ghcr.io/ping-cash/claim-service
+  tag: ""
+replicas: 2
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 256Mi }
+service:
+  port: 3006
+  targetPort: 3006
+secrets:
+  external:
+    enabled: true
+    storeName: openbao-cluster
+    paths:
+      redisUrl: ping/redis/url
+      twilioAccountSid: ping/twilio/account_sid
+      twilioAuthToken: ping/twilio/auth_token
+      twilioVerifySid: ping/twilio/verify_sid
+      claimUrlBase: ping/claim/url_base
+istio:
+  virtualService:
+    enabled: true
+    hosts: [api.ping.cash, ping.cash]
+    matchPrefix: /claims
+healthcheck:
+  liveness: { path: /healthz, initialDelaySeconds: 5, periodSeconds: 30 }
+  readiness: { path: /readyz, initialDelaySeconds: 5, periodSeconds: 10 }
