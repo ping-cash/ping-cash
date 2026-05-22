@@ -1,0 +1,9 @@
+apiVersion: v2
+name: ping-fx
+description: Ping fx-service — Pyth oracle + 0.4% cost-covering spread (ADR 0016)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+annotations:
+  catalyst.openova.io/no-upstream: "true"
+  catalyst.openova.io/source: "ping-cash/ping-cash"

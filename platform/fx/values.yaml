@@ -1,0 +1,25 @@
+image:
+  repository: ghcr.io/ping-cash/fx-service
+  tag: ""
+  pullPolicy: IfNotPresent
+replicas: 2
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 256Mi }
+service:
+  port: 3004
+  targetPort: 3004
+secrets:
+  external:
+    enabled: true
+    storeName: openbao-cluster
+    paths:
+      pythHermesUrl: ping/pyth/hermes_url
+istio:
+  virtualService:
+    enabled: true
+    hosts: [api.ping.cash]
+    matchPrefix: /fx
+healthcheck:
+  liveness: { path: /healthz, initialDelaySeconds: 5, periodSeconds: 30 }
+  readiness: { path: /readyz, initialDelaySeconds: 5, periodSeconds: 10 }

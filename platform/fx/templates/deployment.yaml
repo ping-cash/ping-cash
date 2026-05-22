@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: ping-fx
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ping-fx
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ping-fx
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: fx
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          ports: [{ name: http, containerPort: {{ .Values.service.targetPort }} }]
+          env:
+            - { name: NODE_ENV, value: production }
+            - { name: API_PORT, value: "{{ .Values.service.targetPort }}" }
+            - { name: LOG_LEVEL, value: info }
+            - name: PYTH_HERMES_URL
+              valueFrom: { secretKeyRef: { name: {{ .Release.Name }}-secrets, key: PYTH_HERMES_URL } }
+          resources:
+            requests: { cpu: {{ .Values.resources.requests.cpu }}, memory: {{ .Values.resources.requests.memory }} }
+            limits:   { cpu: {{ .Values.resources.limits.cpu }},   memory: {{ .Values.resources.limits.memory }} }
+          livenessProbe:
+            httpGet: { path: {{ .Values.healthcheck.liveness.path }}, port: http }
+            initialDelaySeconds: {{ .Values.healthcheck.liveness.initialDelaySeconds }}
+          readinessProbe:
+            httpGet: { path: {{ .Values.healthcheck.readiness.path }}, port: http }
