@@ -1,179 +1,77 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Link } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../lib/api';
+/**
+ * Landing screen — branding + sign-in CTA.
+ * After hydration, redirects to (tabs) if user is authenticated.
+ */
+import { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { authStore } from '../lib/auth-store';
 
-export default function Home() {
-  // Test backend connectivity
-  const { data: health, isLoading, error } = useQuery({
-    queryKey: ['health'],
-    queryFn: () => api.healthCheck(),
-    retry: false,
-  });
+export default function LandingScreen() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (authStore.isAuthenticated()) {
+      router.replace('/(tabs)');
+    }
+  }, [router]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.logo}>💸</Text>
-      <Text style={styles.title}>Ping</Text>
-      <Text style={styles.subtitle}>The cheapest way to send money anywhere</Text>
-
-      {/* Backend Status */}
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusLabel}>Backend Status:</Text>
-        {isLoading ? (
-          <ActivityIndicator size="small" color="#10b981" />
-        ) : error ? (
-          <Text style={styles.statusError}>❌ Disconnected</Text>
-        ) : (
-          <Text style={styles.statusOk}>✅ Connected</Text>
-        )}
+    <SafeAreaView style={styles.container}>
+      <View style={styles.brandingArea}>
+        <Text style={styles.logo}>Ping</Text>
+        <Text style={styles.tagline}>Send money worldwide</Text>
+        <Text style={styles.subtagline}>Free between Ping users · 0.4% FX</Text>
       </View>
 
-      {/* Development Info */}
-      <View style={styles.devInfo}>
-        <Text style={styles.devTitle}>Development Mode</Text>
-        <Text style={styles.devText}>API: {api.baseUrl}</Text>
-      </View>
-
-      {/* Actions */}
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Get Started</Text>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => router.push('/signup')}
+        >
+          <Text style={styles.primaryButtonText}>Get started</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.buttonOutline}>
-          <Text style={styles.buttonOutlineText}>I have an account</Text>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => router.push('/signup')}
+        >
+          <Text style={styles.secondaryButtonText}>Sign in</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Features */}
-      <View style={styles.features}>
-        <Feature icon="⚡" text="Instant transfers" />
-        <Feature icon="💰" text="Zero fees in-network" />
-        <Feature icon="🔒" text="Bank-grade security" />
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Non-custodial · Built on Solana · Powered by USDC
+        </Text>
       </View>
-    </View>
-  );
-}
-
-function Feature({ icon, text }: { icon: string; text: string }) {
-  return (
-    <View style={styles.feature}>
-      <Text style={styles.featureIcon}>{icon}</Text>
-      <Text style={styles.featureText}>{text}</Text>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  logo: {
-    fontSize: 64,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#10b981',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-  },
-  statusLabel: {
-    fontSize: 14,
-    color: '#374151',
-  },
-  statusOk: {
-    fontSize: 14,
-    color: '#10b981',
-    fontWeight: '600',
-  },
-  statusError: {
-    fontSize: 14,
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-  devInfo: {
-    marginBottom: 24,
-    padding: 12,
-    backgroundColor: '#fef3c7',
-    borderRadius: 8,
-    width: '100%',
-  },
-  devTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#92400e',
-    marginBottom: 4,
-  },
-  devText: {
-    fontSize: 12,
-    color: '#92400e',
-    fontFamily: 'monospace',
-  },
-  actions: {
-    width: '100%',
-    gap: 12,
-    marginBottom: 32,
-  },
-  button: {
-    backgroundColor: '#10b981',
+  container: { flex: 1, backgroundColor: '#1A1A2E', padding: 24 },
+  brandingArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  logo: { fontSize: 72, fontWeight: '800', color: '#FFFFFF', letterSpacing: -2 },
+  tagline: { fontSize: 22, color: '#FFFFFF', marginTop: 16, textAlign: 'center' },
+  subtagline: { fontSize: 14, color: '#A0A0C0', marginTop: 8, textAlign: 'center' },
+  actions: { gap: 12, marginBottom: 32 },
+  primaryButton: {
+    backgroundColor: '#10B981',
     paddingVertical: 16,
-    paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonOutline: {
-    borderWidth: 2,
-    borderColor: '#10b981',
+  primaryButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
     paddingVertical: 16,
-    paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
   },
-  buttonOutlineText: {
-    color: '#10b981',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  features: {
-    flexDirection: 'row',
-    gap: 24,
-  },
-  feature: {
-    alignItems: 'center',
-  },
-  featureIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  featureText: {
-    fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
+  secondaryButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
+  footer: { paddingBottom: 24, alignItems: 'center' },
+  footerText: { color: '#6B6B8C', fontSize: 12 },
 });

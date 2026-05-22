@@ -38,7 +38,7 @@ function getBaseUrl(): string {
   }
 
   // Production URL
-  return 'https://api.cash.app';
+  return 'https://api.ping.cash';
 }
 
 class ApiClient {
