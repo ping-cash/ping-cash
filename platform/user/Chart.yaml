@@ -1,0 +1,20 @@
+apiVersion: v2
+name: ping-user
+description: Ping user-service — phone OTP → JWT → Privy wallet
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+maintainers:
+  - name: Ping Cash
+    url: https://github.com/ping-cash/ping-cash
+
+keywords:
+  - ping
+  - auth
+  - identity
+  - fintech
+
+annotations:
+  catalyst.openova.io/no-upstream: "true"
+  catalyst.openova.io/source: "ping-cash/ping-cash"

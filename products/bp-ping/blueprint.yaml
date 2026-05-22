@@ -1,0 +1,178 @@
+# Blueprint: bp-ping
+#
+# Per ADR 0006 (Deployment via OpenOva Sovereign):
+#   This manifest composes the platform/<service>/ Helm charts in this repo
+#   into a versioned OCI artifact `bp-ping:<semver>` that the openova-private
+#   Sovereign's Flux pulls and reconciles.
+#
+# The manifest is rendered by CI (.github/workflows/build.yml) — CI substitutes
+# __SHA__ and __VERSION__ at build time.
+
+apiVersion: catalyst.openova.io/v1alpha1
+kind: Blueprint
+metadata:
+  name: bp-ping
+  version: __VERSION__
+  annotations:
+    catalyst.openova.io/source-commit: __SHA__
+    catalyst.openova.io/source-repo: ping-cash/ping-cash
+    catalyst.openova.io/owner: ping-cash
+    catalyst.openova.io/description: Ping — worldwide P2P social money network
+
+spec:
+  # Image registry — all images live under ghcr.io/ping-cash/
+  imageRegistry:
+    base: ghcr.io/ping-cash
+    pullSecretRef:
+      name: ghcr-pull-secret
+      namespace: ping
+
+  # Default image tag for ALL services (rendered SHA from CI)
+  # Individual services can override via per-component imageTag.
+  imageTag: __SHA__
+
+  # Per-service Helm charts in this repo
+  components:
+    # ────────────────────────────────────────────────────────────
+    # Identity context
+    # ────────────────────────────────────────────────────────────
+    - name: auth-service
+      chart: platform/auth
+      enabled: true
+      values:
+        image:
+          tag: __SHA__
+        replicas: 2
+
+    - name: user-service
+      chart: platform/user
+      enabled: false  # Activated when chart is authored (refs #6)
+
+    # KYC is a SEPARATE repo (dynolabs-io/kyc) per ADR 0011 — not included here.
+    # Ping calls it via SDK; no chart needed in this Blueprint.
+
+    # ────────────────────────────────────────────────────────────
+    # Payment context
+    # ────────────────────────────────────────────────────────────
+    - name: transfer-service
+      chart: platform/transfer
+      enabled: false  # Refs #8
+
+    - name: wallet-service
+      chart: platform/wallet
+      enabled: false  # Refs #9
+
+    - name: fx-service
+      chart: platform/fx
+      enabled: false  # Refs #10
+
+    - name: ledger-service
+      chart: platform/ledger
+      enabled: false  # Refs #11
+
+    # ────────────────────────────────────────────────────────────
+    # Delivery context
+    # ────────────────────────────────────────────────────────────
+    - name: claim-service
+      chart: platform/claim
+      enabled: false  # Refs #12
+
+    - name: offramp-service
+      chart: platform/offramp
+      enabled: false  # Refs #13
+
+    - name: notify-service
+      chart: platform/notify
+      enabled: false  # Refs #14
+
+    # ────────────────────────────────────────────────────────────
+    # Gamification + token + market making
+    # ────────────────────────────────────────────────────────────
+    - name: gamification-service
+      chart: platform/gamification
+      enabled: false  # Refs #18
+
+    - name: earn-vault-svc
+      chart: platform/earn-vault
+      enabled: false  # Refs #16
+
+    - name: token-svc
+      chart: platform/token
+      enabled: false  # Refs #17
+
+    - name: swap-svc
+      chart: platform/swap
+      enabled: false  # Refs #24 (Phase 2)
+
+    - name: pomm-svc
+      chart: platform/pomm
+      enabled: false  # Refs #23 (Phase 2)
+
+    - name: compliance-svc
+      chart: platform/compliance
+      enabled: false  # Refs #21
+
+  # Sovereign-side dependencies (provided by openova-private)
+  dependencies:
+    # Per ADR 0006: these are NOT installed by this Blueprint.
+    # They are pre-existing on the Sovereign and we depend on them.
+    sovereign:
+      - cnpg-postgres   # Per-service databases provisioned by Sovereign operator
+      - mongodb         # Replica set
+      - redis-sentinel  # Cluster
+      - redpanda        # 3-broker
+      - istio           # Service mesh
+      - external-secrets-operator  # Pulls from OpenBao
+      - cert-manager    # TLS
+      - external-dns    # Auto-DNS via PowerDNS
+
+  # Public DNS hosts this Blueprint requests
+  dns:
+    - api.ping.cash
+    - ping.cash       # Web (claim flow)
+    - vault.ping.cash # Public vault dashboard
+    - pomm.ping.cash  # Public POMM dashboard
+    - burn.ping.cash  # Public burn registry
+    - status.ping.cash
+
+  # OpenBao secret paths this Blueprint depends on
+  secrets:
+    paths:
+      # Authentication
+      - ping/auth/jwt_secret
+      - ping/redis/url
+      # Twilio
+      - ping/twilio/account_sid
+      - ping/twilio/auth_token
+      - ping/twilio/verify_sid
+      # WhatsApp Business API
+      - ping/whatsapp/phone_number_id
+      - ping/whatsapp/access_token
+      - ping/whatsapp/verify_token
+      # Privy MPC
+      - ping/privy/app_id
+      - ping/privy/app_secret
+      # TransFi
+      - ping/transfi/api_key
+      - ping/transfi/api_secret
+      - ping/transfi/webhook_secret
+      # Stripe (Turkey entity)
+      - ping/stripe/api_key
+      - ping/stripe/webhook_secret
+      # Lean (Oman entity)
+      - ping/lean/api_key
+      - ping/lean/api_secret
+      # Tarabut (Oman entity)
+      - ping/tarabut/api_key
+      - ping/tarabut/api_secret
+      # Persona (via dynolabs-io/kyc service — actually owned there, listed here for reference)
+      # - dynolabs/kyc/persona_api_key
+      # Solana RPC
+      - ping/solana/rpc_url
+      - ping/solana/usdc_mint
+      # Chainalysis
+      - ping/chainalysis/api_key
+      # Pyth (no secret; public oracle)
+
+  # Namespace this Blueprint deploys into on the Sovereign
+  namespace: ping

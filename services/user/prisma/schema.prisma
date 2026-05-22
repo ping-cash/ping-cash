@@ -1,0 +1,172 @@
+// user-service schema
+//
+// Per ADR 0003 (Polyglot persistence) and ARCHITECTURE.md § Service Catalog:
+//   user-service uses MongoDB (AP) per the original design but per
+//   ADR 0015 (phased launch), Ping Points balance is database-tracked
+//   in Phase 1. We use PostgreSQL for the user identity + Ping Points
+//   balance because it gives ACID guarantees for the points balance
+//   (critical for tier calculation), and we use Mongo for contacts (AP,
+//   eventually consistent OK).
+//
+// This schema covers the PostgreSQL side. The Mongo schema lives in a
+// separate file (mongoModels.ts) and is connected via mongoose/native driver.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+// Canonical user identity record
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  privyUserId     String    @unique // did:privy:...
+  walletAddress   String    @unique // Solana address
+  phoneHash       String    @unique // SHA-256 of normalized phone
+  phoneEncrypted  String?   // AES-256 ciphertext of cleartext phone
+
+  // Profile (denormalized for fast lookup)
+  displayName     String?
+  email           String?   @unique
+  avatarUrl       String?
+  language        String    @default("en")
+  timezone        String?
+  country         String?   @db.VarChar(3) // ISO 3166-1 alpha-3
+
+  // KYC state (Tier from dynolabs-io/kyc service)
+  kycTier         Int       @default(0)
+  kycVerifiedAt   DateTime?
+  kycExpiresAt    DateTime?
+
+  // KYC limits — computed from kycTier
+  dailyLimitUsdc        Decimal @default(200.00) @db.Decimal(20, 8)
+  monthlyLimitUsdc      Decimal @default(1000.00) @db.Decimal(20, 8)
+  dailyUsedUsdc         Decimal @default(0) @db.Decimal(20, 8)
+  monthlyUsedUsdc       Decimal @default(0) @db.Decimal(20, 8)
+  dailyResetAt          DateTime?
+  monthlyResetAt        DateTime?
+
+  // Ping Points balance (Phase 1 — DB tracked)
+  // Phase 2: migrated 1:1 to on-chain $PING via cron at TGE.
+  // See ADR 0015.
+  pingPointsFreeBalance      Decimal @default(0) @db.Decimal(20, 8)
+  pingPointsWelcomeLocked    Decimal @default(0) @db.Decimal(20, 8) // 1,000 PP locked
+  pingPointsWelcomeUnlocked  Decimal @default(0) @db.Decimal(20, 8) // 200 PP unlocked
+  welcomeStakeGrantedAt      DateTime?
+  welcomeStakeBackstopAt     DateTime? // 2y from grant — auto-unlock
+
+  // Tier (computed from total Ping Points balance; cached for fast reads)
+  tier            String  @default("bronze") // bronze | silver | gold | platinum
+
+  // Statistics (denormalized; eventually-consistent acceptable)
+  totalSentUsdc       Decimal @default(0) @db.Decimal(20, 8)
+  totalReceivedUsdc   Decimal @default(0) @db.Decimal(20, 8)
+  transferCount       Int @default(0)
+  lastActiveAt        DateTime?
+
+  // Settings (JSON for flexibility)
+  settings        Json? // { notifications: {...}, privacy: {...} }
+
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  pingPointsLedger PingPointsLedger[]
+  welcomeMilestones WelcomeMilestone[]
+
+  @@index([phoneHash])
+  @@index([walletAddress])
+  @@index([privyUserId])
+  @@index([kycTier])
+  @@index([tier])
+}
+
+// Append-only event-sourced ledger for Ping Points balance changes.
+// Per ADR 0015, this is the audit trail that informs the Phase-2 migration.
+model PingPointsLedger {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @db.Uuid
+  user            User      @relation(fields: [userId], references: [id])
+
+  // Change details
+  changeAmount    Decimal   @db.Decimal(20, 8) // positive or negative
+  newFreeBalance       Decimal @db.Decimal(20, 8)
+  newWelcomeLocked     Decimal @db.Decimal(20, 8)
+  newWelcomeUnlocked   Decimal @db.Decimal(20, 8)
+
+  // Reason
+  reasonCode      String    // welcome_grant | welcome_milestone_unlock |
+                            // fee_burn | yield_distribution | manual_adjustment
+
+  // Tier at this moment (snapshotted for clawback per ADR 0013)
+  tierAtTime      String    // bronze | silver | gold | platinum
+  pingPointsBalanceAtTime Decimal @db.Decimal(20, 8)
+
+  // Related entity (e.g., transfer ID, transaction ID)
+  relatedEntityType   String?  // transfer | fee | yield | milestone
+  relatedEntityId     String?
+
+  // Metadata
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([reasonCode])
+  @@index([createdAt])
+}
+
+// Welcome stake milestone tracking
+// Per ADR 0010 — 5 milestones, each unlocks 200 PP.
+model WelcomeMilestone {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  user        User     @relation(fields: [userId], references: [id])
+
+  milestone   String   // refer_3_active | complete_50_sends | active_6mo |
+                       // active_12mo | silver_organic
+
+  achievedAt  DateTime?
+  unlockedAt  DateTime?
+  unlockedAmount Decimal @default(200) @db.Decimal(20, 8)
+
+  // Tracking data for milestone progress (e.g., current referral count)
+  progressData Json?
+
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, milestone])
+  @@index([userId])
+  @@index([milestone])
+}
+
+// Contacts — Phase 1 stored in PostgreSQL too (small per-user list).
+// Phase 2 — may migrate to MongoDB if contact lists grow large.
+model Contact {
+  id              String    @id @default(uuid()) @db.Uuid
+  ownerUserId     String    @db.Uuid
+
+  // Contact identity (the other side)
+  contactPhoneHash String   // SHA-256 of normalized phone
+  contactPhoneMasked String  // "+63 *** *** 4567" for display
+  displayName     String?
+  isRegistered    Boolean   @default(false) // true if contact has a Ping account
+
+  // If registered, link to their user record
+  registeredUserId String?  @db.Uuid
+
+  // Stats
+  lastTransferAt  DateTime?
+  transferCount   Int       @default(0)
+
+  // Metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([ownerUserId, contactPhoneHash])
+  @@index([ownerUserId])
+  @@index([contactPhoneHash])
+  @@index([registeredUserId])
+}

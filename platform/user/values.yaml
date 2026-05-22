@@ -1,0 +1,56 @@
+image:
+  repository: ghcr.io/ping-cash/user-service
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicas: 2
+
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 256Mi }
+
+service:
+  port: 3002
+  targetPort: 3002
+
+secrets:
+  external:
+    enabled: true
+    storeName: openbao-cluster
+    paths:
+      postgresUrl: ping/user-svc/postgres_url
+      jwtSecret: ping/auth/jwt_secret
+
+istio:
+  virtualService:
+    enabled: true
+    hosts:
+      - api.ping.cash
+    matchPrefix: /users
+  destinationRule:
+    enabled: true
+    circuitBreaker:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+
+metrics:
+  enabled: true
+  port: 9090
+  path: /metrics
+
+healthcheck:
+  liveness:
+    path: /healthz
+    initialDelaySeconds: 5
+    periodSeconds: 30
+  readiness:
+    path: /readyz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
