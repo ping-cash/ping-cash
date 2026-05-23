@@ -94,7 +94,8 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // POST /auth/logout — Revoke refresh token
+  // POST /auth/logout — Revoke refresh token. Requires the REFRESH token
+  // (not the access token) — only refresh tokens have a jti claim.
   fastify.post(
     '/logout',
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -108,7 +109,19 @@ export async function authRoutes(fastify: FastifyInstance) {
         });
       }
       const token = authHeader.slice(7);
-      const payload = fastify.jwt.verify(token) as { jti: string };
+      const payload = fastify.jwt.verify(token) as {
+        jti?: string;
+        type?: string;
+      };
+      if (!payload.jti || payload.type !== 'refresh') {
+        return reply.status(400).send({
+          error: {
+            code: 'WRONG_TOKEN_TYPE',
+            message:
+              'Logout requires the refresh token (not the access token).',
+          },
+        });
+      }
       await authService.logout(payload.jti);
       return reply.status(204).send();
     }
