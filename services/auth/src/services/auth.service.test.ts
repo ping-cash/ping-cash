@@ -155,7 +155,7 @@ describe('auth.service.verify', () => {
 
   it('rejects invalid OTP', async () => {
     const init = await authService.init('+971501234567', '1.2.3.4');
-    await expect(authService.verify(init.sessionId, '000000', mockApp)).rejects.toThrow(/INVALID_OTP/);
+    await expect(authService.verify(init.sessionId, '000000', mockApp)).rejects.toMatchObject({ code: 'INVALID_OTP' });
   });
 
   it('rejects invalid OTP format', async () => {
@@ -165,8 +165,8 @@ describe('auth.service.verify', () => {
   });
 
   it('rejects unknown session', async () => {
-    await expect(authService.verify('sess_does_not_exist', '123456', mockApp)).rejects.toThrow(
-      /SESSION_NOT_FOUND/,
+    await expect(authService.verify('sess_does_not_exist', '123456', mockApp)).rejects.toMatchObject(
+      { code: 'SESSION_NOT_FOUND' },
     );
   });
 
@@ -176,8 +176,8 @@ describe('auth.service.verify', () => {
       await expect(authService.verify(init.sessionId, '000000', mockApp)).rejects.toThrow();
     }
     // 6th attempt should hit MAX_ATTEMPTS
-    await expect(authService.verify(init.sessionId, '123456', mockApp)).rejects.toThrow(
-      /MAX_ATTEMPTS/,
+    await expect(authService.verify(init.sessionId, '123456', mockApp)).rejects.toMatchObject(
+      { code: 'MAX_ATTEMPTS' },
     );
   });
 });
@@ -211,7 +211,7 @@ describe('auth.service.refresh', () => {
 
   it('rejects revoked refresh token', async () => {
     const payload = { sub: 'usr_test', jti: 'revoked-jti' };
-    await expect(authService.refresh(payload, mockApp)).rejects.toThrow(/INVALID_REFRESH_TOKEN/);
+    await expect(authService.refresh(payload, mockApp)).rejects.toMatchObject({ code: 'INVALID_REFRESH_TOKEN' });
   });
 });
 

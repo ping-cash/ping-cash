@@ -8,31 +8,18 @@
  *   We validate the balance invariant at the boundary (commit()), then
  *   trust the database to enforce it via the schema constraint + trigger.
  */
-import { Decimal } from '.prisma/ledger-client/runtime/library';
-
-import { LedgerErrors } from '../utils/errors';
 import { logger } from '../utils/logger';
 import { prisma } from '../utils/prisma';
 
-export type EntryType = 'DEBIT' | 'CREDIT';
+// eslint-disable-next-line import/order
+import { Decimal } from '.prisma/ledger-client/runtime/library';
+import { validateBalanced, type EntryType, type LedgerEntryInput } from './validation';
 
-export interface LedgerEntryInput {
-  accountId: string;
-  accountType:
-    | 'user_wallet'
-    | 'platform_fee'
-    | 'platform_markup'
-    | 'provider_cost'
-    | 'yield_pool'
-    | 'foundation_reserve';
-  entryType: EntryType;
-  amount: string; // human-readable decimal
-  currency: string; // USDC | PHP | INR | PING | ...
-  description?: string;
-}
+export type { EntryType, LedgerEntryInput };
+export { validateBalanced };
 
 export interface CommitInput {
-  transactionId: string; // UUID; same for all related entries
+  transactionId: string;
   transactionType: 'transfer' | 'fee' | 'yield' | 'offramp' | 'refund' | 'welcome_grant';
   entries: LedgerEntryInput[];
   metadata?: Record<string, unknown>;
@@ -43,26 +30,6 @@ export interface CommitInput {
     correlationId?: string;
     causationId?: string;
   };
-}
-
-/**
- * Validate that entries balance (debits == credits per currency).
- */
-export function validateBalanced(entries: LedgerEntryInput[]): void {
-  const totals: Record<string, Decimal> = {};
-  for (const e of entries) {
-    const key = `${e.currency}`;
-    const signed = e.entryType === 'DEBIT' ? new Decimal(e.amount) : new Decimal(e.amount).neg();
-    totals[key] = (totals[key] ?? new Decimal(0)).plus(signed);
-  }
-  for (const [currency, sum] of Object.entries(totals)) {
-    if (!sum.equals(0)) {
-      throw LedgerErrors.ImbalancedTransaction({
-        currency,
-        unbalanced_amount: sum.toString(),
-      });
-    }
-  }
 }
 
 /**

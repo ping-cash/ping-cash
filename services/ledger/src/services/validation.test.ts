@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { validateBalanced, type LedgerEntryInput } from './ledger.service';
+import { validateBalanced, type LedgerEntryInput } from './validation';
 
 describe('ledger.service.validateBalanced', () => {
   it('accepts a balanced 2-entry transfer (debit + credit)', () => {

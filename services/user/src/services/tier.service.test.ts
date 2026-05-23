@@ -1,4 +1,3 @@
-import { Decimal } from '.prisma/user-client/runtime/library';
 import { describe, it, expect } from 'vitest';
 
 import {
@@ -8,10 +7,13 @@ import {
   PAY_IN_PING_FURTHER_DISCOUNT,
 } from './tier.service';
 
+// Simulate Prisma's Decimal — only toString() is required by DecimalLike interface.
+const dec = (n: number) => ({ toString: () => String(n) });
+
 describe('tier.service.computeTier', () => {
   it('returns bronze for 0 balance', () => {
     expect(computeTier(0, 0, 0)).toBe('bronze');
-    expect(computeTier(new Decimal(0), new Decimal(0), new Decimal(0))).toBe('bronze');
+    expect(computeTier(dec(0), dec(0), dec(0))).toBe('bronze');
   });
 
   it('returns bronze just below silver threshold', () => {

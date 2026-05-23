@@ -6,7 +6,12 @@
  *
  * Both phases share this calc — they just feed it different inputs.
  */
-import { Decimal } from '.prisma/user-client/runtime/library';
+
+// Accept Decimal (from Prisma) OR plain number — interface kept open
+// so the calc is testable without a generated Prisma client.
+export interface DecimalLike {
+  toString(): string;
+}
 
 export type Tier = 'bronze' | 'silver' | 'gold' | 'platinum';
 
@@ -23,9 +28,9 @@ const TIER_THRESHOLDS: Array<{ tier: Tier; min: number }> = [
  * Total = free + welcome_locked + welcome_unlocked.
  */
 export function computeTier(
-  pingPointsFreeBalance: Decimal | number,
-  welcomeLocked: Decimal | number,
-  welcomeUnlocked: Decimal | number,
+  pingPointsFreeBalance: DecimalLike | number,
+  welcomeLocked: DecimalLike | number,
+  welcomeUnlocked: DecimalLike | number,
 ): Tier {
   const total = toNumber(pingPointsFreeBalance) + toNumber(welcomeLocked) + toNumber(welcomeUnlocked);
   for (const { tier, min } of TIER_THRESHOLDS) {
@@ -78,6 +83,6 @@ export function computeFinalMarkup(
   return markup;
 }
 
-function toNumber(value: Decimal | number): number {
-  return typeof value === 'number' ? value : Number(value);
+function toNumber(value: DecimalLike | number): number {
+  return typeof value === 'number' ? value : Number(value.toString());
 }
