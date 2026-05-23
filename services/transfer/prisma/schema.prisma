@@ -38,6 +38,9 @@ model Transfer {
   blockchainTxHash      String?  @map("blockchain_tx_hash")
   blockchainConfirmedAt DateTime? @map("blockchain_confirmed_at")
 
+  // Claim-service bridge ACK — null when bridge POST hasn't succeeded yet; set by reconciler
+  claimBridgeAckedAt    DateTime? @map("claim_bridge_acked_at")
+
   // Cash-out
   cashoutMethod         String?  @map("cashout_method")
   cashoutLocalAmount    String?  @map("cashout_local_amount")

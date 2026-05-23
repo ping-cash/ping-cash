@@ -79,6 +79,13 @@ export class TransferRepository {
     return this.mapToTransfer(transfer);
   }
 
+  async markClaimBridgeAcked(id: string): Promise<void> {
+    await prisma.transfer.update({
+      where: { id },
+      data: { claimBridgeAckedAt: new Date() },
+    });
+  }
+
   async findByClaimCode(claimCode: string): Promise<Transfer | null> {
     const transfer = await prisma.transfer.findUnique({
       where: { claimCode },

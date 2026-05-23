@@ -106,7 +106,8 @@ export class TransferService {
 
     // Bridge to claim-service so the recipient can actually open the claim_code.
     // Best-effort: a transient claim-service failure does not roll back the transfer.
-    await createClaimForTransfer({
+    // The claim-reconciler polls for transfers with null claim_bridge_acked_at + retries.
+    const bridgeResult = await createClaimForTransfer({
       transferId: transfer.id,
       senderId: input.senderId,
       recipientPhone: input.recipientPhone,
@@ -114,6 +115,9 @@ export class TransferService {
       amountValue: input.amount,
       amountCurrency: input.currency,
     });
+    if (bridgeResult) {
+      await this.repository.markClaimBridgeAcked(transfer.id);
+    }
 
     // Publish event for saga orchestration
     await publishEvent(EventTypes.TRANSFER_INITIATED, {

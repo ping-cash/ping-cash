@@ -2,6 +2,10 @@ import { loadConfig } from '@ping/config';
 
 import { buildApp } from './app';
 import { connectKafka, disconnectKafka } from './events/kafka';
+import {
+  startClaimReconciler,
+  stopClaimReconciler,
+} from './services/claim-reconciler.service';
 import { logger } from './utils/logger';
 import { prisma } from './utils/prisma';
 import { connectRedis, disconnectRedis } from './utils/redis';
@@ -31,10 +35,14 @@ async function main() {
     process.exit(1);
   }
 
+  // Background reconciler retries failed claim-service bridge POSTs every 30s.
+  startClaimReconciler();
+
   // Graceful shutdown
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutting down...');
 
+    stopClaimReconciler();
     await app.close();
     await Promise.all([
       disconnectKafka(),
