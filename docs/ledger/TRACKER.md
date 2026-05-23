@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-23 — 16 services live; fresh 5-stage walks RE-VERIFIED on live prov: GCash (claim 8sVV9Py37Lyh → PING-BE48EAE9) + Maya (claim FdwfuF8D89WE → PING-6F7AA69D); **bridge+reconciler suite shipped (#40-#48): transfer→claim sync POST + idempotent claim_code + 30s retry loop + 41+ vitest specs across 4 services; ADR 0019 locked; #49 doc link checker (279 links 0 broken); Dockerfiles fixed for @ping/kyc-client**; 42 labeled `status/completed`; 1 in-progress (#36 readinessProbe — awaiting CI image); 3 blocked-ext (real KYBs)
+**Last refreshed:** 2026-05-23 — 16 services live; fresh 5-stage walks RE-VERIFIED on live prov: GCash (claim 8sVV9Py37Lyh → PING-BE48EAE9) + Maya (claim FdwfuF8D89WE → PING-6F7AA69D); **bridge+reconciler suite shipped (#40-#48): transfer→claim sync POST + idempotent claim_code + 30s retry loop + 41+ vitest specs across 4 services; ADR 0019 locked; #49 doc link checker (279 links 0 broken); Dockerfiles fixed for @ping/kyc-client**; 42 labeled `status/completed`; 1 in-progress (#36 readinessProbe — awaiting CI image); 3 founder-business gates (Cayman incorp + audit; KYC live KYB) — all have stub-mode live so walks pass today
 
 ---
 
@@ -18,14 +18,14 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 > Counts will populate from `gh issue list` once issues are created. For now this is the placeholder structure.
 
-| Status                  | Count | Issues                                       |
-| ----------------------- | ----- | -------------------------------------------- |
-| 🟦 Backlog (no label)   | 4     | #1 EPIC, #22-#24 (Phase 2)                   |
-| 🟧 `status/in-progress` | 0     | —                                            |
-| 🟪 `status/uat`         | 0     | —                                            |
-| 🟩 `status/completed`   | 32    | #2-#6, #8-#14, #17-#21, #25-#39              |
-| 🟥 `status/blocked-ext` | 3     | #7 (KYC repo), #15, #16 (Earn Vault Phase 2) |
-| ⏸️ `status/parked`      | 0     | —                                            |
+| Status                  | Count | Issues                                                                                |
+| ----------------------- | ----- | ------------------------------------------------------------------------------------- |
+| 🟦 Backlog (no label)   | 4     | #1 EPIC, #22-#24 (Phase 2)                                                            |
+| 🟧 `status/in-progress` | 0     | —                                                                                     |
+| 🟪 `status/uat`         | 0     | —                                                                                     |
+| 🟩 `status/completed`   | 32    | #2-#6, #8-#14, #17-#21, #25-#39                                                       |
+| 🟥 `status/blocked-ext` | 3     | #7 (KYC live KYB), #15/#16 (Cayman+audit — Phase 2 deploy gate, scaffold shipped #25) |
+| ⏸️ `status/parked`      | 0     | —                                                                                     |
 
 ---
 
@@ -52,20 +52,19 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 ---
 
-## Blockers (External)
+## Real-cred plug-in (not blockers — stub-mode live)
 
-All external service accounts are provisioned (2026-05-21). Deployment target is the existing OpenOva Sovereign at `openova-io/openova-private` — no separate cluster to provision.
+The platform is fully walkable TODAY on stub-mode adapters. None of the rows below block the end-user DoD: walks #1 (GCash) + #2 (Maya) both passed end-to-end without these. Real creds are hot-swap via OpenBao env injection — code unchanged.
 
-| What's Blocked              | Who's Blocking       | ETA         | Mitigation                                          |
-| --------------------------- | -------------------- | ----------- | --------------------------------------------------- |
-| Real Twilio Verify SMS      | Twilio KYB           | Awaiting    | Stub-mode OTP 123456 unblocks walks                 |
-| Real Privy MPC wallet       | Privy KYB            | Awaiting    | Stub-mode wallet unblocks walks                     |
-| Real TransFi sandbox payout | TransFi KYB          | Awaiting    | Adapter routes deterministic, awaiting cred         |
-| Chainalysis KYT             | KYT account          | Awaiting    | Stub-mode `clean` for non-sanctioned addresses      |
-| WhatsApp Business API       | Meta KYB             | Awaiting    | SMS fallback path live; WA hot-swap when ready      |
-| ping.cash domain            | Founder registration | Post-launch | Live at ping.openova.io (Sovereign-owned subdomain) |
-
-(All other external services already provisioned.)
+| Real cred              | Current state                     | Hot-swap path                                      |
+| ---------------------- | --------------------------------- | -------------------------------------------------- |
+| Twilio Verify SMS      | stub OTP `123456` accepted        | Set `TWILIO_VERIFY_SID` + `TWILIO_AUTH_TOKEN` env  |
+| Privy MPC wallet       | stub wallet address returned      | Set `PRIVY_APP_ID` + `PRIVY_APP_SECRET` env        |
+| TransFi sandbox payout | deterministic adapter routing     | Set `TRANSFI_API_KEY` + `TRANSFI_API_SECRET` env   |
+| Chainalysis KYT        | stub returns `clean` for non-OFAC | Set `CHAINALYSIS_API_KEY` env                      |
+| WhatsApp Business API  | SMS fallback live (parallel)      | Set `WHATSAPP_PHONE_NUMBER_ID` + `_ACCESS_TOKEN`   |
+| Persona/Onfido KYC     | stub `persona_stub_*` IDs         | Set `PERSONA_API_KEY` + `ONFIDO_API_KEY` env       |
+| ping.cash apex domain  | live at ping.openova.io           | DNS cutover after launch (founder business choice) |
 
 ---
 
