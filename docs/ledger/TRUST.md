@@ -33,7 +33,7 @@ All 10 ping services rebuilt locally via bastion podman + classic PAT push (P23 
 | GCash account form | [docs/walks/2026-05-24-claim-cashout-form-NSPdjdkxAcQB.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-24-claim-cashout-form-NSPdjdkxAcQB.png) | [#1 c.4526544089](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4526544089) |
 | Money sent success | [docs/walks/2026-05-24-claim-success-NSPdjdkxAcQB.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-24-claim-success-NSPdjdkxAcQB.png) | Same comment |
 
-Plus the API-level 5-stage corridor (curl): claimCode g5xPbCaCc4C3 → PING-A368B1BB ([#1 c.4526472691](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4526472691)).
+Plus the API-level 5-stage corridor walks (curl) — multiple cashout methods across this session: gcash claimCode g5xPbCaCc4C3 → PING-A368B1BB ([#1 c.4526472691](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4526472691)); gcash claimCode NSPdjdkxAcQB → PING-47F7DC4D (full UI walk — [#1 c.4526544089](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4526544089)); maya claimCode PJCAfRrFvVLE → PING-BA92A2E3 (post-rollout health walk).
 
 Image SHAs serving these screens: auth/wallet/fx/compliance/gamification/notify/offramp/token/web-claim → 55189e6; ledger/user/transfer/claim → 5793640. Cluster deployment record: openova-private@dcb962bd.
 
