@@ -33,6 +33,15 @@ export async function publishEvent<T>(
   // Determine topic from event type
   const topic = getTopicForEventType(eventType);
 
+  // Stub mode: log + return
+  if (!producer) {
+    logger.info(
+      { eventType, eventId: event.id, topic, mode: 'stub' },
+      'Event would be published (Kafka unset)'
+    );
+    return;
+  }
+
   try {
     await producer.send({
       topic,

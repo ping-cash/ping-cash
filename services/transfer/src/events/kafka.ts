@@ -34,6 +34,12 @@ let producer: Producer;
 let consumer: Consumer;
 
 export async function connectKafka(): Promise<void> {
+  if (!config.KAFKA_BROKERS || config.KAFKA_BROKERS.length === 0) {
+    logger.warn(
+      'KAFKA_BROKERS unset — running in stub mode; transfer events will be logged only'
+    );
+    return;
+  }
   // Connect producer
   producer = kafka.producer({
     allowAutoTopicCreation: true,
@@ -58,11 +64,12 @@ export async function disconnectKafka(): Promise<void> {
   logger.info('Kafka disconnected');
 }
 
-export function getProducer(): Producer {
-  if (!producer) {
-    throw new Error('Kafka producer not initialized');
-  }
-  return producer;
+export function getProducer(): Producer | null {
+  return producer ?? null;
+}
+
+export function isKafkaEnabled(): boolean {
+  return Boolean(producer);
 }
 
 export function getConsumer(): Consumer {
