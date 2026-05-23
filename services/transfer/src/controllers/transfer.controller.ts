@@ -40,14 +40,11 @@ export async function transferRoutes(app: FastifyInstance) {
   }>(
     '/',
     {
-      schema: {
-        body: createTransferSchema,
-      },
       preHandler: [authenticate],
     },
     async (request, reply) => {
       const userId = (request as any).userId as string;
-      const body = request.body;
+      const body = createTransferSchema.parse(request.body);
 
       const transfer = await transferService.createTransfer({
         senderId: userId,
@@ -98,14 +95,13 @@ export async function transferRoutes(app: FastifyInstance) {
   }>(
     '/',
     {
-      schema: {
-        querystring: listTransfersSchema,
-      },
       preHandler: [authenticate],
     },
     async (request, reply) => {
       const userId = (request as any).userId as string;
-      const { type, status, limit, cursor } = request.query;
+      const { type, status, limit, cursor } = listTransfersSchema.parse(
+        request.query
+      );
 
       const result = await transferService.listTransfers(userId, {
         type,
