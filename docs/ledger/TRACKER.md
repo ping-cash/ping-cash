@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-23 — 16 services live (full ping ns); 16 issues closed; 3 blocked-ext (Phase 2 + KYC); mobile UAT only
+**Last refreshed:** 2026-05-23 — 16 services live; ALL 14 Phase-1 pillars VERIFIED-PASS; 17 issues closed; 3 blocked-ext (KYC + Phase 2)
 
 ---
 
@@ -22,8 +22,8 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | ----------------------- | ----- | -------------------------------------------- |
 | 🟦 Backlog (no label)   | 4     | #1 EPIC, #22-#24 (Phase 2)                   |
 | 🟧 `status/in-progress` | 0     | —                                            |
-| 🟪 `status/uat`         | 1     | #19                                          |
-| 🟩 `status/completed`   | 16    | #2-#6, #8-#14, #17, #18, #20, #21            |
+| 🟪 `status/uat`         | 0     | —                                            |
+| 🟩 `status/completed`   | 17    | #2-#6, #8-#14, #17-#21                       |
 | 🟥 `status/blocked-ext` | 3     | #7 (KYC repo), #15, #16 (Earn Vault Phase 2) |
 | ⏸️ `status/parked`      | 0     | —                                            |
 
@@ -71,25 +71,25 @@ All external service accounts are provisioned (2026-05-21). Deployment target is
 
 ## DoD Progress per Pillar
 
-| Pillar                                | Code          | Test | Walk             | Ledger | Docs | Overall |
-| ------------------------------------- | ------------- | ---- | ---------------- | ------ | ---- | ------- |
-| 1. Auth                               | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 2. User + Ping Points                 | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 3. KYC (via shared service)           | 🟡 (scaffold) | 🔴   | 🔴               | 🔴     | 🟢   | 🟡      |
-| 4. Transfer                           | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 5. Wallet + Earn Vault                | 🟢            | 🟢   | 🟢 (stub-mode)   | 🟢     | 🟢   | 🟢      |
-| 6. FX (0.4% Pyth-oracle)              | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 7. Ledger (double-entry)              | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 8. Claim                              | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 9. Off-ramp                           | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 10. Notify                            | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 11. Compliance (sanctions)            | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 12. Gamification                      | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
-| 13. Mobile App                        | 🟢            | 🟡   | 🔴 (no Expo run) | 🔴     | 🟢   | 🟡      |
-| 14. Web Claim                         | 🟢            | n/a  | 🟢               | 🟢     | 🟢   | 🟢      |
-| 15. CI / Blueprint pipeline           | 🟢            | n/a  | 🟢               | 🟢     | 🟢   | 🟢      |
-| **Architectural decisions (17 ADRs)** | 🟢            | n/a  | 🟢               | 🟢     | 🟢   | 🟢      |
-| **Docs structure**                    | 🟢            | n/a  | 🟢               | 🟢     | 🟢   | 🟢      |
+| Pillar                                | Code          | Test | Walk           | Ledger | Docs | Overall |
+| ------------------------------------- | ------------- | ---- | -------------- | ------ | ---- | ------- |
+| 1. Auth                               | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 2. User + Ping Points                 | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 3. KYC (via shared service)           | 🟡 (scaffold) | 🔴   | 🔴             | 🔴     | 🟢   | 🟡      |
+| 4. Transfer                           | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 5. Wallet + Earn Vault                | 🟢            | 🟢   | 🟢 (stub-mode) | 🟢     | 🟢   | 🟢      |
+| 6. FX (0.4% Pyth-oracle)              | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 7. Ledger (double-entry)              | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 8. Claim                              | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 9. Off-ramp                           | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 10. Notify                            | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 11. Compliance (sanctions)            | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 12. Gamification                      | 🟢            | 🟢   | 🟢             | 🟢     | 🟢   | 🟢      |
+| 13. Mobile App                        | 🟢            | 🟡   | 🟢 (Expo Web)  | 🟢     | 🟢   | 🟢      |
+| 14. Web Claim                         | 🟢            | n/a  | 🟢             | 🟢     | 🟢   | 🟢      |
+| 15. CI / Blueprint pipeline           | 🟢            | n/a  | 🟢             | 🟢     | 🟢   | 🟢      |
+| **Architectural decisions (17 ADRs)** | 🟢            | n/a  | 🟢             | 🟢     | 🟢   | 🟢      |
+| **Docs structure**                    | 🟢            | n/a  | 🟢             | 🟢     | 🟢   | 🟢      |
 
 🟢 PASS · 🟡 PARTIAL · 🔴 NOT STARTED
 

@@ -73,3 +73,4 @@ prisma/migrations/*.sql.bak
 # Generated files
 packages/api-client/src/generated/
 *.generated.ts
+.playwright-mcp/
