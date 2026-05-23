@@ -87,3 +87,41 @@ Source code:
 Tests:
 
 - `services/auth/src/services/auth.service.test.ts` — 12 unit tests covering happy path, invalid inputs, rate limits, attempt lockout, refresh rotation, logout revocation.
+
+## Step 3 — POST /auth/refresh
+
+```bash
+$ curl -s -X POST https://ping.openova.io/auth/refresh -H "Authorization: Bearer <refresh-token>"
+```
+
+Response:
+```json
+{
+  "accessToken": "<new access JWT>",
+  "refreshToken": "<rotated refresh JWT, new jti>",
+  "expiresIn": 900
+}
+```
+
+Behaviour: old refresh jti revoked from Redis, new jti stored. Rotation pattern: each refresh issues a NEW refresh token + invalidates the previous one (per OWASP refresh-token best practice).
+
+## Step 4 — POST /auth/logout
+
+```bash
+$ curl -s -X POST https://ping.openova.io/auth/logout -H "Authorization: Bearer <refresh-token>" -w "%{http_code}"
+```
+
+Response: `HTTP 204` (No Content)
+
+## Step 5 — verify revocation
+
+```bash
+$ curl -s -X POST https://ping.openova.io/auth/refresh -H "Authorization: Bearer <already-revoked-refresh>"
+```
+
+Response: `HTTP 401`
+```json
+{"error":{"code":"INVALID_REFRESH_TOKEN","message":"Invalid or expired refresh token.","requestId":"req_..."}}
+```
+
+✅ Token-rotation + revocation work as designed. Old refresh tokens cannot be reused after rotation or logout.
