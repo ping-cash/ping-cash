@@ -30,18 +30,29 @@ describe('router.service.selectAdapters', () => {
     expect(adapters.length).toBe(0); // No adapter supports phpc-direct yet
   });
 
-  // Contract test: every method advertised to PH end-users in claim-service's
-  // inferCashoutMethods(+63...) must resolve to at least one adapter here.
+  // Contract test: every method advertised to end-users in claim-service's
+  // inferCashoutMethods(phone) must resolve to at least one adapter here.
   // Drift bug 2026-05-24: web-claim picker offered cebuana-cash-pickup but
   // offramp-service rejected with InvalidMethod (claim-service masked it as
-  // status=processing). Add cebuana to TRANSFI_METHOD_MAP + assert here.
+  // status=processing). Same risk for PK bank-transfer + TR turkish-bank.
   it.each([
-    ['gcash'],
-    ['maya'],
-    ['bdo-bank'],
-    ['cebuana-cash-pickup'],
-  ])('every PH cashout method advertised to users resolves to an adapter: %s', method => {
-    const adapters = selectAdapters(method as never, 'PH');
+    ['PH', 'gcash'],
+    ['PH', 'maya'],
+    ['PH', 'bdo-bank'],
+    ['PH', 'cebuana-cash-pickup'],
+    ['IN', 'upi'],
+    ['IN', 'neft-bank'],
+    ['IN', 'paytm'],
+    ['PK', 'jazzcash'],
+    ['PK', 'easypaisa'],
+    ['PK', 'bank-transfer'],
+    ['BD', 'bkash'],
+    ['BD', 'nagad'],
+    ['KE', 'm-pesa'],
+    ['KE', 'airtel-money'],
+    ['TR', 'turkish-bank'],
+  ])('every cashout method advertised to %s users resolves to an adapter: %s', (_country, method) => {
+    const adapters = selectAdapters(method as never, _country);
     expect(adapters.length).toBeGreaterThan(0);
   });
 });

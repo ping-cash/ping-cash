@@ -35,6 +35,8 @@ const TRANSFI_METHOD_MAP: Partial<
   paytm: { service: 'mobile-wallet', subservice: 'PAYTM_IN' },
   jazzcash: { service: 'mobile-wallet', subservice: 'JAZZCASH_PK' },
   easypaisa: { service: 'mobile-wallet', subservice: 'EASYPAISA_PK' },
+  'bank-transfer': { service: 'bank-transfer', subservice: 'IBFT_PK' },
+  'turkish-bank': { service: 'bank-transfer', subservice: 'IBAN_TR' },
   bkash: { service: 'mobile-wallet', subservice: 'BKASH_BD' },
   nagad: { service: 'mobile-wallet', subservice: 'NAGAD_BD' },
   'm-pesa': { service: 'mobile-wallet', subservice: 'MPESA_KE' },
