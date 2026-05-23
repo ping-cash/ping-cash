@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-23 — 16 services live; ALL 14 Phase-1 pillars VERIFIED-PASS; 2 Anchor scaffolds landed (#25 earn-vault, #26 internal-swap; both do-not-deploy); 4 closed + 15 labeled `status/completed`; 3 blocked-ext
+**Last refreshed:** 2026-05-23 — 16 services live; ALL 14 Phase-1 pillars VERIFIED-PASS; 3 Phase-2 Anchor scaffolds landed (#25 earn-vault, #26 internal-swap, #27 POMM; all do-not-deploy); 4 closed + 16 labeled `status/completed`; 3 blocked-ext
 
 ---
 
@@ -23,7 +23,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | 🟦 Backlog (no label)   | 4     | #1 EPIC, #22-#24 (Phase 2)                   |
 | 🟧 `status/in-progress` | 0     | —                                            |
 | 🟪 `status/uat`         | 0     | —                                            |
-| 🟩 `status/completed`   | 19    | #2-#6, #8-#14, #17-#21, #25, #26             |
+| 🟩 `status/completed`   | 20    | #2-#6, #8-#14, #17-#21, #25-#27              |
 | 🟥 `status/blocked-ext` | 3     | #7 (KYC repo), #15, #16 (Earn Vault Phase 2) |
 | ⏸️ `status/parked`      | 0     | —                                            |
 
