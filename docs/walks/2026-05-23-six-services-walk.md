@@ -89,3 +89,16 @@ web-claim-69b5865f96-d7rnz              1/1   Running   d0b6738
 ```
 
 9 ping services + Redis + web-claim app live on contabo-mkt cluster, all reachable from the public internet via Traefik+TLS at ping.openova.io.
+
+## wallet-service (#9) 🟢 (added in second batch)
+
+`GET /wallet/validate?address=...` — round-trip via Sovereign ingress:
+- Valid USDC mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`:
+  ```json
+  {"valid":true,"address":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}
+  ```
+- Invalid: `{"valid":false,"address":"NotAValidSolanaAddress"}`
+
+Per ADR 0017 (custody model): wallet-service does NOT sign — it only validates + reads on-chain balances. Public Solana RPC (api.mainnet-beta.solana.com) is wired; Helius/QuickNode endpoint swaps via OpenBao when Phase-2 needs higher RPC quota.
+
+`GET /wallet/balance` and `GET /wallet/address` require JWT (auth-service issued); validated via public endpoint /wallet/validate which is auth-free.
