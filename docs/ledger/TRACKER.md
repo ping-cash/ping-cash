@@ -38,8 +38,8 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | 🟧 `status/in-progress` | 0     | —                                                                                     |
 | 🟪 `status/uat`         | 0     | —                                                                                     |
 | 🟩 `status/completed`   | 36    | #2-#14 (incl. #6, #11), #17-#21, #25-#39, **#59 + #60 (offramp drift fix + send-intent)** |
-| 🟥 `status/blocked-ext` | 3     | #15/#16 Cayman+audit, #50 vendor keys (#54 reclassified — mech-4 unblocks corridor)   |
-| ⏸️ `status/parked`      | 0     | —                                                                                     |
+| 🟥 `status/blocked-ext` | 0     | — (all 6 prior blocked-ext exhausted via P23 + reclassified to parked 2026-05-24)     |
+| ⏸️ `status/parked`      | 7     | #54 GHA billing, #50 vendor keys, #15/#16/#23/#24 Phase-2 mainnet, #58 Wise           |
 
 ---
 
