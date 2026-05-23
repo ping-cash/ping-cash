@@ -148,6 +148,19 @@ class ApiClient {
     return this.request('/wallet/address');
   }
 
+  // Pillar 4 send-side: fetch unsigned USDC SPL Token transfer for client
+  // Privy MPC signing. Returns the base64 serializedTransaction + ATA + atomic
+  // amount metadata. Per ADR 0017 the backend NEVER signs.
+  async buildSendIntent(
+    recipientWallet: string,
+    amountUsdc: string
+  ): Promise<SendIntent> {
+    return this.request('/wallet/send-intent', {
+      method: 'POST',
+      body: JSON.stringify({ recipientWallet, amountUsdc }),
+    });
+  }
+
   // ==========================================
   // Transfers
   // ==========================================
@@ -254,6 +267,24 @@ export interface FxQuote {
   rate: string;
   fee: string;
   expiresAt: string;
+}
+
+// Pillar 4 send-side intent shape — wallet-service builds, client signs.
+export interface SendIntent {
+  senderWallet: string;
+  recipientWallet: string;
+  amountUsdc: string;
+  serializedTransaction: string; // base64 unsigned tx for Privy MPC sign
+  expiresInSeconds: number;
+  meta: {
+    mint: string;
+    program: string;
+    associatedTokenProgram: string;
+    senderAta: string;
+    recipientAta: string;
+    decimals: number;
+    amountAtomic: string;
+  };
 }
 
 // ==========================================
