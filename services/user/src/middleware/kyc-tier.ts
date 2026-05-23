@@ -19,9 +19,17 @@ function getClient(): KycClient | null {
   return kycClient;
 }
 
-export function requireKycTier(minTier: 1 | 2) {
+export function requireKycTier(
+  minTier: 1 | 2,
+  options: { userIdFrom?: 'context' | 'body' } = { userIdFrom: 'context' }
+) {
   return async (req: FastifyRequest, reply: FastifyReply) => {
-    const userId = (req as unknown as { userId?: string }).userId;
+    let userId: string | undefined;
+    if (options.userIdFrom === 'body') {
+      userId = (req.body as { userId?: string } | undefined)?.userId;
+    } else {
+      userId = (req as unknown as { userId?: string }).userId;
+    }
     if (!userId) {
       reply.status(401).send({ error: { code: 'UNAUTHENTICATED' } });
       return;

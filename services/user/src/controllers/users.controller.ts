@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 
+import { requireKycTier } from '../middleware/kyc-tier';
 import * as contactsService from '../services/contacts.service';
 import * as userService from '../services/user.service';
 import * as welcomeStakeService from '../services/welcome-stake.service';
@@ -79,8 +80,10 @@ export async function userRoutes(fastify: FastifyInstance) {
   );
 
   // POST /users/internal/welcome-stake — called by transfer-service on first outbound ≥ $10
+  // Tier 1 KYC required (welcome-stake is real-money-adjacent — Persona phone+selfie minimum)
   fastify.post(
     '/internal/welcome-stake',
+    { preHandler: [requireKycTier(1, { userIdFrom: 'body' })] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const body = GrantWelcomeStakeBody.parse(request.body);
       await welcomeStakeService.grant(body.userId, body.transferId);
