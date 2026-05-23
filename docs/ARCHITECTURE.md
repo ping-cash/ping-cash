@@ -402,7 +402,7 @@ The `programs/` directory holds four Anchor 0.30.1 programs. All carry a DO-NOT-
 
 ### KYC integration boundary
 
-KYC lives in a separate repo (`dynolabs-io/kyc`) per [ADR 0011](adr/0011-shared-kyc-service.md) and is consumed by ping via the `@ping/kyc-client` package:
+KYC lives in a separate repo (`dynolabs-io/kyc`) per [ADR 0011](adr/0011-kyc-shared-service.md) and is consumed by ping via the `@ping/kyc-client` package:
 
 - `user-service` uses `requireKycTier(1|2)` Fastify pre-handler to gate sensitive endpoints (welcome-stake, profile updates)
 - `transfer-service` calls `ensureKycForTransfer(userId, amountUsdc)` before `createTransfer` — refuses transfers above the user's tier threshold (`<$200` no check / `$200-999` tier 1 / `≥$1000` tier 2)
