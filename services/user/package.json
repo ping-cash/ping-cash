@@ -30,7 +30,8 @@
     "fastify": "^4.26.0",
     "ioredis": "^5.3.0",
     "pino": "^8.19.0",
-    "zod": "^3.22.0"
+    "zod": "^3.22.0",
+    "@ping/kyc-client": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
