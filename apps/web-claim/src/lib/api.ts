@@ -65,7 +65,8 @@ export async function getClaim(code: string): Promise<ClaimPublic> {
 export async function requestOtp(
   code: string
 ): Promise<{ sent: true; expiresIn: number }> {
-  return request(`/claims/${code}/otp`, { method: 'POST' });
+  // Fastify requires non-empty body when Content-Type is JSON.
+  return request(`/claims/${code}/otp`, { method: 'POST', body: '{}' });
 }
 
 export async function verifyOtp(

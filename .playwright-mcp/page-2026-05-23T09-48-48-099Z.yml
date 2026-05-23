@@ -1,0 +1,24 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "Ping" [ref=e3] [cursor=pointer]:
+      - /url: https://ping.cash
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - paragraph [ref=e6]: Ahmed sent you
+      - paragraph [ref=e14]: $200 USDC
+      - paragraph [ref=e15]: ≈ 11250 PHP
+      - paragraph [ref=e16]: Expires in 166h 47m
+    - generic [ref=e17]:
+      - button "Continue to claim →" [ref=e18] [cursor=pointer]
+      - paragraph [ref=e19]: We'll send a 6-digit code to +63917 *** *** 4567
+      - paragraph [ref=e20]: Body cannot be empty when content-type is set to 'application/json'
+  - contentinfo [ref=e7]:
+    - paragraph [ref=e8]: Non-custodial · Solana · USDC
+    - paragraph [ref=e9]:
+      - link "Privacy" [ref=e10] [cursor=pointer]:
+        - /url: https://ping.cash/privacy
+      - link "Terms" [ref=e11] [cursor=pointer]:
+        - /url: https://ping.cash/terms
+      - link "Help" [ref=e12] [cursor=pointer]:
+        - /url: https://ping.cash/help
+  - alert [ref=e13]
