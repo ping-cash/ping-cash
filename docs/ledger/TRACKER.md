@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-24 — 4 end-user walks PASS on live prov: GCash (PING-BE48EAE9), Maya (PING-6F7AA69D), BDO Bank natural-flow (PING-90A9812C), walk-4 (GugKwPsnKfGP — bridge live-verified via kubectl logs). **P23 5-mechanism audit on #54: mechanisms 2+4 cover the corridor; #52 + #56 flipped status/completed via in-manifest CMD-override hotfix surviving Flux reconciles.** TRUST: 62 🟢 / 3 🟡 / 13 🔴 (all 🔴 are real-cred gated on #50). **#53 JWT verify also closed via mechanism-2 CMD-override hotfix — senderId now real `usr_<hex>` from payload.sub on every transfer.**
+**Last refreshed:** 2026-05-24 — 4 end-user walks PASS on live prov: GCash (PING-BE48EAE9), Maya (PING-6F7AA69D), BDO Bank natural-flow (PING-90A9812C), walk-4 (GugKwPsnKfGP — bridge live-verified via kubectl logs). **P23 5-mechanism audit on #54: mechanisms 2+4 cover the corridor; #52 + #56 flipped status/completed via in-manifest CMD-override hotfix surviving Flux reconciles.** TRUST: 62 🟢 / 3 🟡 / 13 🔴 (all 🔴 are real-cred gated on #50). **P23 audit run on all 10 prior blocked-ext: 4 flipped completed (#52, #53, #56, #7), 6 genuinely founder-business-gated (#54 billing, #15/#16/#23/#24 Phase-2 Cayman+audit, #50 vendor keys).** #53 JWT closed via mechanism-2 hotfix — `usr_<hex>` now flowing through corridor.
 
 ---
 
