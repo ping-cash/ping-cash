@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-23 — 16 services live; ALL 14 Phase-1 pillars VERIFIED-PASS; 4 Phase-2 Anchor scaffolds + KYC service scaffold landed (#25-#29); KYC service walks locally (Persona+Onfido stubs); 22 labeled `status/completed`; 3 blocked-ext (real KYBs)
+**Last refreshed:** 2026-05-23 — 16 services live; ALL 14 Phase-1 pillars VERIFIED-PASS; 4 Anchor scaffolds + KYC service + ping-side kyc-client+middleware (#25-#30); 23 labeled `status/completed`; 3 blocked-ext (real KYBs)
 
 ---
 
@@ -23,7 +23,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | 🟦 Backlog (no label)   | 4     | #1 EPIC, #22-#24 (Phase 2)                   |
 | 🟧 `status/in-progress` | 0     | —                                            |
 | 🟪 `status/uat`         | 0     | —                                            |
-| 🟩 `status/completed`   | 22    | #2-#6, #8-#14, #17-#21, #25-#29              |
+| 🟩 `status/completed`   | 23    | #2-#6, #8-#14, #17-#21, #25-#30              |
 | 🟥 `status/blocked-ext` | 3     | #7 (KYC repo), #15, #16 (Earn Vault Phase 2) |
 | ⏸️ `status/parked`      | 0     | —                                            |
 
