@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-24 — 4 end-user walks PASS on live prov: GCash (PING-BE48EAE9), Maya (PING-6F7AA69D), BDO Bank natural-flow (PING-90A9812C), walk-4 (GugKwPsnKfGP — bridge live-verified via kubectl logs). **P23 5-mechanism audit on #54: mechanisms 2+4 cover the corridor; #52 + #56 flipped status/completed via in-manifest CMD-override hotfix surviving Flux reconciles.** TRUST: 62 🟢 / 3 🟡 / 13 🔴 (all 🔴 are real-cred gated on #50). **P23 audit run on all 10 prior blocked-ext: 4 flipped completed (#52, #53, #56, #7), 6 genuinely founder-business-gated (#54 billing, #15/#16/#23/#24 Phase-2 Cayman+audit, #50 vendor keys).** #53 JWT closed via mechanism-2 hotfix — `usr_<hex>` now flowing through corridor.
+**Last refreshed:** 2026-05-24 (post mech-4 sweep) — **P23 mechanism-4 PROVEN end-to-end**: bastion podman + classic PAT push to ghcr bypasses #54 GHA billing block. 4 services rebuilt + redeployed off CMD-override hotfixes in one session (ledger-service:5793640 NEW with Prisma engines; user-service:5793640 NEW with Prisma; transfer-service:5793640 replacing c3b2ed1, sed JWT hotfix removed; claim-service:5793640 replacing c3b2ed1, sed senderId hotfix removed). Full 5-stage corridor walks PASS on clean stack (NO in-manifest workarounds): claimCode=GrpGyVx3NNUK → PING-8D1C9D6E (#1 comment 4526400835). Issue closes after operator verification: #6 user-service flipped status/completed; #11 ledger-service flipped status/completed; #54 GHA billing reclassified as soft-blocker only for CI gates (not for corridor surfaces — mech-4 IS the operating path now). TRUST: 64 🟢 / 3 🟡 / 11 🔴.
 
 ---
 
@@ -37,8 +37,8 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | 🟦 Backlog (no label)   | 4     | #1 EPIC, #22-#24 (Phase 2)                                                            |
 | 🟧 `status/in-progress` | 0     | —                                                                                     |
 | 🟪 `status/uat`         | 0     | —                                                                                     |
-| 🟩 `status/completed`   | 32    | #2-#6, #8-#14, #17-#21, #25-#39                                                       |
-| 🟥 `status/blocked-ext` | 3     | #7 (KYC live KYB), #15/#16 (Cayman+audit — Phase 2 deploy gate, scaffold shipped #25) |
+| 🟩 `status/completed`   | 34    | #2-#14 (incl. #6, #11), #17-#21, #25-#39 (mech-4 corridor verified)                   |
+| 🟥 `status/blocked-ext` | 3     | #15/#16 Cayman+audit, #50 vendor keys (#54 reclassified — mech-4 unblocks corridor)   |
 | ⏸️ `status/parked`      | 0     | —                                                                                     |
 
 ---
