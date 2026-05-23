@@ -22,8 +22,8 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web-claim/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web-claim/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web-claim/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web-claim/.next/static ./apps/web-claim/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web-claim/public ./apps/web-claim/public
 
 USER nextjs
 
