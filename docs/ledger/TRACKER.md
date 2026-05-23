@@ -47,7 +47,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 | ID                      | Title                                   | Status      | Owner  | DoD Gate                                                                                      |
 | ----------------------- | --------------------------------------- | ----------- | ------ | --------------------------------------------------------------------------------------------- |
-| #1                      | EPIC: End-to-End Phase 1 Delivery       | UAT         | claude | 5-stage walk + 6 screenshots VERIFIED-PASS on mech-4 stack + Pillar 4 send-intent scaffold shipped (wallet@59465b2 — POST /wallet/send-intent for client-side Privy MPC signing per ADR 0017); EPIC stays open until founder closes |
+| #1                      | EPIC: End-to-End Phase 1 Delivery       | UAT         | claude | 5-stage walk + 6 screenshots VERIFIED-PASS on mech-4 stack + Pillar 4 send-intent target-state shipped (wallet@cc0d237 with real createTransferCheckedInstruction + ATA derivation + mobile ApiClient.buildSendIntent wired in apps/mobile/lib/api.ts); EPIC stays open until founder closes |
 | #5                      | auth-service (phone OTP → JWT → wallet) | ✅ closed   | claude | Walked at /auth/\* (stub mode)                                                                |
 | #10                     | fx-service (Pyth + 0.4% spread)         | ✅ closed   | claude | Walked at /fx/\* (stub-rate oracle)                                                           |
 | #12                     | claim-service                           | ✅ closed   | claude | Walked all 5 stages on real browser                                                           |
