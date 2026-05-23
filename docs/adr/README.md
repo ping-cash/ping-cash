@@ -58,6 +58,7 @@ What did we reject, and why?
 | [0015](0015-phased-launch-ping-points-to-token.md) | Phased launch — Ping Points (Phase 1) → $PING token (Phase 2)        | Accepted | 2026-05-23 |
 | [0016](0016-fx-cost-covering-pricing.md)           | FX cost-covering pricing (0.4% spread)                               | Accepted | 2026-05-23 |
 | [0017](0017-custody-model.md)                      | Custody model — non-custodial wallets + delegated-authority vault    | Accepted | 2026-05-23 |
+| [0018](0018-anchor-scaffolds-do-not-deploy.md)     | Anchor scaffolds ship with explicit DO-NOT-DEPLOY guard              | Accepted | 2026-05-23 |
 
 ---
 
