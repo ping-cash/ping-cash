@@ -18,7 +18,7 @@ const envSchema = z.object({
   // Kafka
   KAFKA_BROKERS: z
     .string()
-    .transform(s => s.split(','))
+    .transform(s => (s === '' ? [] : s.split(',').filter(Boolean)))
     .optional(),
   KAFKA_CLIENT_ID: z.string().default('cash-platform'),
   KAFKA_GROUP_ID: z.string().optional(),
