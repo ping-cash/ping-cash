@@ -18,37 +18,37 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 > Counts will populate from `gh issue list` once issues are created. For now this is the placeholder structure.
 
-| Status                  | Count | Issues                 |
-| ----------------------- | ----- | ---------------------- |
-| 🟦 Backlog (no label)   | 6     | #15-#16, #22-#24, #7   |
-| 🟧 `status/in-progress` | 1     | #11 (ledger — current) |
-| 🟪 `status/uat`         | 9     | #2-#4, #6, #8, #9, #16, #19 |
+| Status                  | Count | Issues                                     |
+| ----------------------- | ----- | ------------------------------------------ |
+| 🟦 Backlog (no label)   | 6     | #15-#16, #22-#24, #7                       |
+| 🟧 `status/in-progress` | 1     | #11 (ledger — current)                     |
+| 🟪 `status/uat`         | 9     | #2-#4, #6, #8, #9, #16, #19                |
 | 🟩 `status/completed`   | 7     | #5, #10, #12, #13, #14, #17, #18, #20, #21 |
-| 🟥 `status/blocked-ext` | 0     | —                      |
-| ⏸️ `status/parked`      | 0     | —                      |
+| 🟥 `status/blocked-ext` | 0     | —                                          |
+| ⏸️ `status/parked`      | 0     | —                                          |
 
 ---
 
 ## Active Work Items
 
-| ID                  | Title                                         | Status     | Owner  | DoD Gate                                              |
-| ------------------- | --------------------------------------------- | ---------- | ------ | ----------------------------------------------------- |
-| #1                  | EPIC: End-to-End Phase 1 Delivery             | UAT        | claude | 5-stage walk VERIFIED-PASS (issue comment 4525035929); EPIC stays open until all pillars walk |
-| #5                  | auth-service (phone OTP → JWT → wallet)       | ✅ closed   | claude | Walked at /auth/* (stub mode)                          |
-| #10                 | fx-service (Pyth + 0.4% spread)               | ✅ closed   | claude | Walked at /fx/* (stub-rate oracle)                     |
-| #12                 | claim-service                                  | ✅ closed   | claude | Walked all 5 stages on real browser                   |
-| #13                 | offramp-service (TransFi/Wise routing)        | ✅ closed   | claude | Pod Ready; real adapter calls await TransFi KYB        |
-| #14                 | notify-service (12 templates)                 | ✅ closed   | claude | Walked /notify/templates                               |
-| #17                 | token-service (tier+clawback)                 | ✅ closed   | claude | Walked /token/tier with bronze/silver/gold/platinum    |
-| #18                 | gamification-service                          | ✅ closed   | claude | Pod Ready + event endpoints                            |
-| #20                 | web-claim (Next.js)                            | ✅ closed   | claude | All 5 stages walked on Playwright                     |
-| #21                 | compliance-service (sanctions)                | ✅ closed   | claude | Walked /compliance/sanctions/screen/wallet             |
-| #11                 | ledger-service (double-entry + outbox)        | IN PROGRESS| claude | Needs Postgres in `ping` ns — currently deploying      |
-| #6, #8, #9          | user / transfer / wallet                       | UAT        | claude | Need Postgres + Solana RPC                             |
-| #19                 | mobile app screens                             | UAT        | claude | Code-complete; awaiting Expo run                       |
-| #15, #16, #22, #23, #24 | Phase 2 (Earn Vault Anchor, $PING TGE)    | backlog    | —      | Cayman Foundation + audit prerequisite                 |
-| #7 (dynolabs-io/kyc) | KYC shared service                            | backlog    | —      | Separate repo created (scaffold only)                  |
-| openova-private#167 | Sovereign deploy PR (Kustomize)                | ✅ merged   | claude | Flux reconciles each commit                            |
+| ID                      | Title                                   | Status      | Owner  | DoD Gate                                                                                      |
+| ----------------------- | --------------------------------------- | ----------- | ------ | --------------------------------------------------------------------------------------------- |
+| #1                      | EPIC: End-to-End Phase 1 Delivery       | UAT         | claude | 5-stage walk VERIFIED-PASS (issue comment 4525035929); EPIC stays open until all pillars walk |
+| #5                      | auth-service (phone OTP → JWT → wallet) | ✅ closed   | claude | Walked at /auth/\* (stub mode)                                                                |
+| #10                     | fx-service (Pyth + 0.4% spread)         | ✅ closed   | claude | Walked at /fx/\* (stub-rate oracle)                                                           |
+| #12                     | claim-service                           | ✅ closed   | claude | Walked all 5 stages on real browser                                                           |
+| #13                     | offramp-service (TransFi/Wise routing)  | ✅ closed   | claude | Pod Ready; real adapter calls await TransFi KYB                                               |
+| #14                     | notify-service (12 templates)           | ✅ closed   | claude | Walked /notify/templates                                                                      |
+| #17                     | token-service (tier+clawback)           | ✅ closed   | claude | Walked /token/tier with bronze/silver/gold/platinum                                           |
+| #18                     | gamification-service                    | ✅ closed   | claude | Pod Ready + event endpoints                                                                   |
+| #20                     | web-claim (Next.js)                     | ✅ closed   | claude | All 5 stages walked on Playwright                                                             |
+| #21                     | compliance-service (sanctions)          | ✅ closed   | claude | Walked /compliance/sanctions/screen/wallet                                                    |
+| #11                     | ledger-service (double-entry + outbox)  | IN PROGRESS | claude | Needs Postgres in `ping` ns — currently deploying                                             |
+| #6, #8, #9              | user / transfer / wallet                | UAT         | claude | Need Postgres + Solana RPC                                                                    |
+| #19                     | mobile app screens                      | UAT         | claude | Code-complete; awaiting Expo run                                                              |
+| #15, #16, #22, #23, #24 | Phase 2 (Earn Vault Anchor, $PING TGE)  | backlog     | —      | Cayman Foundation + audit prerequisite                                                        |
+| #7 (dynolabs-io/kyc)    | KYC shared service                      | backlog     | —      | Separate repo created (scaffold only)                                                         |
+| openova-private#167     | Sovereign deploy PR (Kustomize)         | ✅ merged   | claude | Flux reconciles each commit                                                                   |
 
 ---
 
@@ -56,14 +56,14 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 All external service accounts are provisioned (2026-05-21). Deployment target is the existing OpenOva Sovereign at `openova-io/openova-private` — no separate cluster to provision.
 
-| What's Blocked                                         | Who's Blocking                | ETA                  | Mitigation                                               |
-| ------------------------------------------------------ | ----------------------------- | -------------------- | -------------------------------------------------------- |
-| Real Twilio Verify SMS                                  | Twilio KYB                    | Awaiting             | Stub-mode OTP 123456 unblocks walks                       |
-| Real Privy MPC wallet                                   | Privy KYB                     | Awaiting             | Stub-mode wallet unblocks walks                           |
-| Real TransFi sandbox payout                             | TransFi KYB                   | Awaiting             | Adapter routes deterministic, awaiting cred               |
-| Chainalysis KYT                                         | KYT account                   | Awaiting             | Stub-mode `clean` for non-sanctioned addresses            |
-| WhatsApp Business API                                   | Meta KYB                      | Awaiting             | SMS fallback path live; WA hot-swap when ready            |
-| ping.cash domain                                        | Founder registration          | Post-launch          | Live at ping.openova.io (Sovereign-owned subdomain)       |
+| What's Blocked              | Who's Blocking       | ETA         | Mitigation                                          |
+| --------------------------- | -------------------- | ----------- | --------------------------------------------------- |
+| Real Twilio Verify SMS      | Twilio KYB           | Awaiting    | Stub-mode OTP 123456 unblocks walks                 |
+| Real Privy MPC wallet       | Privy KYB            | Awaiting    | Stub-mode wallet unblocks walks                     |
+| Real TransFi sandbox payout | TransFi KYB          | Awaiting    | Adapter routes deterministic, awaiting cred         |
+| Chainalysis KYT             | KYT account          | Awaiting    | Stub-mode `clean` for non-sanctioned addresses      |
+| WhatsApp Business API       | Meta KYB             | Awaiting    | SMS fallback path live; WA hot-swap when ready      |
+| ping.cash domain            | Founder registration | Post-launch | Live at ping.openova.io (Sovereign-owned subdomain) |
 
 (All other external services already provisioned.)
 

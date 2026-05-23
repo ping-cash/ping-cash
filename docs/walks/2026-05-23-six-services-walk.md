@@ -5,23 +5,58 @@ Activated 6 stateless services + path-based ingress in one commit. Walked each v
 ## fx-service (#10) 🟢
 
 `GET /fx/rates` → returns USD/PHP/INR/PKR/BDT/KES/NGN/EUR/GBP/AED/TRY rates with 0.4% spread per ADR 0016:
+
 ```json
-{"base":"USD","rates":{"PHP":56.25,"INR":83,"PKR":278,"BDT":110,"KES":130,"NGN":1550,"EUR":0.92,"GBP":0.78,"AED":3.673,"TRY":32.5},"spread":0.004,"validForSeconds":60,
-"note":"Live rates are the interbank mid; Ping applies 0.4% spread on conversions (per ADR 0016)"}
+{
+  "base": "USD",
+  "rates": {
+    "PHP": 56.25,
+    "INR": 83,
+    "PKR": 278,
+    "BDT": 110,
+    "KES": 130,
+    "NGN": 1550,
+    "EUR": 0.92,
+    "GBP": 0.78,
+    "AED": 3.673,
+    "TRY": 32.5
+  },
+  "spread": 0.004,
+  "validForSeconds": 60,
+  "note": "Live rates are the interbank mid; Ping applies 0.4% spread on conversions (per ADR 0016)"
+}
 ```
 
 `POST /fx/quote {"amount":"200","fromCurrency":"USD","toCurrency":"PHP"}` → returns:
+
 ```json
-{"id":"quote_mpi8plhr_28i5zi2s","interbankRate":56.25,"pingRate":56.025,"spread":0.004,"receivedAmount":"11205.00","validUntil":1779534250,"oracleSource":"stub"}
+{
+  "id": "quote_mpi8plhr_28i5zi2s",
+  "interbankRate": 56.25,
+  "pingRate": 56.025,
+  "spread": 0.004,
+  "receivedAmount": "11205.00",
+  "validUntil": 1779534250,
+  "oracleSource": "stub"
+}
 ```
+
 Verification: ₱11,205 received on $200 = 56.025 effective rate = interbank 56.25 × (1 - 0.004) ✓ ADR 0016 0.4% commitment honored.
 
 ## compliance-service (#21) 🟢
 
 `POST /compliance/sanctions/screen/wallet {"walletAddress":"5xKp...","chain":"solana"}` →
+
 ```json
-{"result":"clean","listsHit":[],"riskScore":0,"source":"stub","checkedAt":1779534191}
+{
+  "result": "clean",
+  "listsHit": [],
+  "riskScore": 0,
+  "source": "stub",
+  "checkedAt": 1779534191
+}
 ```
+
 Stub source returns clean for non-`Sanctioned`-prefix addresses; real Chainalysis KYT activates when CHAINALYSIS_API_KEY env populated.
 
 ## token-service (#17) 🟢

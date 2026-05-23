@@ -12,6 +12,7 @@ $ curl -s -X POST https://ping.openova.io/auth/init \
 ```
 
 Response:
+
 ```json
 {
   "sessionId": "sess_3947e659-468a-48ea-84d4-6fa540444189",
@@ -34,6 +35,7 @@ $ curl -s -X POST https://ping.openova.io/auth/verify \
 ```
 
 Response (formatted):
+
 ```json
 {
   "user": {
@@ -52,6 +54,7 @@ Response (formatted):
 ```
 
 JWT decoded (access token payload):
+
 ```json
 {
   "sub": "usr_dbcd929ec0aaf0b2",
@@ -64,6 +67,7 @@ JWT decoded (access token payload):
 ```
 
 Verified behaviors:
+
 - ✅ Phone validated as E.164 (rejected non-E.164 in earlier test)
 - ✅ Session created in Redis with 10-min TTL
 - ✅ OTP accepted (stub mode `123456`)
@@ -74,10 +78,12 @@ Verified behaviors:
 - ✅ New user flag = true (first-time signup)
 
 Source code:
+
 - `services/auth/src/services/auth.service.ts` (init/verify/refresh/logout)
 - `services/auth/src/services/twilio.service.ts` (Twilio Verify integration, stub-mode aware)
 - `services/auth/src/services/privy.service.ts` (Privy MPC wallet binding, stub-mode aware)
 - `services/auth/src/controllers/auth.controller.ts` (REST endpoints + Zod validation)
 
 Tests:
+
 - `services/auth/src/services/auth.service.test.ts` — 12 unit tests covering happy path, invalid inputs, rate limits, attempt lockout, refresh rotation, logout revocation.
