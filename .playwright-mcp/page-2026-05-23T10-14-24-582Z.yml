@@ -1,0 +1,23 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "Ping" [ref=e3] [cursor=pointer]:
+      - /url: https://ping.cash
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - heading "✓ Sent!" [level=2] [ref=e46]
+      - paragraph [ref=e47]: 11250 PHP is on its way to your gcash.
+      - paragraph [ref=e48]: "Reference: PING-DF7049AD"
+    - generic [ref=e14]:
+      - link "Get the Ping app for free transfers →" [ref=e49] [cursor=pointer]:
+        - /url: https://ping.cash/app
+      - paragraph [ref=e50]: Sign up with this phone and get 1,200 $PING as a welcome bonus
+  - contentinfo [ref=e7]:
+    - paragraph [ref=e8]: Non-custodial · Solana · USDC
+    - paragraph [ref=e9]:
+      - link "Privacy" [ref=e10] [cursor=pointer]:
+        - /url: https://ping.cash/privacy
+      - link "Terms" [ref=e11] [cursor=pointer]:
+        - /url: https://ping.cash/terms
+      - link "Help" [ref=e12] [cursor=pointer]:
+        - /url: https://ping.cash/help
+  - alert [ref=e13]

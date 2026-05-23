@@ -1,0 +1,39 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "Ping" [ref=e3] [cursor=pointer]:
+      - /url: https://ping.cash
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - paragraph [ref=e6]: Choose how you want to receive
+      - paragraph [ref=e18]: $200 USDC
+    - generic [ref=e14]:
+      - generic [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: gcash
+          - generic [ref=e22]: Instant
+        - generic [ref=e23]: 0.5%
+      - generic [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]:
+          - generic [ref=e26]: maya
+          - generic [ref=e27]: Instant
+        - generic [ref=e28]: 0.5%
+      - generic [ref=e29] [cursor=pointer]:
+        - generic [ref=e30]:
+          - generic [ref=e31]: bdo-bank
+          - generic [ref=e32]: 1-24 hrs
+        - generic [ref=e33]: 0.75%
+      - generic [ref=e34] [cursor=pointer]:
+        - generic [ref=e35]:
+          - generic [ref=e36]: cebuana-cash-pickup
+          - generic [ref=e37]: 1 hour
+        - generic [ref=e38]: 1.0%
+  - contentinfo [ref=e7]:
+    - paragraph [ref=e8]: Non-custodial · Solana · USDC
+    - paragraph [ref=e9]:
+      - link "Privacy" [ref=e10] [cursor=pointer]:
+        - /url: https://ping.cash/privacy
+      - link "Terms" [ref=e11] [cursor=pointer]:
+        - /url: https://ping.cash/terms
+      - link "Help" [ref=e12] [cursor=pointer]:
+        - /url: https://ping.cash/help
+  - alert [ref=e13]
