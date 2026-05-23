@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-24 — 14/15 ping ns pods Running; 2 fresh 5-stage walks PASS on live prov: GCash (PING-BE48EAE9) + Maya (PING-6F7AA69D). Bridge+reconciler suite shipped (#40-#48); CLAUDE.md heavy-compute ban locked (commit 61def12) after self-inflicted solana-test-validator OOM outage (recovered without Contabo hard-reboot). 46 labeled `status/completed` (#55, #57 closed; #56 ready) + 2 in-progress (#52, #53 — JWT verify wire); #36 transfer readinessProbe still awaits fresh CI image; 3 founder-business gates (Cayman + audit + KYC KYB).
+**Last refreshed:** 2026-05-24 — 4 end-user walks PASS on live prov: GCash (PING-BE48EAE9), Maya (PING-6F7AA69D), BDO Bank natural-flow (PING-90A9812C), walk-4 (GugKwPsnKfGP — bridge live-verified via kubectl logs). **P23 5-mechanism audit on #54: mechanisms 2+4 cover the corridor; #52 + #56 flipped status/completed via in-manifest CMD-override hotfix surviving Flux reconciles.** TRUST: 62 🟢 / 3 🟡 / 13 🔴 (all 🔴 are real-cred gated on #50).
 
 ---
 
