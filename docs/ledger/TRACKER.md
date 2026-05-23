@@ -18,25 +18,25 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 > Counts will populate from `gh issue list` once issues are created. For now this is the placeholder structure.
 
-| Status                  | Count | Issues |
-| ----------------------- | ----- | ------ |
-| 🟦 Backlog (no label)   | 6     | #15-#16, #22-#24, #7 |
-| 🟧 `status/in-progress` | 0     | — |
+| Status                  | Count | Issues                 |
+| ----------------------- | ----- | ---------------------- |
+| 🟦 Backlog (no label)   | 6     | #15-#16, #22-#24, #7   |
+| 🟧 `status/in-progress` | 0     | —                      |
 | 🟪 `status/uat`         | 17    | #1-#6, #8-#14, #17-#21 |
-| 🟩 `status/completed`   | 0     | — (none walked yet) |
-| 🟥 `status/blocked-ext` | 0     | — |
-| ⏸️ `status/parked`      | 0     | — |
+| 🟩 `status/completed`   | 0     | — (none walked yet)    |
+| 🟥 `status/blocked-ext` | 0     | —                      |
+| ⏸️ `status/parked`      | 0     | —                      |
 
 ---
 
 ## Active Work Items
 
-| ID  | Title                                            | Status     | Owner | DoD Gate |
-| --- | ------------------------------------------------ | ---------- | ----- | -------- |
-| #1  | EPIC: End-to-End Phase 1 Delivery                | UAT        | claude | Awaiting walk-screenshot |
-| #2  | CI matrix workflow + Blueprint + Sovereign PR    | UAT ✅     | claude | CI green 2026-05-23 |
-| #3-#21 | 12 services + 2 apps + Helm charts            | UAT        | claude | Images on ghcr.io; awaiting Sovereign deploy |
-| openova-private#167 | Sovereign deploy PR (Kustomize)     | PR open    | claude | Founder review/merge → Flux reconcile → walk |
+| ID                  | Title                                         | Status  | Owner  | DoD Gate                                     |
+| ------------------- | --------------------------------------------- | ------- | ------ | -------------------------------------------- |
+| #1                  | EPIC: End-to-End Phase 1 Delivery             | UAT     | claude | Awaiting walk-screenshot                     |
+| #2                  | CI matrix workflow + Blueprint + Sovereign PR | UAT ✅  | claude | CI green 2026-05-23                          |
+| #3-#21              | 12 services + 2 apps + Helm charts            | UAT     | claude | Images on ghcr.io; awaiting Sovereign deploy |
+| openova-private#167 | Sovereign deploy PR (Kustomize)               | PR open | claude | Founder review/merge → Flux reconcile → walk |
 
 ---
 
@@ -44,11 +44,11 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 All external service accounts are provisioned (2026-05-21). Deployment target is the existing OpenOva Sovereign at `openova-io/openova-private` — no separate cluster to provision.
 
-| What's Blocked                                                         | Who's Blocking                 | ETA                  | Mitigation                                                 |
-| ---------------------------------------------------------------------- | ------------------------------ | -------------------- | ---------------------------------------------------------- |
-| Walk-screenshot on issue #1                                            | openova-private#167 PR review  | Awaiting merge       | Direct Kustomize deploy uses existing ghcr.io images       |
-| OpenBao secret paths for Ping (Phase-2 real providers)                 | Founder (post-KYB)             | Phase-2 prerequisite | Phase-1 runs in stub mode; no secrets needed for walk      |
-| ping.cash domain                                                       | Founder registration           | Post-walk            | Walk runs at ping.openova.io (Sovereign-owned subdomain)   |
+| What's Blocked                                         | Who's Blocking                | ETA                  | Mitigation                                               |
+| ------------------------------------------------------ | ----------------------------- | -------------------- | -------------------------------------------------------- |
+| Walk-screenshot on issue #1                            | openova-private#167 PR review | Awaiting merge       | Direct Kustomize deploy uses existing ghcr.io images     |
+| OpenBao secret paths for Ping (Phase-2 real providers) | Founder (post-KYB)            | Phase-2 prerequisite | Phase-1 runs in stub mode; no secrets needed for walk    |
+| ping.cash domain                                       | Founder registration          | Post-walk            | Walk runs at ping.openova.io (Sovereign-owned subdomain) |
 
 (All other external services already provisioned.)
 
