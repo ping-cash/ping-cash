@@ -71,25 +71,25 @@ All external service accounts are provisioned (2026-05-21). Deployment target is
 
 ## DoD Progress per Pillar
 
-| Pillar                                | Code          | Test | Walk                  | Ledger | Docs | Overall |
-| ------------------------------------- | ------------- | ---- | --------------------- | ------ | ---- | ------- |
-| 1. Auth                               | 🟢            | 🟢   | 🟢                    | 🟢     | 🟢   | 🟢      |
-| 2. User + Ping Points                 | 🟢            | 🟢   | 🟡 (deploying)        | 🟡     | 🟢   | 🟡      |
-| 3. KYC (via shared service)           | 🟡 (scaffold) | 🔴   | 🔴                    | 🔴     | 🟢   | 🟡      |
-| 4. Transfer                           | 🟢            | 🟢   | 🔴 (no deploy)        | 🔴     | 🟢   | 🟡      |
-| 5. Wallet + Earn Vault                | 🟢            | 🟢   | 🔴 (no Solana RPC)    | 🔴     | 🟢   | 🟡      |
-| 6. FX (0.4% Pyth-oracle)              | 🟢            | 🟢   | 🟢                    | 🟢     | 🟢   | 🟢      |
-| 7. Ledger (double-entry)              | 🟢            | 🟢   | 🟡 (Prisma fix in CI) | 🟡     | 🟢   | 🟡      |
-| 8. Claim                              | 🟢            | 🟢   | 🟢                    | 🟢     | 🟢   | 🟢      |
-| 9. Off-ramp                           | 🟢            | 🟢   | 🟢                    | 🟢     | 🟢   | 🟢      |
-| 10. Notify                            | 🟢            | 🟢   | 🟢                    | 🟢     | 🟢   | 🟢      |
-| 11. Compliance (sanctions)            | 🟢            | 🟢   | 🟢                    | 🟢     | 🟢   | 🟢      |
-| 12. Gamification                      | 🟢            | 🟢   | 🟢                    | 🟢     | 🟢   | 🟢      |
-| 13. Mobile App                        | 🟢            | 🟡   | 🔴 (no Expo run)      | 🔴     | 🟢   | 🟡      |
-| 14. Web Claim                         | 🟢            | n/a  | 🟢                    | 🟢     | 🟢   | 🟢      |
-| 15. CI / Blueprint pipeline           | 🟢            | n/a  | 🟢                    | 🟢     | 🟢   | 🟢      |
-| **Architectural decisions (17 ADRs)** | 🟢            | n/a  | 🟢                    | 🟢     | 🟢   | 🟢      |
-| **Docs structure**                    | 🟢            | n/a  | 🟢                    | 🟢     | 🟢   | 🟢      |
+| Pillar                                | Code          | Test | Walk             | Ledger | Docs | Overall |
+| ------------------------------------- | ------------- | ---- | ---------------- | ------ | ---- | ------- |
+| 1. Auth                               | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 2. User + Ping Points                 | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 3. KYC (via shared service)           | 🟡 (scaffold) | 🔴   | 🔴               | 🔴     | 🟢   | 🟡      |
+| 4. Transfer                           | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 5. Wallet + Earn Vault                | 🟢            | 🟢   | 🟢 (stub-mode)   | 🟢     | 🟢   | 🟢      |
+| 6. FX (0.4% Pyth-oracle)              | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 7. Ledger (double-entry)              | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 8. Claim                              | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 9. Off-ramp                           | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 10. Notify                            | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 11. Compliance (sanctions)            | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 12. Gamification                      | 🟢            | 🟢   | 🟢               | 🟢     | 🟢   | 🟢      |
+| 13. Mobile App                        | 🟢            | 🟡   | 🔴 (no Expo run) | 🔴     | 🟢   | 🟡      |
+| 14. Web Claim                         | 🟢            | n/a  | 🟢               | 🟢     | 🟢   | 🟢      |
+| 15. CI / Blueprint pipeline           | 🟢            | n/a  | 🟢               | 🟢     | 🟢   | 🟢      |
+| **Architectural decisions (17 ADRs)** | 🟢            | n/a  | 🟢               | 🟢     | 🟢   | 🟢      |
+| **Docs structure**                    | 🟢            | n/a  | 🟢               | 🟢     | 🟢   | 🟢      |
 
 🟢 PASS · 🟡 PARTIAL · 🔴 NOT STARTED
 
