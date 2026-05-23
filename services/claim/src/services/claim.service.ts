@@ -21,6 +21,7 @@ import {
   type ClaimRecord,
 } from '../utils/redis';
 
+import { dispatchToOfframp } from './offramp-bridge.service';
 import { sendClaimOtp, verifyClaimOtp } from './twilio.service';
 
 const CLAIM_CODE_LENGTH = 12;
@@ -296,8 +297,26 @@ export async function executeCashout(input: {
     'Cash-out initiated'
   );
 
-  // In production: emit Kafka event to offramp-service via outbox in ledger-service
-  // For now, the offramp-service polls or is invoked via this event
+  // Bridge to offramp-service so the payout actually enters the provider queue.
+  // Best-effort: a transient offramp-service failure does NOT roll back the
+  // claim — the recipient still sees their PING-* reference and a reconciler
+  // can retry later. Mirrors the transfer→claim bridge pattern (ping-cash#40).
+  await dispatchToOfframp({
+    reference: offrampReference,
+    method: input.method,
+    amount: {
+      usdcAmount: record.amount.value,
+      localAmount: record.amount.localValue ?? record.amount.value,
+      localCurrency: record.amount.localCurrency ?? record.amount.currency,
+    },
+    recipient: {
+      phone: record.recipientPhone,
+      name: input.accountName,
+      accountNumber: input.account,
+      accountName: input.accountName,
+    },
+  });
+
   return {
     status: 'processing',
     offrampReference,
