@@ -60,6 +60,7 @@ What did we reject, and why?
 | [0017](0017-custody-model.md)                        | Custody model — non-custodial wallets + delegated-authority vault    | Accepted | 2026-05-23 |
 | [0018](0018-anchor-scaffolds-do-not-deploy.md)       | Anchor scaffolds ship with explicit DO-NOT-DEPLOY guard              | Accepted | 2026-05-23 |
 | [0019](0019-transfer-claim-bridge-and-reconciler.md) | transfer→claim synchronous bridge + reconciler retry (best-effort)   | Accepted | 2026-05-23 |
+| [0020](0020-pillar-4-send-side-unsigned-tx-pattern.md) | Pillar 4 send-side: unsigned-tx builder + client signs via Privy MPC | Accepted | 2026-05-24 |
 
 ---
 
