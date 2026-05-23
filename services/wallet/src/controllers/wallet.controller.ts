@@ -5,6 +5,7 @@ import {
   getBalanceSnapshot,
   isValidSolanaAddress,
 } from '../services/solana.service';
+import { buildSendIntent } from '../services/send.service';
 import {
   buildStakeIntent,
   buildUnstakeIntent,
@@ -17,6 +18,11 @@ const StakeIntentBody = z.object({
 });
 
 const UnstakeIntentBody = z.object({
+  amountUsdc: z.string().regex(/^\d+(\.\d{1,6})?$/),
+});
+
+const SendIntentBody = z.object({
+  recipientWallet: z.string().min(32).max(44),
   amountUsdc: z.string().regex(/^\d+(\.\d{1,6})?$/),
 });
 
@@ -137,6 +143,28 @@ export async function walletRoutes(fastify: FastifyInstance) {
       }
       const body = UnstakeIntentBody.parse(request.body);
       const intent = await buildUnstakeIntent(auth.wallet, body.amountUsdc);
+      return reply.status(200).send(intent);
+    }
+  );
+
+  // POST /wallet/send-intent — build unsigned USDC SPL Token transfer
+  // Pillar 4 send-side: client signs via Privy MPC and submits to Solana RPC.
+  // Backend NEVER signs per ADR 0017 (custody model).
+  fastify.post(
+    '/send-intent',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const auth = await requireAuth(request, reply);
+      if (!auth.wallet) {
+        return reply.status(404).send({
+          error: { code: 'WALLET_NOT_FOUND', message: 'No wallet bound' },
+        });
+      }
+      const body = SendIntentBody.parse(request.body);
+      const intent = await buildSendIntent(
+        auth.wallet,
+        body.recipientWallet,
+        body.amountUsdc
+      );
       return reply.status(200).send(intent);
     }
   );
