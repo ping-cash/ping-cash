@@ -103,3 +103,23 @@ web-claim-69b5865f96-d7rnz              1/1   Running   d0b6738
 Per ADR 0017 (custody model): wallet-service does NOT sign — it only validates + reads on-chain balances. Public Solana RPC (api.mainnet-beta.solana.com) is wired; Helius/QuickNode endpoint swaps via OpenBao when Phase-2 needs higher RPC quota.
 
 `GET /wallet/balance` and `GET /wallet/address` require JWT (auth-service issued); validated via public endpoint /wallet/validate which is auth-free.
+
+## Auth + Wallet integration walked
+
+Full chain across two services on the live Sovereign:
+
+1. `POST /auth/init {"phone":"+971501234567"}` → returns sessionId
+2. `POST /auth/verify {sessionId, code:"123456"}` → returns JWT (HS256-signed with claim `{wallet: "Stub..."}`)
+3. `GET /wallet/address` with `Authorization: Bearer <JWT>` → returns:
+   ```json
+   {
+     "address": "Stub2b393731353031323334353637",
+     "chain": "solana",
+     "acceptedTokens": ["USDC","USDT","FDUSD","PHPC","cKES","cNGN","EURC","GBPT","$PING"],
+     "autoSwapPolicy": "auto-swap to USDC via Jupiter, max 0.5% slippage"
+   }
+   ```
+
+Per ADR 0007 (Multi-token receive via Jupiter): the `acceptedTokens` list + autoSwapPolicy is the wallet's declared policy. Any SPL token sent in is auto-swapped to USDC at receive time.
+
+This proves cross-service auth: auth-service JWT verified by wallet-service via shared JWT_SECRET (sourced from same ConfigMap `ping-config`).
