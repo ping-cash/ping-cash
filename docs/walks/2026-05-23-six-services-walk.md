@@ -93,9 +93,10 @@ web-claim-69b5865f96-d7rnz              1/1   Running   d0b6738
 ## wallet-service (#9) 🟢 (added in second batch)
 
 `GET /wallet/validate?address=...` — round-trip via Sovereign ingress:
+
 - Valid USDC mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`:
   ```json
-  {"valid":true,"address":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}
+  { "valid": true, "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" }
   ```
 - Invalid: `{"valid":false,"address":"NotAValidSolanaAddress"}`
 
