@@ -95,6 +95,7 @@ $ curl -s -X POST https://ping.openova.io/auth/refresh -H "Authorization: Bearer
 ```
 
 Response:
+
 ```json
 {
   "accessToken": "<new access JWT>",
@@ -120,8 +121,15 @@ $ curl -s -X POST https://ping.openova.io/auth/refresh -H "Authorization: Bearer
 ```
 
 Response: `HTTP 401`
+
 ```json
-{"error":{"code":"INVALID_REFRESH_TOKEN","message":"Invalid or expired refresh token.","requestId":"req_..."}}
+{
+  "error": {
+    "code": "INVALID_REFRESH_TOKEN",
+    "message": "Invalid or expired refresh token.",
+    "requestId": "req_..."
+  }
+}
 ```
 
 ✅ Token-rotation + revocation work as designed. Old refresh tokens cannot be reused after rotation or logout.

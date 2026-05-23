@@ -115,7 +115,17 @@ Full chain across two services on the live Sovereign:
    {
      "address": "Stub2b393731353031323334353637",
      "chain": "solana",
-     "acceptedTokens": ["USDC","USDT","FDUSD","PHPC","cKES","cNGN","EURC","GBPT","$PING"],
+     "acceptedTokens": [
+       "USDC",
+       "USDT",
+       "FDUSD",
+       "PHPC",
+       "cKES",
+       "cNGN",
+       "EURC",
+       "GBPT",
+       "$PING"
+     ],
      "autoSwapPolicy": "auto-swap to USDC via Jupiter, max 0.5% slippage"
    }
    ```

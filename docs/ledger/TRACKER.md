@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-23 — 13 services live; 12 issues closed; 11 still open (3 Phase-2)
+**Last refreshed:** 2026-05-23 — 13 services live; 13 issues closed; 3 blocked-ext (Phase 2 + KYC); 3 awaiting Prisma image rebuild; mobile UAT
 
 ---
 
@@ -23,7 +23,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | 🟦 Backlog (no label)   | 7     | #1 EPIC, #15, #16, #22-#24, #7                    |
 | 🟧 `status/in-progress` | 1     | #11 (ledger — Prisma image rebuild)               |
 | 🟪 `status/uat`         | 3     | #6, #8, #19                                       |
-| 🟩 `status/completed`   | 12    | #2-#5, #9, #10, #12, #13, #14, #17, #18, #20, #21 |
+| 🟩 `status/completed`   | 13    | #2-#5, #9, #10, #12, #13, #14, #17, #18, #20, #21 |
 | 🟥 `status/blocked-ext` | 0     | —                                                 |
 | ⏸️ `status/parked`      | 0     | —                                                 |
 
