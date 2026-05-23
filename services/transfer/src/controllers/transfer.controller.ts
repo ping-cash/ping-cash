@@ -142,7 +142,8 @@ export async function transferRoutes(app: FastifyInstance) {
   );
 }
 
-// Authentication middleware (placeholder - implement JWT validation)
+// Authentication middleware — verifies access tokens issued by auth-service
+// using @fastify/jwt (registered in app.ts with config.JWT_SECRET, HS256).
 async function authenticate(request: FastifyRequest, _reply: FastifyReply) {
   const authHeader = request.headers.authorization;
 
@@ -154,18 +155,23 @@ async function authenticate(request: FastifyRequest, _reply: FastifyReply) {
     );
   }
 
-  // _token would be the bearer token; left commented until JWT verification ships
-  // const _token = authHeader.slice(7);
-
-  // TODO: Validate JWT and extract user ID
-  // For now, this is a placeholder
+  const token = authHeader.slice(7);
   try {
-    // const payload = await verifyJwt(token);
-    // (request as any).userId = payload.userId;
-
-    // Placeholder for development
-    (request as any).userId = 'usr_development';
-  } catch {
-    throw new AppError('UNAUTHORIZED', 'Invalid token', 401);
+    const payload = (
+      request.server as {
+        jwt: { verify: (t: string) => { sub: string; type?: string } };
+      }
+    ).jwt.verify(token);
+    if (payload.type === 'refresh') {
+      throw new AppError(
+        'UNAUTHORIZED',
+        'Refresh token cannot be used as access token',
+        401
+      );
+    }
+    (request as { userId?: string }).userId = payload.sub;
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError('UNAUTHORIZED', 'Invalid or expired token', 401);
   }
 }
