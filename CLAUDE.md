@@ -105,3 +105,18 @@ Full list in [docs/GLOSSARY.md § Banned Terms](docs/GLOSSARY.md#banned-terms-do
 - Major decision → ADR in `docs/adr/NNNN-<slug>.md`
 
 Always update [docs/ledger/TRUST.md](docs/ledger/TRUST.md) when a surface is walked. Always update [docs/ledger/TRACKER.md](docs/ledger/TRACKER.md) when work-in-progress status changes.
+
+## NEVER schedule heavy-compute on the shared K3s node
+
+The OpenOva Sovereign at `45.151.123.50` runs k3s SINGLE-NODE. Anything that consumes >2GB RSS or >2 cores will OOM the kubelet + take down kubectl API + ping.openova.io + catalyst.openova.io simultaneously. Recovery requires hypervisor reboot via Contabo panel (founder hands).
+
+**Banned on the shared node:**
+- `solana-test-validator` / `agave-test-validator`
+- `anchor test` against `localnet` (spins up a validator)
+- Local Postgres benchmarks / `pgbench`
+- LLM inference servers (vLLM, llama.cpp)
+- Any Rust full-rebuild from a fresh container
+
+**For these workloads:** spin up a separate Contabo throwaway VPS, or use an ephemeral GitHub Actions runner. Never the shared Sovereign node.
+
+This rule comes from a 2026-05-24 self-inflicted outage where I tried to run a Solana test validator as a workaround for the public devnet faucet rate-limit (`scripts/real-solana-walk.mjs`). The validator took the kubelet down within 90 seconds and required hard-reboot via the Contabo panel to recover.
