@@ -1,13 +1,14 @@
 /**
  * User profile service — CRUD + tier read.
  */
-import { Decimal } from '.prisma/user-client/runtime/library';
-
 import { UserErrors } from '../utils/errors';
 import { logger } from '../utils/logger';
 import { prisma } from '../utils/prisma';
 
 import { computeTier, type Tier } from './tier.service';
+
+// eslint-disable-next-line import/order
+import { Decimal } from '.prisma/user-client/runtime/library';
 
 export interface UserPublic {
   id: string;

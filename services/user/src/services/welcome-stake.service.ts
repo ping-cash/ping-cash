@@ -7,6 +7,7 @@
  *   - 1,000 PP locked, unlocks via 5 milestones OR 2y backstop
  *   - Total counts for tier from day 1
  */
+// eslint-disable-next-line import/order
 import { Decimal } from '.prisma/user-client/runtime/library';
 
 import { UserErrors } from '../utils/errors';

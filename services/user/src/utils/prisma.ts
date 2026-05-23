@@ -1,6 +1,7 @@
-import { PrismaClient } from '.prisma/user-client';
-
 import { logger } from './logger';
+
+// eslint-disable-next-line import/order
+import { PrismaClient } from '.prisma/user-client';
 
 export const prisma = new PrismaClient({
   log: [
