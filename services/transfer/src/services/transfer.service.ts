@@ -23,6 +23,7 @@ import {
   ensureKycForTransfer,
   KycTierInsufficientError,
 } from './kyc-check.service';
+import { lookupRecipientUserId } from './recipient-lookup.service';
 
 interface CreateTransferInput {
   senderId: string;
@@ -82,12 +83,16 @@ export class TransferService {
       'Creating transfer'
     );
 
+    // Best-effort lookup: if recipient phone matches an existing user, link them.
+    const recipientUserId = await lookupRecipientUserId(recipientPhoneHash);
+
     // Create transfer record
     const transfer = await this.repository.create({
       id: transferId,
       senderId: input.senderId,
       recipientPhone: input.recipientPhone,
       recipientPhoneHash,
+      recipientUserId: recipientUserId ?? undefined,
       amount: input.amount,
       currency: input.currency,
       status: 'pending',

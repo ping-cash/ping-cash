@@ -12,6 +12,7 @@ interface CreateTransferInput {
   senderId: string;
   recipientPhone: string;
   recipientPhoneHash: string;
+  recipientUserId?: string;
   amount: string;
   currency: string;
   status: TransferStatus;
@@ -53,6 +54,7 @@ export class TransferRepository {
         senderId: input.senderId,
         recipientPhone: input.recipientPhone,
         recipientPhoneHash: input.recipientPhoneHash,
+        recipientUserId: input.recipientUserId,
         amount: input.amount,
         currency: input.currency,
         status: input.status,

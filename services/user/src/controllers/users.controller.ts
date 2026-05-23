@@ -91,6 +91,29 @@ export async function userRoutes(fastify: FastifyInstance) {
     }
   );
 
+  // GET /users/internal/by-phone-hash/:hash — called by transfer-service to link
+  // a transfer to an existing user when the recipient is already registered.
+  // Returns {userId} or 404.
+  fastify.get(
+    '/internal/by-phone-hash/:hash',
+    async (
+      request: FastifyRequest<{ Params: { hash: string } }>,
+      reply: FastifyReply
+    ) => {
+      const { hash } = request.params;
+      if (!/^[0-9a-f]{64}$/.test(hash)) {
+        return reply
+          .status(400)
+          .send({ error: { code: 'INVALID_PHONE_HASH' } });
+      }
+      const user = await userService.getByPhoneHash(hash);
+      if (!user) {
+        return reply.status(404).send({ error: { code: 'USER_NOT_FOUND' } });
+      }
+      return reply.status(200).send({ userId: user.id });
+    }
+  );
+
   // ────────────────────────────────────────────────────────────────────
   // User-facing endpoints (require JWT)
   // ────────────────────────────────────────────────────────────────────
