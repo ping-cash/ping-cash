@@ -387,6 +387,27 @@ Per [ADR 0015](adr/0015-phased-launch-ping-points-to-token.md):
 
 Phase 1 starts day-of-platform-launch. Phase 2 begins when Cayman Foundation incorporated + smart contracts audited.
 
+### On-chain programs (scaffold landed; mainnet deploy gated)
+
+The `programs/` directory holds four Anchor 0.30.1 programs. All carry a DO-NOT-DEPLOY guard in their READMEs: mainnet deploy requires Cayman Foundation incorporation + OtterSec audit. Local validator testing via `anchor test` is fine.
+
+| Program         | Path                      | Purpose                                                                                                  |
+| --------------- | ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `earn-vault`    | `programs/earn-vault/`    | Auto-stake USDC with vUSDC receipt token; 40/60 yield split per harvest                                  |
+| `internal-swap` | `programs/internal-swap/` | USDC ↔ $PING fixed-spread swap; off-chain Jupiter hedger reads `needs_hedge()`                           |
+| `pomm`          | `programs/pomm/`          | Protocol-Owned Market Maker treasury; Squads multisig authority; EMA ±15% band + 0.5%/day deployment cap |
+| `ping-token`    | `programs/ping-token/`    | SPL Token-2022 mint registry — validates 9 decimals, Squads mint authority, no freeze                    |
+
+`Anchor.toml` at repo root pins all four into the workspace; CI workflow `.github/workflows/anchor.yml` runs `anchor build + test` on PRs touching `programs/`.
+
+### KYC integration boundary
+
+KYC lives in a separate repo (`dynolabs-io/kyc`) per [ADR 0011](adr/0011-shared-kyc-service.md) and is consumed by ping via the `@ping/kyc-client` package:
+
+- `user-service` uses `requireKycTier(1|2)` Fastify pre-handler to gate sensitive endpoints (welcome-stake, profile updates)
+- `transfer-service` calls `ensureKycForTransfer(userId, amountUsdc)` before `createTransfer` — refuses transfers above the user's tier threshold (`<$200` no check / `$200-999` tier 1 / `≥$1000` tier 2)
+- Both pieces are stub-mode when `KYC_SERVICE_URL` env is unset (current Phase 1 state); real enforcement flips on when env is added via OpenBao
+
 ---
 
 ## Design Patterns
