@@ -111,6 +111,7 @@ Always update [docs/ledger/TRUST.md](docs/ledger/TRUST.md) when a surface is wal
 The OpenOva Sovereign at `45.151.123.50` runs k3s SINGLE-NODE. Anything that consumes >2GB RSS or >2 cores will OOM the kubelet + take down kubectl API + ping.openova.io + catalyst.openova.io simultaneously. Recovery requires hypervisor reboot via Contabo panel (founder hands).
 
 **Banned on the shared node:**
+
 - `solana-test-validator` / `agave-test-validator`
 - `anchor test` against `localnet` (spins up a validator)
 - Local Postgres benchmarks / `pgbench`
