@@ -6,7 +6,7 @@ const config = getConfig();
 
 export const kafka = new Kafka({
   clientId: config.KAFKA_CLIENT_ID,
-  brokers: config.KAFKA_BROKERS,
+  brokers: config.KAFKA_BROKERS ?? [],
   logLevel: logLevel.WARN,
   logCreator: () => {
     return ({ level, log }) => {

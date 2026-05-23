@@ -11,7 +11,7 @@ import { errorHandler } from './utils/errors';
 
 export async function buildApp() {
   const app = Fastify({
-    logger: logger,
+    logger: logger as never,
     requestIdHeader: 'x-request-id',
     requestIdLogLabel: 'requestId',
     genReqId: () => `req_${Date.now().toString(36)}`,
@@ -37,7 +37,7 @@ export async function buildApp() {
   });
 
   // Error handling
-  app.setErrorHandler(errorHandler);
+  app.setErrorHandler(errorHandler as never);
 
   // Request logging
   app.addHook('onRequest', async (request) => {

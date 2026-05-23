@@ -5,12 +5,12 @@ import { kafka } from '../events/kafka';
 
 export async function healthRoutes(app: FastifyInstance) {
   // Liveness probe
-  app.get('/live', async (request, reply) => {
+  app.get('/live', async (_request, reply) => {
     reply.send({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
   // Readiness probe
-  app.get('/ready', async (request, reply) => {
+  app.get('/ready', async (_request, reply) => {
     const checks: Record<string, boolean> = {};
 
     // Check PostgreSQL
@@ -49,7 +49,7 @@ export async function healthRoutes(app: FastifyInstance) {
   });
 
   // Detailed health check
-  app.get('/', async (request, reply) => {
+  app.get('/', async (_request, reply) => {
     reply.send({
       service: 'transfer-service',
       version: process.env.npm_package_version || '0.1.0',

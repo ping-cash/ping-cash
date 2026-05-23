@@ -54,7 +54,7 @@ export function errorHandler(
   }
 
   // Handle rate limit errors
-  if (error.statusCode === 429) {
+  if ('statusCode' in error && (error as { statusCode?: number }).statusCode === 429) {
     return reply.status(429).send({
       success: false,
       error: {

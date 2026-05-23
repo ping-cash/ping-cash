@@ -15,7 +15,7 @@ export async function buildApp() {
   const config = loadConfig();
 
   const app = Fastify({
-    logger,
+    logger: logger as never,
     requestIdHeader: 'x-request-id',
     requestIdLogLabel: 'requestId',
     genReqId: () => `req_${Date.now().toString(36)}`,
@@ -38,7 +38,7 @@ export async function buildApp() {
     keyGenerator: (request) => request.ip,
   });
 
-  app.setErrorHandler(errorHandler);
+  app.setErrorHandler(errorHandler as never);
 
   app.addHook('onRequest', async (request) => {
     request.log.info(

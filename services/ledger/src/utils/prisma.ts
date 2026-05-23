@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '.prisma/ledger-client';
 import { logger } from './logger';
 
 export const prisma = new PrismaClient({
@@ -8,5 +8,5 @@ export const prisma = new PrismaClient({
   ],
 });
 
-prisma.$on('error', (e) => logger.error({ err: e }, 'Prisma error'));
-prisma.$on('warn', (e) => logger.warn({ msg: e }, 'Prisma warning'));
+prisma.$on('error' as never, (e: unknown) => logger.error({ err: e }, 'Prisma error'));
+prisma.$on('warn' as never, (e: unknown) => logger.warn({ msg: e }, 'Prisma warning'));

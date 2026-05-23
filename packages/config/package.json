@@ -14,8 +14,11 @@
     },
     "./eslint": "./eslint.js",
     "./typescript/base": "./typescript/base.json",
+    "./typescript/base.json": "./typescript/base.json",
     "./typescript/node": "./typescript/node.json",
-    "./typescript/react": "./typescript/react.json"
+    "./typescript/node.json": "./typescript/node.json",
+    "./typescript/react": "./typescript/react.json",
+    "./typescript/react.json": "./typescript/react.json"
   },
   "scripts": {
     "build": "tsup",

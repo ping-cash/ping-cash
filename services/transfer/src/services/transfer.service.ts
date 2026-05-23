@@ -97,7 +97,7 @@ export class TransferService {
   ): Promise<{ transfers: TransferSummary[]; pagination: PaginationResult }> {
     const limit = options.limit || constants.DEFAULT_PAGE_SIZE;
 
-    const { transfers, hasMore, nextCursor } = await this.repository.findByUser(
+    const { transfers } = await this.repository.findByUser(
       userId,
       {
         type: options.type,

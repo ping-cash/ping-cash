@@ -5,11 +5,9 @@
  * Stub-mode-only in Phase 1 — full FCM integration deferred until mobile
  * app device-token registration is wired (per ROADMAP.md Wave 2).
  */
-import { loadConfig } from '@ping/config';
 import { logger } from '../utils/logger';
 import type { ChannelResult } from './whatsapp.channel';
 
-const _config = loadConfig();
 
 export interface PushSendInput {
   deviceToken: string;

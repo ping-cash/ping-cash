@@ -63,6 +63,10 @@ export async function bindPhoneToWallet(phone: string): Promise<PrivyUserBindRes
       });
     }
 
+    if (!user) {
+      throw AuthErrors.PrivyFailure({ message: 'Privy user lookup returned null' });
+    }
+
     // Find the Solana wallet
     const solanaWallet = user.linkedAccounts.find(
       (a: { type: string }) => a.type === 'wallet' && 'chainType' in a && (a as { chainType: string }).chainType === 'solana',

@@ -1,7 +1,7 @@
 /**
  * User profile service — CRUD + tier read.
  */
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '.prisma/user-client/runtime/library';
 import { prisma } from '../utils/prisma';
 import { logger } from '../utils/logger';
 import { UserErrors } from '../utils/errors';

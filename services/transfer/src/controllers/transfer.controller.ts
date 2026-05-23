@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import type { CreateTransferRequest, Transfer, TransferSummary, PaginationParams } from '@ping/types';
+import type { CreateTransferRequest, PaginationParams } from '@ping/types';
 import { TransferService } from '../services/transfer.service';
 import { AppError } from '../utils/errors';
 
@@ -116,14 +116,15 @@ export async function transferRoutes(app: FastifyInstance) {
 }
 
 // Authentication middleware (placeholder - implement JWT validation)
-async function authenticate(request: FastifyRequest, reply: FastifyReply) {
+async function authenticate(request: FastifyRequest, _reply: FastifyReply) {
   const authHeader = request.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
     throw new AppError('UNAUTHORIZED', 'Missing or invalid authorization header', 401);
   }
 
-  const token = authHeader.slice(7);
+  // _token would be the bearer token; left commented until JWT verification ships
+  // const _token = authHeader.slice(7);
 
   // TODO: Validate JWT and extract user ID
   // For now, this is a placeholder

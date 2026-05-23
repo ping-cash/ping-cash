@@ -7,7 +7,7 @@
  *   - 1,000 PP locked, unlocks via 5 milestones OR 2y backstop
  *   - Total counts for tier from day 1
  */
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '.prisma/user-client/runtime/library';
 import { prisma } from '../utils/prisma';
 import { logger } from '../utils/logger';
 import { UserErrors } from '../utils/errors';
@@ -235,7 +235,7 @@ export async function backstopUnlock(userId: string): Promise<void> {
         pingPointsBalanceAtTime: new Decimal(
           newFree + Number(user.pingPointsWelcomeUnlocked),
         ),
-        metadata: { backstop_at: user.welcomeStakeBackstopAt.toISOString() },
+        metadata: { backstop_at: user.welcomeStakeBackstopAt?.toISOString() },
       },
     });
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '.prisma/user-client/runtime/library';
 import {
   computeTier,
   discountForTier,

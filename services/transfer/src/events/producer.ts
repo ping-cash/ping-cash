@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'crypto';
+
 import { getProducer } from './kafka';
 import { EventTopics, EventType, CloudEvent } from '@ping/types/events';
 import { generateId, now } from '@ping/utils';

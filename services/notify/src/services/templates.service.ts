@@ -83,7 +83,7 @@ const TEMPLATES: Record<
       `❌ Cash-out failed: ${p.reason}\n\n` +
       `Your money is safe. Tap to retry: ${p.claimUrl}`,
     sms: (p) => `Ping: cash-out failed (${p.reason}). Retry: ${p.claimUrl}`,
-    push: (p) => ({
+    push: (_p) => ({
       title: `Cash-out failed`,
       body: `Tap to retry`,
     }),

@@ -9,33 +9,51 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
 
   // Database
-  POSTGRES_URL: z.string().url(),
-  MONGODB_URL: z.string().url(),
-  REDIS_URL: z.string().url(),
+  POSTGRES_URL: z.string().url().optional(),
+  MONGODB_URL: z.string().url().optional(),
+  REDIS_URL: z.string().url().default('redis://localhost:6379'),
 
   // Kafka
-  KAFKA_BROKERS: z.string().transform(s => s.split(',')),
+  KAFKA_BROKERS: z.string().transform(s => s.split(',')).optional(),
   KAFKA_CLIENT_ID: z.string().default('cash-platform'),
   KAFKA_GROUP_ID: z.string().optional(),
 
   // Privy
-  PRIVY_APP_ID: z.string(),
-  PRIVY_APP_SECRET: z.string(),
+  PRIVY_APP_ID: z.string().optional(),
+  PRIVY_APP_SECRET: z.string().optional(),
 
   // Twilio
-  TWILIO_ACCOUNT_SID: z.string(),
-  TWILIO_AUTH_TOKEN: z.string(),
-  TWILIO_VERIFY_SID: z.string(),
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_VERIFY_SID: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(),
 
   // WhatsApp
-  WHATSAPP_PHONE_NUMBER_ID: z.string(),
-  WHATSAPP_ACCESS_TOKEN: z.string(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
 
   // TransFi
-  TRANSFI_API_KEY: z.string(),
+  TRANSFI_API_KEY: z.string().optional(),
   TRANSFI_API_SECRET: z.string().optional(),
-  TRANSFI_WEBHOOK_SECRET: z.string(),
+  TRANSFI_WEBHOOK_SECRET: z.string().optional(),
+
+  // Wise
+  WISE_API_KEY: z.string().optional(),
+  WISE_WEBHOOK_SECRET: z.string().optional(),
+
+  // Chainalysis (sanctions / KYT)
+  CHAINALYSIS_API_KEY: z.string().optional(),
+
+  // Pyth (FX oracle)
+  PYTH_HERMES_URL: z.string().url().default('https://hermes.pyth.network'),
+
+  // $PING + Earn Vault mints (Phase 2)
+  PING_TOKEN_MINT: z.string().optional(),
+  V_USDC_MINT: z.string().optional(),
+
+  // Claim URL base (used by claim-service)
+  CLAIM_URL_BASE: z.string().url().default('https://ping.cash/c'),
 
   // MoonPay
   MOONPAY_API_KEY: z.string().optional(),
@@ -52,7 +70,7 @@ const envSchema = z.object({
   SOLANA_USDC_MINT: z.string().default('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
 
   // JWT
-  JWT_SECRET: z.string().min(32),
+  JWT_SECRET: z.string().min(32).default('dev-only-secret-32-characters-minimum-length-for-hs256'),
   JWT_ACCESS_TOKEN_TTL: z.string().default('15m'),
   JWT_REFRESH_TOKEN_TTL: z.string().default('7d'),
 

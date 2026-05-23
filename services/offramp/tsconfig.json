@@ -2,14 +2,7 @@
   "extends": "@ping/config/typescript/node.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
-    "baseUrl": ".",
-    "paths": {
-      "@ping/types": ["../../packages/types/src"],
-      "@ping/types/*": ["../../packages/types/src/*"],
-      "@ping/config": ["../../packages/config/src"],
-      "@ping/utils": ["../../packages/utils/src"]
-    }
+    "rootDir": "./src"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

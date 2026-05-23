@@ -8,7 +8,6 @@
 import { createHmac } from 'node:crypto';
 import { loadConfig } from '@ping/config';
 import { logger } from '../utils/logger';
-import { OfframpErrors } from '../utils/errors';
 import type {
   ProviderAdapter,
   CashOutMethod,

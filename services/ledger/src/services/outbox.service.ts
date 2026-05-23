@@ -32,7 +32,7 @@ async function getProducer(): Promise<Producer | null> {
   }
   const kafka = new Kafka({
     clientId: config.KAFKA_CLIENT_ID ?? 'ledger-service',
-    brokers: config.KAFKA_BROKERS.split(','),
+    brokers: config.KAFKA_BROKERS,
   });
   kafkaProducer = kafka.producer({ idempotent: true });
   await kafkaProducer.connect();

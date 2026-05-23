@@ -6,7 +6,7 @@
  *
  * Both phases share this calc — they just feed it different inputs.
  */
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '.prisma/user-client/runtime/library';
 
 export type Tier = 'bronze' | 'silver' | 'gold' | 'platinum';
 

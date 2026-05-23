@@ -6,7 +6,6 @@
  */
 import { loadConfig } from '@ping/config';
 import { logger } from '../utils/logger';
-import { NotifyErrors } from '../utils/errors';
 
 const config = loadConfig();
 const GRAPH_API_URL = 'https://graph.facebook.com/v18.0';

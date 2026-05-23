@@ -1,6 +1,6 @@
 import type { Transfer, TransferStatus, TransferSummary, Chain } from '@ping/types';
 import { prisma } from '../utils/prisma';
-import { now } from '@ping/utils';
+
 
 interface CreateTransferInput {
   id: string;

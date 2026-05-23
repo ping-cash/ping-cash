@@ -7,10 +7,10 @@ import { healthRoutes } from './controllers/health.controller';
 import { errorHandler } from './utils/errors';
 
 export async function buildApp() {
-  const app = Fastify({ logger });
+  const app = Fastify({ logger: logger as never });
   await app.register(helmet);
   await app.register(cors, { origin: true });
-  app.setErrorHandler(errorHandler);
+  app.setErrorHandler(errorHandler as never);
   await app.register(healthRoutes);
   await app.register(tokenRoutes, { prefix: '/token' });
   return app;
