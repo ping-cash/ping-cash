@@ -48,6 +48,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm format:check
+      - name: Check doc links
+        run: bash scripts/check-doc-links.sh
 
   typecheck:
     name: Type Check
