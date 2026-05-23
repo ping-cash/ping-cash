@@ -74,3 +74,7 @@ prisma/migrations/*.sql.bak
 packages/api-client/src/generated/
 *.generated.ts
 .playwright-mcp/
+
+# Anchor / Rust build artifacts
+target/
+**/*.rs.bk

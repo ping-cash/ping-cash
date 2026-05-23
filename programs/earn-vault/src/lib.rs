@@ -1,0 +1,361 @@
+use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{
+    self, Mint, TokenAccount, TokenInterface, TransferChecked, MintTo,
+};
+
+declare_id!("EarnVau1tProgr4mPubKeyP1ace0001111111111111");
+
+#[program]
+pub mod earn_vault {
+    use super::*;
+
+    pub fn initialize_vault(ctx: Context<InitializeVault>, treasury_bps: u16) -> Result<()> {
+        require!(treasury_bps <= 10_000, VaultError::InvalidBps);
+        let vault = &mut ctx.accounts.vault;
+        vault.authority = ctx.accounts.authority.key();
+        vault.usdc_mint = ctx.accounts.usdc_mint.key();
+        vault.vusdc_mint = ctx.accounts.vusdc_mint.key();
+        vault.treasury = ctx.accounts.treasury.key();
+        vault.usdc_vault = ctx.accounts.usdc_vault.key();
+        vault.treasury_split_bps = treasury_bps;
+        vault.holder_split_bps = 10_000 - treasury_bps;
+        vault.total_staked = 0;
+        vault.total_vusdc_supply = 0;
+        vault.is_paused = false;
+        vault.bump = ctx.bumps.vault;
+        Ok(())
+    }
+
+    pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
+        require!(!ctx.accounts.vault.is_paused, VaultError::Paused);
+        require!(amount > 0, VaultError::ZeroAmount);
+
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_to_vault_ctx(),
+            amount,
+            ctx.accounts.usdc_mint.decimals,
+        )?;
+
+        let vusdc_amount = if ctx.accounts.vault.total_vusdc_supply == 0 {
+            amount
+        } else {
+            (amount as u128)
+                .checked_mul(ctx.accounts.vault.total_vusdc_supply as u128)
+                .ok_or(VaultError::MathOverflow)?
+                .checked_div(ctx.accounts.vault.total_staked as u128)
+                .ok_or(VaultError::MathOverflow)? as u64
+        };
+
+        let vault_key = ctx.accounts.vault.key();
+        let seeds = &[b"vault".as_ref(), &[ctx.accounts.vault.bump]];
+        let signer = &[&seeds[..]];
+        token_interface::mint_to(
+            ctx.accounts.mint_vusdc_ctx().with_signer(signer),
+            vusdc_amount,
+        )?;
+
+        let vault = &mut ctx.accounts.vault;
+        vault.total_staked = vault
+            .total_staked
+            .checked_add(amount)
+            .ok_or(VaultError::MathOverflow)?;
+        vault.total_vusdc_supply = vault
+            .total_vusdc_supply
+            .checked_add(vusdc_amount)
+            .ok_or(VaultError::MathOverflow)?;
+
+        emit!(StakeEvent {
+            user: ctx.accounts.user.key(),
+            vault: vault_key,
+            usdc_amount: amount,
+            vusdc_amount,
+        });
+        Ok(())
+    }
+
+    pub fn harvest(ctx: Context<Harvest>, yield_amount: u64) -> Result<()> {
+        require!(!ctx.accounts.vault.is_paused, VaultError::Paused);
+        require!(yield_amount > 0, VaultError::ZeroAmount);
+
+        let treasury_share = (yield_amount as u128)
+            .checked_mul(ctx.accounts.vault.treasury_split_bps as u128)
+            .ok_or(VaultError::MathOverflow)?
+            .checked_div(10_000)
+            .ok_or(VaultError::MathOverflow)? as u64;
+        let holder_share = yield_amount
+            .checked_sub(treasury_share)
+            .ok_or(VaultError::MathOverflow)?;
+
+        let seeds = &[b"vault".as_ref(), &[ctx.accounts.vault.bump]];
+        let signer = &[&seeds[..]];
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_to_treasury_ctx().with_signer(signer),
+            treasury_share,
+            ctx.accounts.usdc_mint.decimals,
+        )?;
+
+        let vault = &mut ctx.accounts.vault;
+        vault.total_staked = vault
+            .total_staked
+            .checked_add(holder_share)
+            .ok_or(VaultError::MathOverflow)?;
+
+        emit!(HarvestEvent {
+            vault: vault.key(),
+            yield_amount,
+            treasury_share,
+            holder_share,
+        });
+        Ok(())
+    }
+
+    pub fn unstake(ctx: Context<Unstake>, vusdc_amount: u64) -> Result<()> {
+        require!(!ctx.accounts.vault.is_paused, VaultError::Paused);
+        require!(vusdc_amount > 0, VaultError::ZeroAmount);
+
+        let usdc_amount = (vusdc_amount as u128)
+            .checked_mul(ctx.accounts.vault.total_staked as u128)
+            .ok_or(VaultError::MathOverflow)?
+            .checked_div(ctx.accounts.vault.total_vusdc_supply as u128)
+            .ok_or(VaultError::MathOverflow)? as u64;
+
+        let seeds = &[b"vault".as_ref(), &[ctx.accounts.vault.bump]];
+        let signer = &[&seeds[..]];
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_to_user_ctx().with_signer(signer),
+            usdc_amount,
+            ctx.accounts.usdc_mint.decimals,
+        )?;
+        token_interface::burn(
+            ctx.accounts.burn_vusdc_ctx(),
+            vusdc_amount,
+        )?;
+
+        let vault = &mut ctx.accounts.vault;
+        vault.total_staked = vault
+            .total_staked
+            .checked_sub(usdc_amount)
+            .ok_or(VaultError::MathOverflow)?;
+        vault.total_vusdc_supply = vault
+            .total_vusdc_supply
+            .checked_sub(vusdc_amount)
+            .ok_or(VaultError::MathOverflow)?;
+
+        emit!(UnstakeEvent {
+            user: ctx.accounts.user.key(),
+            vault: vault.key(),
+            vusdc_amount,
+            usdc_amount,
+        });
+        Ok(())
+    }
+
+    pub fn set_paused(ctx: Context<SetPaused>, paused: bool) -> Result<()> {
+        ctx.accounts.vault.is_paused = paused;
+        emit!(PausedEvent {
+            vault: ctx.accounts.vault.key(),
+            paused,
+        });
+        Ok(())
+    }
+}
+
+#[account]
+pub struct Vault {
+    pub authority: Pubkey,
+    pub usdc_mint: Pubkey,
+    pub vusdc_mint: Pubkey,
+    pub treasury: Pubkey,
+    pub usdc_vault: Pubkey,
+    pub total_staked: u64,
+    pub total_vusdc_supply: u64,
+    pub treasury_split_bps: u16,
+    pub holder_split_bps: u16,
+    pub is_paused: bool,
+    pub bump: u8,
+}
+
+impl Vault {
+    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 * 2 + 1 + 1;
+}
+
+#[derive(Accounts)]
+pub struct InitializeVault<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    #[account(
+        init,
+        payer = authority,
+        space = Vault::LEN,
+        seeds = [b"vault"],
+        bump
+    )]
+    pub vault: Account<'info, Vault>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    pub vusdc_mint: InterfaceAccount<'info, Mint>,
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub treasury: InterfaceAccount<'info, TokenAccount>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct Stake<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(mut, seeds = [b"vault"], bump = vault.bump)]
+    pub vault: Account<'info, Vault>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub vusdc_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut, address = vault.usdc_vault)]
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub user_vusdc_ata: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+impl<'info> Stake<'info> {
+    fn transfer_to_vault_ctx(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(
+            self.token_program.to_account_info(),
+            TransferChecked {
+                from: self.user_usdc_ata.to_account_info(),
+                mint: self.usdc_mint.to_account_info(),
+                to: self.usdc_vault.to_account_info(),
+                authority: self.user.to_account_info(),
+            },
+        )
+    }
+    fn mint_vusdc_ctx(&self) -> CpiContext<'_, '_, '_, 'info, MintTo<'info>> {
+        CpiContext::new(
+            self.token_program.to_account_info(),
+            MintTo {
+                mint: self.vusdc_mint.to_account_info(),
+                to: self.user_vusdc_ata.to_account_info(),
+                authority: self.vault.to_account_info(),
+            },
+        )
+    }
+}
+
+#[derive(Accounts)]
+pub struct Harvest<'info> {
+    #[account(mut, address = vault.authority)]
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [b"vault"], bump = vault.bump)]
+    pub vault: Account<'info, Vault>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut, address = vault.usdc_vault)]
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut, address = vault.treasury)]
+    pub treasury: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+impl<'info> Harvest<'info> {
+    fn transfer_to_treasury_ctx(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(
+            self.token_program.to_account_info(),
+            TransferChecked {
+                from: self.usdc_vault.to_account_info(),
+                mint: self.usdc_mint.to_account_info(),
+                to: self.treasury.to_account_info(),
+                authority: self.vault.to_account_info(),
+            },
+        )
+    }
+}
+
+#[derive(Accounts)]
+pub struct Unstake<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(mut, seeds = [b"vault"], bump = vault.bump)]
+    pub vault: Account<'info, Vault>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub vusdc_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut, address = vault.usdc_vault)]
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub user_vusdc_ata: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+impl<'info> Unstake<'info> {
+    fn transfer_to_user_ctx(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(
+            self.token_program.to_account_info(),
+            TransferChecked {
+                from: self.usdc_vault.to_account_info(),
+                mint: self.usdc_mint.to_account_info(),
+                to: self.user_usdc_ata.to_account_info(),
+                authority: self.vault.to_account_info(),
+            },
+        )
+    }
+    fn burn_vusdc_ctx(&self) -> CpiContext<'_, '_, '_, 'info, anchor_spl::token_interface::Burn<'info>> {
+        CpiContext::new(
+            self.token_program.to_account_info(),
+            anchor_spl::token_interface::Burn {
+                mint: self.vusdc_mint.to_account_info(),
+                from: self.user_vusdc_ata.to_account_info(),
+                authority: self.user.to_account_info(),
+            },
+        )
+    }
+}
+
+#[derive(Accounts)]
+pub struct SetPaused<'info> {
+    #[account(address = vault.authority)]
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [b"vault"], bump = vault.bump)]
+    pub vault: Account<'info, Vault>,
+}
+
+#[event]
+pub struct StakeEvent {
+    pub user: Pubkey,
+    pub vault: Pubkey,
+    pub usdc_amount: u64,
+    pub vusdc_amount: u64,
+}
+
+#[event]
+pub struct UnstakeEvent {
+    pub user: Pubkey,
+    pub vault: Pubkey,
+    pub vusdc_amount: u64,
+    pub usdc_amount: u64,
+}
+
+#[event]
+pub struct HarvestEvent {
+    pub vault: Pubkey,
+    pub yield_amount: u64,
+    pub treasury_share: u64,
+    pub holder_share: u64,
+}
+
+#[event]
+pub struct PausedEvent {
+    pub vault: Pubkey,
+    pub paused: bool,
+}
+
+#[error_code]
+pub enum VaultError {
+    #[msg("Vault is paused")]
+    Paused,
+    #[msg("Amount must be > 0")]
+    ZeroAmount,
+    #[msg("treasury_bps must be <= 10000")]
+    InvalidBps,
+    #[msg("Arithmetic overflow")]
+    MathOverflow,
+}
