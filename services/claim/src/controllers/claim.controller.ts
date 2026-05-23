@@ -5,7 +5,9 @@ import * as claimService from '../services/claim.service';
 
 const CreateClaimBody = z.object({
   transferId: z.string().min(1),
-  senderId: z.string().uuid(),
+  // senderId is any non-empty string — transfer-service uses `usr_<hex>` in dev-mode
+  // and UUIDs in real-mode. Both shapes are valid identifiers for the audit trail.
+  senderId: z.string().min(1),
   senderName: z.string().min(1).max(100).optional(),
   recipientPhone: z.string().regex(/^\+[1-9]\d{6,14}$/),
   // Optional claim_code — when set, claim-service honors it idempotently
