@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Fastify from 'fastify';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('../services/user.service', () => ({
   getByPhoneHash: vi.fn(),
@@ -25,8 +25,9 @@ vi.mock('../utils/auth', () => ({
   requireAuth: async () => 'mock-user-id',
 }));
 
-import { userRoutes } from './users.controller';
 import * as userService from '../services/user.service';
+
+import { userRoutes } from './users.controller';
 
 const VALID_HASH = 'a'.repeat(64);
 const INVALID_HASH = 'NOT_HEX';
