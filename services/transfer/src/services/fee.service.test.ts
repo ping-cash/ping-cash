@@ -4,6 +4,7 @@
  * Documented in BUSINESS-STRATEGY.md "Complete fee table" section.
  */
 import { describe, it, expect } from 'vitest';
+
 import { computeFee, applyHardFloor, PAY_IN_PING_FURTHER_DISCOUNT } from './fee.service';
 
 describe('fee.service.computeFee — in-network', () => {

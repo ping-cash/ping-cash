@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+
 import { screenWallet, screenName, checkTransferAllowance } from '../services/sanctions.service';
 
 const ScreenWalletBody = z.object({

@@ -7,8 +7,9 @@
  *   - Ping margin: 0.0-0.2% (razor-thin, never negative)
  *   - Hard floor: never settle below provider cost
  */
-import { getPythRate, crossCheckSwitchboard } from './oracle.service';
 import { logger } from '../utils/logger';
+
+import { getPythRate, crossCheckSwitchboard } from './oracle.service';
 
 // Per ADR 0016 — the brand commitment
 export const FX_SPREAD = 0.004; // 0.4%

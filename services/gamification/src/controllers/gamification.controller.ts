@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+
 import * as milestoneService from '../services/milestone.service';
 
 const TransferEventBody = z.object({

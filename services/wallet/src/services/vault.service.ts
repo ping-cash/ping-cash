@@ -11,8 +11,9 @@
  * Per ADR 0017 (Custody model): wallet-service NEVER signs on behalf of users.
  */
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { logger } from '../utils/logger';
+
 import { WalletErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 export interface VaultStakeIntent {
   userWallet: string;

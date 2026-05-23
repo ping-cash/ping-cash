@@ -5,8 +5,9 @@
  * are registered Ping users. Returns enriched contact list for the app UX.
  */
 import { createHash } from 'node:crypto';
-import { prisma } from '../utils/prisma';
+
 import { logger } from '../utils/logger';
+import { prisma } from '../utils/prisma';
 
 export interface ContactSyncInput {
   name: string;

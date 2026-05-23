@@ -1,7 +1,8 @@
 import { FastifyInstance } from 'fastify';
+
+import { kafka } from '../events/kafka';
 import { prisma } from '../utils/prisma';
 import { redis } from '../utils/redis';
-import { kafka } from '../events/kafka';
 
 export async function healthRoutes(app: FastifyInstance) {
   // Liveness probe

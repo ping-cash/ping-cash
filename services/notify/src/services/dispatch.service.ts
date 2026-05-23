@@ -9,13 +9,14 @@
  *   We DO retry on real failures, NOT on missing inputs. Input validation
  *   happens at the controller boundary.
  */
-import { logger } from '../utils/logger';
-import { renderTemplate, type TemplateId } from './templates.service';
-import { sendWhatsApp } from '../channels/whatsapp.channel';
-import { sendSms } from '../channels/sms.channel';
 import { sendPush } from '../channels/push.channel';
-import { NotifyErrors } from '../utils/errors';
+import { sendSms } from '../channels/sms.channel';
+import { sendWhatsApp } from '../channels/whatsapp.channel';
 import type { ChannelResult } from '../channels/whatsapp.channel';
+import { NotifyErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
+
+import { renderTemplate, type TemplateId } from './templates.service';
 
 export interface DispatchInput {
   recipientPhone?: string;

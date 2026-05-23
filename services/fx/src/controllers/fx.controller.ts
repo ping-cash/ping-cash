@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import { getQuote, getRate, FX_SPREAD } from '../services/quote.service';
+
 import { getPythRate } from '../services/oracle.service';
+import { getQuote, getRate, FX_SPREAD } from '../services/quote.service';
 
 const QuoteBody = z.object({
   amount: z.string().regex(/^\d+(\.\d{1,8})?$/),

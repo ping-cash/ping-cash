@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import * as userService from '../services/user.service';
+
 import * as contactsService from '../services/contacts.service';
+import * as userService from '../services/user.service';
 import * as welcomeStakeService from '../services/welcome-stake.service';
 import { UserErrors } from '../utils/errors';
 

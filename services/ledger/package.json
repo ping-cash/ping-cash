@@ -13,7 +13,8 @@
     "lint": "eslint src/",
     "clean": "rm -rf dist",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy"
+    "db:migrate": "prisma migrate deploy",
+    "lint:fix": "eslint src/ --fix"
   },
   "dependencies": {
     "@ping/config": "workspace:*",

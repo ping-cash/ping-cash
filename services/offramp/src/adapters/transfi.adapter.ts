@@ -5,9 +5,12 @@
  * synthetic payout responses. In production, hits TransFi's REST API.
  */
 import { createHmac } from 'node:crypto';
+
 import { loadConfig } from '@ping/config';
-import { logger } from '../utils/logger';
+
 import { OfframpErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
+
 import type {
   ProviderAdapter,
   CashOutMethod,

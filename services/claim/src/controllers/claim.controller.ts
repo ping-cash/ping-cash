@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+
 import * as claimService from '../services/claim.service';
 
 const CreateClaimBody = z.object({

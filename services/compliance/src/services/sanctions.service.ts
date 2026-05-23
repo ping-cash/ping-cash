@@ -9,6 +9,7 @@
  * The service is invoked on every cash-out + every $X transfer.
  */
 import { loadConfig } from '@ping/config';
+
 import { logger } from '../utils/logger';
 
 const config = loadConfig();

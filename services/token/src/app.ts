@@ -1,10 +1,11 @@
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
-import { logger } from './utils/logger';
-import { tokenRoutes } from './controllers/token.controller';
+import Fastify from 'fastify';
+
 import { healthRoutes } from './controllers/health.controller';
+import { tokenRoutes } from './controllers/token.controller';
 import { errorHandler } from './utils/errors';
+import { logger } from './utils/logger';
 
 export async function buildApp() {
   const app = Fastify({ logger: logger as never });

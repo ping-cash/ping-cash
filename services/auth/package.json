@@ -2,7 +2,7 @@
   "name": "@ping/auth-service",
   "version": "0.1.0",
   "private": true,
-  "description": "Phone OTP → Twilio Verify → JWT → Privy wallet creation",
+  "description": "Phone OTP \u2192 Twilio Verify \u2192 JWT \u2192 Privy wallet creation",
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsup",
@@ -13,10 +13,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "clean": "rm -rf dist",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy",
-    "db:push": "prisma db push"
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@ping/config": "workspace:*",

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+
 import { redis } from '../utils/redis';
 
 export async function healthRoutes(fastify: FastifyInstance) {

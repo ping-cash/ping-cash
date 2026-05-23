@@ -1,4 +1,5 @@
 import { loadConfig } from '@ping/config';
+
 import { buildApp } from './app';
 import { logger } from './utils/logger';
 import { prisma } from './utils/prisma';

@@ -2,9 +2,11 @@
  * User profile service — CRUD + tier read.
  */
 import { Decimal } from '.prisma/user-client/runtime/library';
-import { prisma } from '../utils/prisma';
-import { logger } from '../utils/logger';
+
 import { UserErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
+import { prisma } from '../utils/prisma';
+
 import { computeTier, type Tier } from './tier.service';
 
 export interface UserPublic {

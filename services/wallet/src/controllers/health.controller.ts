@@ -1,6 +1,6 @@
-import type { FastifyInstance } from 'fastify';
-import { Connection } from '@solana/web3.js';
 import { loadConfig } from '@ping/config';
+import { Connection } from '@solana/web3.js';
+import type { FastifyInstance } from 'fastify';
 
 const config = loadConfig();
 

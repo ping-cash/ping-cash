@@ -11,7 +11,8 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "lint:fix": "eslint src/ --fix"
   },
   "dependencies": {
     "@ping/config": "workspace:*",

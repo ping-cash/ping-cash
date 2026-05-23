@@ -90,8 +90,9 @@ vi.mock('./privy.service', () => ({
 }));
 
 // Now import the service under test
-import * as authService from './auth.service';
 import * as redisMock from '../utils/redis';
+
+import * as authService from './auth.service';
 
 const mockJwt = {
   sign: vi.fn().mockImplementation((payload: object) => `mock_jwt_${JSON.stringify(payload).slice(0, 20)}`),

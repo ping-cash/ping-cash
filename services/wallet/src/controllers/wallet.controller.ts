@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+
 import { getBalanceSnapshot, isValidSolanaAddress } from '../services/solana.service';
 import { buildStakeIntent, buildUnstakeIntent, getVaultPosition } from '../services/vault.service';
 import { WalletErrors } from '../utils/errors';

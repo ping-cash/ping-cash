@@ -1,8 +1,9 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+
+import type { ProviderName } from '../adapters/types';
 import { executePayout, getAdapter } from '../services/router.service';
 import { OfframpErrors } from '../utils/errors';
-import type { ProviderName } from '../adapters/types';
 
 const PayoutBody = z.object({
   reference: z.string().min(1),

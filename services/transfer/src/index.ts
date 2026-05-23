@@ -1,9 +1,10 @@
 import { loadConfig } from '@ping/config';
+
 import { buildApp } from './app';
-import { logger } from './utils/logger';
 import { connectKafka, disconnectKafka } from './events/kafka';
-import { connectRedis, disconnectRedis } from './utils/redis';
+import { logger } from './utils/logger';
 import { prisma } from './utils/prisma';
+import { connectRedis, disconnectRedis } from './utils/redis';
 
 async function main() {
   // Load and validate configuration

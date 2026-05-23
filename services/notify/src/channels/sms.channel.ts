@@ -2,9 +2,11 @@
  * SMS channel via Twilio Programmable Messaging.
  * (Distinct from Twilio Verify — Verify is OTP-only; this is general SMS.)
  */
-import twilio from 'twilio';
 import { loadConfig } from '@ping/config';
+import twilio from 'twilio';
+
 import { logger } from '../utils/logger';
+
 import type { ChannelResult } from './whatsapp.channel';
 
 const config = loadConfig();

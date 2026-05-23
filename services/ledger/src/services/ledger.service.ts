@@ -9,9 +9,10 @@
  *   trust the database to enforce it via the schema constraint + trigger.
  */
 import { Decimal } from '.prisma/ledger-client/runtime/library';
-import { prisma } from '../utils/prisma';
-import { logger } from '../utils/logger';
+
 import { LedgerErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
+import { prisma } from '../utils/prisma';
 
 export type EntryType = 'DEBIT' | 'CREDIT';
 

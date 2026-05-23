@@ -7,10 +7,11 @@
  *
  * Both share the same Twilio account but use the same Verify SID.
  */
-import twilio from 'twilio';
 import { loadConfig } from '@ping/config';
-import { logger } from '../utils/logger';
+import twilio from 'twilio';
+
 import { ClaimErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 const config = loadConfig();
 

@@ -1,4 +1,5 @@
 import { FastifyError, FastifyRequest, FastifyReply } from 'fastify';
+
 import { logger } from './logger';
 
 export class AppError extends Error {

@@ -1,13 +1,13 @@
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import Fastify from 'fastify';
 
+import { healthRoutes } from './controllers/health.controller';
+import { transferRoutes } from './controllers/transfer.controller';
+import { errorHandler } from './utils/errors';
 import { logger } from './utils/logger';
 import { redis } from './utils/redis';
-import { transferRoutes } from './controllers/transfer.controller';
-import { healthRoutes } from './controllers/health.controller';
-import { errorHandler } from './utils/errors';
 
 export async function buildApp() {
   const app = Fastify({

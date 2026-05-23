@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+
 import { dispatch } from '../services/dispatch.service';
 import { listTemplates } from '../services/templates.service';
 

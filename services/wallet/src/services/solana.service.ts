@@ -7,11 +7,12 @@
  * Per ADR 0017 (Custody model): we only READ on-chain state, never sign tx
  * on behalf of users. Signing is delegated to Privy MPC or external wallet.
  */
-import { Connection, PublicKey } from '@solana/web3.js';
-import { getAssociatedTokenAddress, getAccount, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { loadConfig } from '@ping/config';
-import { logger } from '../utils/logger';
+import { getAssociatedTokenAddress, getAccount, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { Connection, PublicKey } from '@solana/web3.js';
+
 import { WalletErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 const config = loadConfig();
 

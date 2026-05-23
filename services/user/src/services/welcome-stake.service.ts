@@ -8,9 +8,11 @@
  *   - Total counts for tier from day 1
  */
 import { Decimal } from '.prisma/user-client/runtime/library';
-import { prisma } from '../utils/prisma';
-import { logger } from '../utils/logger';
+
 import { UserErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
+import { prisma } from '../utils/prisma';
+
 import { computeTier } from './tier.service';
 
 const WELCOME_STAKE_TOTAL = 1200;

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+
 import { computeClawback, tierFromBalance } from '../services/clawback.service';
 
 const ClawbackBody = z.object({

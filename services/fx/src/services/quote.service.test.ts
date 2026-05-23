@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { FX_SPREAD, ORACLE_DISAGREEMENT_THRESHOLD } from './quote.service';
 
 describe('fx-service constants', () => {

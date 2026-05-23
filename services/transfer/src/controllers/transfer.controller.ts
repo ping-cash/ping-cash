@@ -1,6 +1,7 @@
+import type { CreateTransferRequest, PaginationParams } from '@ping/types';
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import type { CreateTransferRequest, PaginationParams } from '@ping/types';
+
 import { TransferService } from '../services/transfer.service';
 import { AppError } from '../utils/errors';
 

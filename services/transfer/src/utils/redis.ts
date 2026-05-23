@@ -1,5 +1,6 @@
-import Redis from 'ioredis';
 import { getConfig } from '@ping/config';
+import Redis from 'ioredis';
+
 import { logger } from './logger';
 
 const config = getConfig();

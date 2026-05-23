@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+
 import * as ledgerService from '../services/ledger.service';
 
 const EntrySchema = z.object({

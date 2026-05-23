@@ -1,5 +1,5 @@
-import pino from 'pino';
 import { getConfig } from '@ping/config';
+import pino from 'pino';
 
 const config = getConfig();
 

@@ -9,9 +9,9 @@
  *   - Rate limited at IP level
  */
 import { randomBytes, createHash } from 'node:crypto';
-import { logger } from '../utils/logger';
+
 import { ClaimErrors } from '../utils/errors';
-import { sendClaimOtp, verifyClaimOtp } from './twilio.service';
+import { logger } from '../utils/logger';
 import {
   storeClaim,
   readClaim,
@@ -20,6 +20,9 @@ import {
   checkClaimViewRateLimit,
   type ClaimRecord,
 } from '../utils/redis';
+
+import { sendClaimOtp, verifyClaimOtp } from './twilio.service';
+
 
 const CLAIM_CODE_LENGTH = 12;
 const CLAIM_CODE_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -58,12 +61,12 @@ export async function create(input: {
   amount: { value: string; currency: string; localValue?: string; localCurrency?: string; fxRate?: number };
 }): Promise<{ code: string; url: string; expiresAt: number }> {
   // Generate unique code (retry on collision — improbable but safe)
-  let code: string;
+  let code = generateClaimCode();
   let attempts = 0;
-  while (true) {
-    code = generateClaimCode();
+  for (let i = 0; i < 6; i++) {
     const existing = await readClaim(code);
     if (!existing) break;
+    code = generateClaimCode();
     attempts++;
     if (attempts > 5) {
       throw new Error('Failed to generate unique claim code after 5 attempts');

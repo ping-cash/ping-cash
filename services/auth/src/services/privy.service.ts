@@ -1,7 +1,8 @@
-import { PrivyClient } from '@privy-io/server-auth';
 import { loadConfig } from '@ping/config';
-import { logger } from '../utils/logger';
+import { PrivyClient } from '@privy-io/server-auth';
+
 import { AuthErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 const config = loadConfig();
 

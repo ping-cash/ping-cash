@@ -3,6 +3,7 @@
  * Pure unit tests — no DB / Kafka dependency.
  */
 import { describe, it, expect } from 'vitest';
+
 import { validateBalanced, type LedgerEntryInput } from './ledger.service';
 
 describe('ledger.service.validateBalanced', () => {

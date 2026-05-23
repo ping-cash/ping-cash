@@ -1,12 +1,12 @@
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import Fastify from 'fastify';
 
-import { logger } from './utils/logger';
-import { offrampRoutes } from './controllers/offramp.controller';
 import { healthRoutes } from './controllers/health.controller';
+import { offrampRoutes } from './controllers/offramp.controller';
 import { errorHandler } from './utils/errors';
+import { logger } from './utils/logger';
 
 export async function buildApp() {
   const app = Fastify({

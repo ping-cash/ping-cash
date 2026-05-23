@@ -1,8 +1,10 @@
 
-import { getProducer } from './kafka';
 import { EventTopics, EventType, CloudEvent } from '@ping/types/events';
 import { generateId, now } from '@ping/utils';
+
 import { logger } from '../utils/logger';
+
+import { getProducer } from './kafka';
 
 const SERVICE_SOURCE = '/services/transfer';
 

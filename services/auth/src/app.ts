@@ -1,15 +1,15 @@
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import jwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
-
 import { loadConfig } from '@ping/config';
-import { logger } from './utils/logger';
-import { redis } from './utils/redis';
+import Fastify from 'fastify';
+
 import { authRoutes } from './controllers/auth.controller';
 import { healthRoutes } from './controllers/health.controller';
 import { errorHandler } from './utils/errors';
+import { logger } from './utils/logger';
+import { redis } from './utils/redis';
 
 export async function buildApp() {
   const config = loadConfig();

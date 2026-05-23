@@ -1,5 +1,6 @@
-import { Kafka, Producer, Consumer, logLevel } from 'kafkajs';
 import { getConfig } from '@ping/config';
+import { Kafka, Producer, Consumer, logLevel } from 'kafkajs';
+
 import { logger } from '../utils/logger';
 
 const config = getConfig();

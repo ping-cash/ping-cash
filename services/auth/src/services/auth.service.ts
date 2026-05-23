@@ -1,8 +1,9 @@
 import { createHash, randomUUID, randomBytes } from 'node:crypto';
+
 import { loadConfig } from '@ping/config';
+
+import { AuthErrors } from '../utils/errors';
 import { logger } from '../utils/logger';
-import { sendOtp, verifyOtp } from './twilio.service';
-import { bindPhoneToWallet } from './privy.service';
 import {
   storeOtpSession,
   readOtpSession,
@@ -13,7 +14,9 @@ import {
   revokeRefreshToken,
   checkInitRateLimit,
 } from '../utils/redis';
-import { AuthErrors } from '../utils/errors';
+
+import { bindPhoneToWallet } from './privy.service';
+import { sendOtp, verifyOtp } from './twilio.service';
 
 const config = loadConfig();
 const MAX_OTP_ATTEMPTS = 5;

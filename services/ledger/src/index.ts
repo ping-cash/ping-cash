@@ -1,8 +1,9 @@
 import { loadConfig } from '@ping/config';
+
 import { buildApp } from './app';
+import { startPolling, shutdown as shutdownOutbox } from './services/outbox.service';
 import { logger } from './utils/logger';
 import { prisma } from './utils/prisma';
-import { startPolling, shutdown as shutdownOutbox } from './services/outbox.service';
 
 async function main() {
   const config = loadConfig();

@@ -10,8 +10,9 @@
  * runs in the same container as ledger-service (single-instance for safety,
  * with at-least-once delivery semantics on the Kafka side).
  */
-import { Kafka, type Producer } from 'kafkajs';
 import { loadConfig } from '@ping/config';
+import { Kafka, type Producer } from 'kafkajs';
+
 import { logger } from '../utils/logger';
 import { prisma } from '../utils/prisma';
 

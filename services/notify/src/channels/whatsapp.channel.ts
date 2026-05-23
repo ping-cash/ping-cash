@@ -5,6 +5,7 @@
  * + transfer events. SMS is the fallback (cheaper but lower engagement).
  */
 import { loadConfig } from '@ping/config';
+
 import { logger } from '../utils/logger';
 
 const config = loadConfig();

@@ -7,10 +7,7 @@
  *   3. On failure: failover to backup provider
  *   4. On all-fail: surface AllProvidersFailed error
  */
-import { logger } from '../utils/logger';
-import { OfframpErrors } from '../utils/errors';
 import { transfiAdapter } from '../adapters/transfi.adapter';
-import { wiseAdapter } from '../adapters/wise.adapter';
 import type {
   ProviderAdapter,
   CashOutMethod,
@@ -18,6 +15,9 @@ import type {
   PayoutResult,
   ProviderName,
 } from '../adapters/types';
+import { wiseAdapter } from '../adapters/wise.adapter';
+import { OfframpErrors } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 const ALL_ADAPTERS: ProviderAdapter[] = [transfiAdapter, wiseAdapter];
 
