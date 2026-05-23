@@ -6,17 +6,20 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* turbo.json tsconfig.json .
 COPY packages/types/package.json ./packages/types/
 COPY packages/config/package.json ./packages/config/
 COPY packages/utils/package.json ./packages/utils/
+COPY packages/kyc-client/package.json ./packages/kyc-client/
 COPY services/transfer/package.json ./services/transfer/
 RUN pnpm install --frozen-lockfile
 
 COPY packages/types ./packages/types
 COPY packages/config ./packages/config
 COPY packages/utils ./packages/utils
+COPY packages/kyc-client ./packages/kyc-client
 COPY services/transfer ./services/transfer
 
 RUN pnpm --filter @ping/types build
 RUN pnpm --filter @ping/config build
 RUN pnpm --filter @ping/utils build
+RUN pnpm --filter @ping/kyc-client build
 RUN pnpm --filter @ping/transfer-service db:generate
 RUN pnpm --filter @ping/transfer-service build
 
