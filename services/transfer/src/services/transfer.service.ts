@@ -19,6 +19,10 @@ import { publishEvent } from '../events/producer';
 import { TransferRepository } from '../repositories/transfer.repository';
 import { AppError } from '../utils/errors';
 import { logger } from '../utils/logger';
+import {
+  ensureKycForTransfer,
+  KycTierInsufficientError,
+} from './kyc-check.service';
 
 interface CreateTransferInput {
   senderId: string;
@@ -44,6 +48,20 @@ export class TransferService {
 
   async createTransfer(input: CreateTransferInput): Promise<Transfer> {
     const config = getConfig();
+
+    // KYC tier check per ADR 0011 — refuses early if user can't legally transact at this amount
+    try {
+      await ensureKycForTransfer(input.senderId, Number(input.amount));
+    } catch (err) {
+      if (err instanceof KycTierInsufficientError) {
+        throw new AppError('KYC_TIER_INSUFFICIENT', err.message, 403, {
+          currentTier: err.currentTier,
+          requiredTier: err.requiredTier,
+        });
+      }
+      throw err;
+    }
+
     const transferId = generateId.transfer();
     const claimCode = generateClaimCode();
     const recipientPhoneHash = hashPhone(input.recipientPhone);
