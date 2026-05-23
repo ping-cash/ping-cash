@@ -20,11 +20,11 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 | Status                  | Count | Issues                                            |
 | ----------------------- | ----- | ------------------------------------------------- |
-| 🟦 Backlog (no label)   | 7     | #1 EPIC, #15, #16, #22-#24, #7                    |
+| 🟦 Backlog (no label)   | 4     | #1 EPIC, #22-#24 (Phase 2)                        |
 | 🟧 `status/in-progress` | 1     | #11 (ledger — Prisma image rebuild)               |
 | 🟪 `status/uat`         | 3     | #6, #8, #19                                       |
 | 🟩 `status/completed`   | 13    | #2-#5, #9, #10, #12, #13, #14, #17, #18, #20, #21 |
-| 🟥 `status/blocked-ext` | 0     | —                                                 |
+| 🟥 `status/blocked-ext` | 3     | #7 (KYC repo), #15, #16 (Earn Vault Phase 2)      |
 | ⏸️ `status/parked`      | 0     | —                                                 |
 
 ---
