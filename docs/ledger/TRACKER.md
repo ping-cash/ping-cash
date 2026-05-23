@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-23 (CI green + Sovereign deploy PR open)
+**Last refreshed:** 2026-05-23 — 9 services live on Sovereign; 7 issues closed by walk
 
 ---
 
@@ -21,9 +21,9 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | Status                  | Count | Issues                 |
 | ----------------------- | ----- | ---------------------- |
 | 🟦 Backlog (no label)   | 6     | #15-#16, #22-#24, #7   |
-| 🟧 `status/in-progress` | 0     | —                      |
-| 🟪 `status/uat`         | 17    | #1-#6, #8-#14, #17-#21 |
-| 🟩 `status/completed`   | 0     | — (none walked yet)    |
+| 🟧 `status/in-progress` | 1     | #11 (ledger — current) |
+| 🟪 `status/uat`         | 9     | #2-#4, #6, #8, #9, #16, #19 |
+| 🟩 `status/completed`   | 7     | #5, #10, #12, #13, #14, #17, #18, #20, #21 |
 | 🟥 `status/blocked-ext` | 0     | —                      |
 | ⏸️ `status/parked`      | 0     | —                      |
 
@@ -31,12 +31,24 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 ## Active Work Items
 
-| ID                  | Title                                         | Status  | Owner  | DoD Gate                                     |
-| ------------------- | --------------------------------------------- | ------- | ------ | -------------------------------------------- |
-| #1                  | EPIC: End-to-End Phase 1 Delivery             | UAT     | claude | Awaiting walk-screenshot                     |
-| #2                  | CI matrix workflow + Blueprint + Sovereign PR | UAT ✅  | claude | CI green 2026-05-23                          |
-| #3-#21              | 12 services + 2 apps + Helm charts            | UAT     | claude | Images on ghcr.io; awaiting Sovereign deploy |
-| openova-private#167 | Sovereign deploy PR (Kustomize)               | PR open | claude | Founder review/merge → Flux reconcile → walk |
+| ID                  | Title                                         | Status     | Owner  | DoD Gate                                              |
+| ------------------- | --------------------------------------------- | ---------- | ------ | ----------------------------------------------------- |
+| #1                  | EPIC: End-to-End Phase 1 Delivery             | UAT        | claude | 5-stage walk VERIFIED-PASS (issue comment 4525035929); EPIC stays open until all pillars walk |
+| #5                  | auth-service (phone OTP → JWT → wallet)       | ✅ closed   | claude | Walked at /auth/* (stub mode)                          |
+| #10                 | fx-service (Pyth + 0.4% spread)               | ✅ closed   | claude | Walked at /fx/* (stub-rate oracle)                     |
+| #12                 | claim-service                                  | ✅ closed   | claude | Walked all 5 stages on real browser                   |
+| #13                 | offramp-service (TransFi/Wise routing)        | ✅ closed   | claude | Pod Ready; real adapter calls await TransFi KYB        |
+| #14                 | notify-service (12 templates)                 | ✅ closed   | claude | Walked /notify/templates                               |
+| #17                 | token-service (tier+clawback)                 | ✅ closed   | claude | Walked /token/tier with bronze/silver/gold/platinum    |
+| #18                 | gamification-service                          | ✅ closed   | claude | Pod Ready + event endpoints                            |
+| #20                 | web-claim (Next.js)                            | ✅ closed   | claude | All 5 stages walked on Playwright                     |
+| #21                 | compliance-service (sanctions)                | ✅ closed   | claude | Walked /compliance/sanctions/screen/wallet             |
+| #11                 | ledger-service (double-entry + outbox)        | IN PROGRESS| claude | Needs Postgres in `ping` ns — currently deploying      |
+| #6, #8, #9          | user / transfer / wallet                       | UAT        | claude | Need Postgres + Solana RPC                             |
+| #19                 | mobile app screens                             | UAT        | claude | Code-complete; awaiting Expo run                       |
+| #15, #16, #22, #23, #24 | Phase 2 (Earn Vault Anchor, $PING TGE)    | backlog    | —      | Cayman Foundation + audit prerequisite                 |
+| #7 (dynolabs-io/kyc) | KYC shared service                            | backlog    | —      | Separate repo created (scaffold only)                  |
+| openova-private#167 | Sovereign deploy PR (Kustomize)                | ✅ merged   | claude | Flux reconciles each commit                            |
 
 ---
 
@@ -46,9 +58,12 @@ All external service accounts are provisioned (2026-05-21). Deployment target is
 
 | What's Blocked                                         | Who's Blocking                | ETA                  | Mitigation                                               |
 | ------------------------------------------------------ | ----------------------------- | -------------------- | -------------------------------------------------------- |
-| Walk-screenshot on issue #1                            | openova-private#167 PR review | Awaiting merge       | Direct Kustomize deploy uses existing ghcr.io images     |
-| OpenBao secret paths for Ping (Phase-2 real providers) | Founder (post-KYB)            | Phase-2 prerequisite | Phase-1 runs in stub mode; no secrets needed for walk    |
-| ping.cash domain                                       | Founder registration          | Post-walk            | Walk runs at ping.openova.io (Sovereign-owned subdomain) |
+| Real Twilio Verify SMS                                  | Twilio KYB                    | Awaiting             | Stub-mode OTP 123456 unblocks walks                       |
+| Real Privy MPC wallet                                   | Privy KYB                     | Awaiting             | Stub-mode wallet unblocks walks                           |
+| Real TransFi sandbox payout                             | TransFi KYB                   | Awaiting             | Adapter routes deterministic, awaiting cred               |
+| Chainalysis KYT                                         | KYT account                   | Awaiting             | Stub-mode `clean` for non-sanctioned addresses            |
+| WhatsApp Business API                                   | Meta KYB                      | Awaiting             | SMS fallback path live; WA hot-swap when ready            |
+| ping.cash domain                                        | Founder registration          | Post-launch          | Live at ping.openova.io (Sovereign-owned subdomain)       |
 
 (All other external services already provisioned.)
 
