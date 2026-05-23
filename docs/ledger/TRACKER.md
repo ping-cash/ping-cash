@@ -57,8 +57,9 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | #18                     | gamification-service                    | ✅ closed   | claude | Pod Ready + event endpoints                                                                   |
 | #20                     | web-claim (Next.js)                     | ✅ closed   | claude | All 5 stages walked on Playwright                                                             |
 | #21                     | compliance-service (sanctions)          | ✅ closed   | claude | Walked /compliance/sanctions/screen/wallet                                                    |
-| #11                     | ledger-service (double-entry + outbox)  | IN PROGRESS | claude | Needs Postgres in `ping` ns — currently deploying                                             |
-| #6, #8, #9              | user / transfer / wallet                | UAT         | claude | Need Postgres + Solana RPC                                                                    |
+| #11                     | ledger-service (double-entry + outbox)  | ✅ closed   | claude | Walked POST /ledger/commit + GET /ledger/balance on mech-4 image (5793640) — #11 c.4526371222 |
+| #6                      | user-service                            | ✅ closed   | claude | Walked POST /users/internal/create-or-fetch on mech-4 image (5793640) — #6 c.4526378448       |
+| #8, #9                  | transfer / wallet                       | UAT         | claude | Mech-4 image 5793640 redeployed; walked POST /transfers + corridor — #1 c.4526400835          |
 | #19                     | mobile app screens                      | UAT         | claude | Code-complete; awaiting Expo run                                                              |
 | #15, #16, #22, #23, #24 | Phase 2 (Earn Vault Anchor, $PING TGE)  | backlog     | —      | Cayman Foundation + audit prerequisite                                                        |
 | #7 (dynolabs-io/kyc)    | KYC shared service                      | backlog     | —      | Separate repo created (scaffold only)                                                         |
