@@ -6,7 +6,6 @@ export default defineConfig({
   target: 'node20',
   clean: true,
   sourcemap: true,
-  minify: false,
-  splitting: false,
   bundle: true,
+  noExternal: [/^@ping\//],
 });

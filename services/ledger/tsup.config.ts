@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsup';
+
 export default defineConfig({
   entry: ['src/index.ts'],
   format: ['cjs'],
@@ -6,5 +7,5 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   bundle: true,
-  external: ['@prisma/client', '.prisma'],
+  noExternal: [/^@ping\//],
 });

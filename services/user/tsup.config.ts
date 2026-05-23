@@ -6,8 +6,6 @@ export default defineConfig({
   target: 'node20',
   clean: true,
   sourcemap: true,
-  minify: false,
-  splitting: false,
   bundle: true,
-  external: ['@prisma/client', '.prisma'],
+  noExternal: [/^@ping\//],
 });

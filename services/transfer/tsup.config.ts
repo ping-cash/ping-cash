@@ -8,4 +8,6 @@ export default defineConfig({
   sourcemap: true,
   minify: false,
   splitting: false,
+  bundle: true,
+  noExternal: [/^@ping\//],
 });
