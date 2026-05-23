@@ -1,7 +1,7 @@
 # ledger-service — tsup bundles ALL deps into dist/index.js (self-contained).
 # Per ADR 0006 + CLAUDE.md: CI is the only build path.
 
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
@@ -23,9 +23,9 @@ RUN pnpm --filter @ping/utils build
 RUN pnpm --filter @ping/ledger-service db:generate
 RUN pnpm --filter @ping/ledger-service build
 
-FROM node:20-alpine AS runner
+FROM node:20-bookworm-slim AS runner
 WORKDIR /app
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 ping
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 --ingroup nodejs ping && apt-get update && apt-get install -y --no-install-recommends openssl wget ca-certificates && rm -rf /var/lib/apt/lists/*
 USER ping
 
 COPY --from=builder --chown=ping:nodejs /app/services/ledger/dist ./dist
