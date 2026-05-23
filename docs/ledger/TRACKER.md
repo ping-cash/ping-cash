@@ -8,6 +8,20 @@
 
 ---
 
+## BACKLOG-STANDARDS.md audit — 2026-05-24
+
+Per [dynolabs-io/workflow BACKLOG-STANDARDS.md](https://github.com/dynolabs-io/workflow/blob/main/docs/BACKLOG-STANDARDS.md). Triage decision tree applied to every open issue:
+
+- **Action A (fix in place):** 7 issues — #1 EPIC, #22 EPIC, #7 EPIC, #15, #16, #23, #24, #36, #50 (reformatted title + 4-section body + correct labels)
+- **Action B (close + re-file):** 0 — every open issue had clear intent
+- **Action C (close as not-planned):** 0 — none obsolete
+
+Issues left untouched (status/completed, awaiting founder close): #2-#6, #8-#14, #17-#21, #25-#35, #37, #39 — these conformed to per-Wave discipline at filing time; will reformat lazily IF re-opened.
+
+Status counts post-audit: 1 in-progress (#36), 6 blocked-ext (#7, #15, #16, #23, #24, #50), 21 completed, 2 unclaimed EPIC parents (#1, #22).
+
+---
+
 ## Current Sprint Focus
 
 Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC sender → PH recipient → GCash cash-out) by Month 6.
