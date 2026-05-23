@@ -58,6 +58,7 @@ export async function create(input: {
   senderId: string;
   senderName?: string;
   recipientPhone: string;
+  claimCode?: string;
   amount: {
     value: string;
     currency: string;
@@ -66,16 +67,36 @@ export async function create(input: {
     fxRate?: number;
   };
 }): Promise<{ code: string; url: string; expiresAt: number }> {
-  // Generate unique code (retry on collision — improbable but safe)
-  let code = generateClaimCode();
-  let attempts = 0;
-  for (let i = 0; i < 6; i++) {
-    const existing = await readClaim(code);
-    if (!existing) break;
+  let code: string;
+
+  if (input.claimCode) {
+    // Caller (transfer-service) supplied the code. Honor it idempotently.
+    const existing = await readClaim(input.claimCode);
+    if (existing) {
+      if (existing.transferId !== input.transferId) {
+        throw new Error(
+          `Claim code ${input.claimCode} already bound to a different transferId`
+        );
+      }
+      // Idempotent re-create — same payload, return existing.
+      const url = `${process.env.CLAIM_URL_BASE ?? 'https://ping.cash/c'}/${existing.code}`;
+      return { code: existing.code, url, expiresAt: existing.expiresAt };
+    }
+    code = input.claimCode;
+  } else {
+    // No code supplied — generate unique code (retry on collision — improbable but safe).
     code = generateClaimCode();
-    attempts++;
-    if (attempts > 5) {
-      throw new Error('Failed to generate unique claim code after 5 attempts');
+    let attempts = 0;
+    for (let i = 0; i < 6; i++) {
+      const existing = await readClaim(code);
+      if (!existing) break;
+      code = generateClaimCode();
+      attempts++;
+      if (attempts > 5) {
+        throw new Error(
+          'Failed to generate unique claim code after 5 attempts'
+        );
+      }
     }
   }
 

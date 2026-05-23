@@ -8,6 +8,12 @@ const CreateClaimBody = z.object({
   senderId: z.string().uuid(),
   senderName: z.string().min(1).max(100).optional(),
   recipientPhone: z.string().regex(/^\+[1-9]\d{6,14}$/),
+  // Optional claim_code — when set, claim-service honors it idempotently
+  // so transfer-service's claim_code matches what's stored here. Per ping-cash#42.
+  claimCode: z
+    .string()
+    .regex(/^[A-Za-z0-9]{8,16}$/)
+    .optional(),
   amount: z.object({
     value: z.string().regex(/^\d+(\.\d{1,8})?$/),
     currency: z.string().min(3).max(8),
