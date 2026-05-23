@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-23 — 16 services live; ALL 14 Phase-1 pillars VERIFIED-PASS; **fresh 5-stage end-user walk RE-VERIFIED on live prov (claim 8sVV9Py37Lyh → ref PING-BE48EAE9, issue #1 comment 4525537316)**; 4 Anchor scaffolds + KYC service + ping-side kyc-client + tier middleware + transfer KYC enforcement (#25-#39); 33 labeled `status/completed` (including #40 transfer→claim bridge); 3 blocked-ext (real KYBs)
+**Last refreshed:** 2026-05-23 — 16 services live; ALL 14 Phase-1 pillars VERIFIED-PASS; **fresh 5-stage end-user walk RE-VERIFIED on live prov (claim 8sVV9Py37Lyh → ref PING-BE48EAE9, issue #1 comment 4525537316)**; 4 Anchor scaffolds + KYC service + ping-side kyc-client + tier middleware + transfer KYC enforcement (#25-#39); 34 labeled `status/completed` (including #40 transfer→claim bridge + #41 reconciler); 3 blocked-ext (real KYBs)
 
 ---
 
