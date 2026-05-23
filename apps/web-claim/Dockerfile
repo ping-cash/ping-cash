@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* turbo.json tsconfig.json ./
 COPY apps/web-claim/package.json ./apps/web-claim/
 
 RUN pnpm install --frozen-lockfile
