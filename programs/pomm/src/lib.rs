@@ -1,0 +1,267 @@
+use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{
+    self, Mint, TokenAccount, TokenInterface, TransferChecked,
+};
+
+declare_id!("PommProgr4mPubKeyP1ace00011111111111111111");
+
+const EMA_BAND_BPS: u16 = 1_500;
+const MAX_PER_DAY_DEPLOYED_BPS: u16 = 50;
+
+#[program]
+pub mod pomm {
+    use super::*;
+
+    pub fn initialize_treasury(
+        ctx: Context<InitializeTreasury>,
+        squads_multisig: Pubkey,
+    ) -> Result<()> {
+        let treasury = &mut ctx.accounts.treasury;
+        treasury.authority = squads_multisig;
+        treasury.usdc_mint = ctx.accounts.usdc_mint.key();
+        treasury.usdc_vault = ctx.accounts.usdc_vault.key();
+        treasury.total_usdc = 0;
+        treasury.deployed_usdc = 0;
+        treasury.collected_fees_lifetime = 0;
+        treasury.is_paused = false;
+        treasury.bump = ctx.bumps.treasury;
+        Ok(())
+    }
+
+    pub fn deposit_usdc(ctx: Context<DepositUsdc>, amount: u64) -> Result<()> {
+        require!(!ctx.accounts.treasury.is_paused, PommError::Paused);
+        require!(amount > 0, PommError::ZeroAmount);
+
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_ctx(),
+            amount,
+            ctx.accounts.usdc_mint.decimals,
+        )?;
+
+        let treasury = &mut ctx.accounts.treasury;
+        treasury.total_usdc = treasury.total_usdc.checked_add(amount).ok_or(PommError::MathOverflow)?;
+
+        emit!(DepositEvent {
+            treasury: treasury.key(),
+            depositor: ctx.accounts.depositor.key(),
+            amount,
+        });
+        Ok(())
+    }
+
+    pub fn mint_lp_position(
+        ctx: Context<MintLpPosition>,
+        amount: u64,
+        oracle_price_x64: u128,
+        ema_price_x64: u128,
+    ) -> Result<()> {
+        require!(!ctx.accounts.treasury.is_paused, PommError::Paused);
+        require!(amount > 0, PommError::ZeroAmount);
+
+        require!(price_within_band(oracle_price_x64, ema_price_x64), PommError::PriceOutOfBand);
+
+        let max_per_day = (ctx.accounts.treasury.total_usdc as u128)
+            .checked_mul(MAX_PER_DAY_DEPLOYED_BPS as u128).ok_or(PommError::MathOverflow)?
+            .checked_div(10_000).ok_or(PommError::MathOverflow)? as u64;
+        require!(amount <= max_per_day, PommError::DailyCapExceeded);
+
+        let treasury = &mut ctx.accounts.treasury;
+        treasury.deployed_usdc = treasury.deployed_usdc.checked_add(amount).ok_or(PommError::MathOverflow)?;
+
+        emit!(LpMintEvent {
+            treasury: treasury.key(),
+            amount,
+            oracle_price_x64,
+        });
+        Ok(())
+    }
+
+    pub fn collect_fees(ctx: Context<CollectFees>, fees: u64) -> Result<()> {
+        require!(!ctx.accounts.treasury.is_paused, PommError::Paused);
+        let treasury = &mut ctx.accounts.treasury;
+        treasury.collected_fees_lifetime = treasury.collected_fees_lifetime
+            .checked_add(fees).ok_or(PommError::MathOverflow)?;
+        emit!(FeesCollected { treasury: treasury.key(), amount: fees });
+        Ok(())
+    }
+
+    pub fn set_paused(ctx: Context<AdminTreasury>, paused: bool) -> Result<()> {
+        ctx.accounts.treasury.is_paused = paused;
+        emit!(PausedEvent { treasury: ctx.accounts.treasury.key(), paused });
+        Ok(())
+    }
+
+    pub fn emergency_withdraw(ctx: Context<EmergencyWithdraw>, amount: u64) -> Result<()> {
+        require!(ctx.accounts.treasury.is_paused, PommError::EmergencyRequiresPause);
+
+        let seeds = &[b"treasury".as_ref(), &[ctx.accounts.treasury.bump]];
+        let signer = &[&seeds[..]];
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_ctx().with_signer(signer),
+            amount,
+            ctx.accounts.usdc_mint.decimals,
+        )?;
+
+        let treasury = &mut ctx.accounts.treasury;
+        treasury.total_usdc = treasury.total_usdc.checked_sub(amount).ok_or(PommError::MathOverflow)?;
+        emit!(EmergencyWithdrawEvent { treasury: treasury.key(), amount });
+        Ok(())
+    }
+}
+
+fn price_within_band(price_x64: u128, ema_x64: u128) -> bool {
+    if ema_x64 == 0 { return false; }
+    let band = ema_x64.checked_mul(EMA_BAND_BPS as u128).and_then(|x| x.checked_div(10_000)).unwrap_or(0);
+    let lower = ema_x64.saturating_sub(band);
+    let upper = ema_x64.saturating_add(band);
+    price_x64 >= lower && price_x64 <= upper
+}
+
+#[account]
+pub struct Treasury {
+    pub authority: Pubkey,
+    pub usdc_mint: Pubkey,
+    pub usdc_vault: Pubkey,
+    pub total_usdc: u64,
+    pub deployed_usdc: u64,
+    pub collected_fees_lifetime: u64,
+    pub is_paused: bool,
+    pub bump: u8,
+}
+
+impl Treasury {
+    pub const LEN: usize = 8 + 32 * 3 + 8 * 3 + 1 + 1;
+}
+
+#[derive(Accounts)]
+pub struct InitializeTreasury<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    #[account(init, payer = payer, space = Treasury::LEN, seeds = [b"treasury"], bump)]
+    pub treasury: Account<'info, Treasury>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct DepositUsdc<'info> {
+    #[account(mut)]
+    pub depositor: Signer<'info>,
+    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    pub treasury: Account<'info, Treasury>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub depositor_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut, address = treasury.usdc_vault)]
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+impl<'info> DepositUsdc<'info> {
+    fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), TransferChecked {
+            from: self.depositor_usdc_ata.to_account_info(),
+            mint: self.usdc_mint.to_account_info(),
+            to: self.usdc_vault.to_account_info(),
+            authority: self.depositor.to_account_info(),
+        })
+    }
+}
+
+#[derive(Accounts)]
+pub struct MintLpPosition<'info> {
+    #[account(address = treasury.authority)]
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    pub treasury: Account<'info, Treasury>,
+}
+
+#[derive(Accounts)]
+pub struct CollectFees<'info> {
+    #[account(address = treasury.authority)]
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    pub treasury: Account<'info, Treasury>,
+}
+
+#[derive(Accounts)]
+pub struct AdminTreasury<'info> {
+    #[account(address = treasury.authority)]
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    pub treasury: Account<'info, Treasury>,
+}
+
+#[derive(Accounts)]
+pub struct EmergencyWithdraw<'info> {
+    #[account(address = treasury.authority)]
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    pub treasury: Account<'info, Treasury>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut, address = treasury.usdc_vault)]
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub destination_ata: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+impl<'info> EmergencyWithdraw<'info> {
+    fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), TransferChecked {
+            from: self.usdc_vault.to_account_info(),
+            mint: self.usdc_mint.to_account_info(),
+            to: self.destination_ata.to_account_info(),
+            authority: self.treasury.to_account_info(),
+        })
+    }
+}
+
+#[event]
+pub struct DepositEvent {
+    pub treasury: Pubkey,
+    pub depositor: Pubkey,
+    pub amount: u64,
+}
+
+#[event]
+pub struct LpMintEvent {
+    pub treasury: Pubkey,
+    pub amount: u64,
+    pub oracle_price_x64: u128,
+}
+
+#[event]
+pub struct FeesCollected {
+    pub treasury: Pubkey,
+    pub amount: u64,
+}
+
+#[event]
+pub struct PausedEvent {
+    pub treasury: Pubkey,
+    pub paused: bool,
+}
+
+#[event]
+pub struct EmergencyWithdrawEvent {
+    pub treasury: Pubkey,
+    pub amount: u64,
+}
+
+#[error_code]
+pub enum PommError {
+    #[msg("Treasury is paused")]
+    Paused,
+    #[msg("Amount must be > 0")]
+    ZeroAmount,
+    #[msg("Oracle price outside EMA band")]
+    PriceOutOfBand,
+    #[msg("Per-day deployment cap exceeded")]
+    DailyCapExceeded,
+    #[msg("Emergency withdraw requires paused state")]
+    EmergencyRequiresPause,
+    #[msg("Arithmetic overflow")]
+    MathOverflow,
+}
