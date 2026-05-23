@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-23 — 16 services live; fresh 5-stage walk RE-VERIFIED on live prov (claim 8sVV9Py37Lyh → ref PING-BE48EAE9, issue #1 comment 4525537316); **bridge+reconciler suite shipped (#40-#48): transfer→claim sync POST + idempotent claim_code + 30s retry loop + 41+ vitest specs across 4 services; ADR 0019 locked; #49 doc link checker (279 links 0 broken); Dockerfiles fixed for @ping/kyc-client**; 42 labeled `status/completed`; 1 in-progress (#36 readinessProbe — awaiting CI image); 3 blocked-ext (real KYBs)
+**Last refreshed:** 2026-05-23 — 16 services live; fresh 5-stage walks RE-VERIFIED on live prov: GCash (claim 8sVV9Py37Lyh → PING-BE48EAE9) + Maya (claim FdwfuF8D89WE → PING-6F7AA69D); **bridge+reconciler suite shipped (#40-#48): transfer→claim sync POST + idempotent claim_code + 30s retry loop + 41+ vitest specs across 4 services; ADR 0019 locked; #49 doc link checker (279 links 0 broken); Dockerfiles fixed for @ping/kyc-client**; 42 labeled `status/completed`; 1 in-progress (#36 readinessProbe — awaiting CI image); 3 blocked-ext (real KYBs)
 
 ---
 
