@@ -23,6 +23,11 @@ function getClient(): KycClient | null {
   return kycClient;
 }
 
+/** Test-only: clear cached client so subsequent calls re-pick stubbed fetch. */
+export function __resetKycClientForTests(): void {
+  kycClient = null;
+}
+
 export class KycTierInsufficientError extends Error {
   constructor(
     public readonly currentTier: 0 | 1 | 2,
