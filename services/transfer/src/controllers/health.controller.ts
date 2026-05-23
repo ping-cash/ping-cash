@@ -1,8 +1,12 @@
 import { FastifyInstance } from 'fastify';
 
+import { getConfig } from '@ping/config';
+
 import { kafka } from '../events/kafka';
 import { prisma } from '../utils/prisma';
 import { redis } from '../utils/redis';
+
+const config = getConfig();
 
 export async function healthRoutes(app: FastifyInstance) {
   // Liveness probe
@@ -30,14 +34,18 @@ export async function healthRoutes(app: FastifyInstance) {
       checks.redis = false;
     }
 
-    // Check Kafka
-    try {
-      const admin = kafka.admin();
-      await admin.connect();
-      await admin.disconnect();
+    // Check Kafka (skip if no brokers configured — stub mode)
+    if (!config.KAFKA_BROKERS || config.KAFKA_BROKERS.length === 0) {
       checks.kafka = true;
-    } catch {
-      checks.kafka = false;
+    } else {
+      try {
+        const admin = kafka.admin();
+        await admin.connect();
+        await admin.disconnect();
+        checks.kafka = true;
+      } catch {
+        checks.kafka = false;
+      }
     }
 
     const allHealthy = Object.values(checks).every(Boolean);
