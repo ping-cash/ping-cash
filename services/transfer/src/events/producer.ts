@@ -1,4 +1,3 @@
-
 import { EventTopics, EventType, CloudEvent } from '@ping/types/events';
 import { generateId, now } from '@ping/utils';
 
@@ -51,17 +50,23 @@ export async function publishEvent<T>(
       ],
     });
 
-    logger.debug({
-      eventType,
-      eventId: event.id,
-      topic,
-    }, 'Event published');
+    logger.debug(
+      {
+        eventType,
+        eventId: event.id,
+        topic,
+      },
+      'Event published'
+    );
   } catch (error) {
-    logger.error({
-      eventType,
-      topic,
-      error,
-    }, 'Failed to publish event');
+    logger.error(
+      {
+        eventType,
+        topic,
+        error,
+      },
+      'Failed to publish event'
+    );
     throw error;
   }
 }

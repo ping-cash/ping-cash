@@ -105,7 +105,9 @@ export async function getPythRate(currency: string): Promise<OracleQuote> {
  * Returns true if the two oracles agree within 0.3%.
  * Phase 1 stub: always passes (no Switchboard integration yet).
  */
-export async function crossCheckSwitchboard(quote: OracleQuote): Promise<{ agrees: boolean; switchboardRate?: number }> {
+export async function crossCheckSwitchboard(
+  quote: OracleQuote
+): Promise<{ agrees: boolean; switchboardRate?: number }> {
   // Phase 1: stub returns "agreed" with the same rate
   logger.info({ pair: quote.pair }, '[STUB] Switchboard cross-check');
   return { agrees: true, switchboardRate: quote.rate };

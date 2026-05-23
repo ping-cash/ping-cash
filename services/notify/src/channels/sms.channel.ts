@@ -46,7 +46,10 @@ export async function sendSms(input: SmsSendInput): Promise<ChannelResult> {
     });
     return {
       channel: 'sms',
-      delivered: result.status === 'queued' || result.status === 'sent' || result.status === 'delivered',
+      delivered:
+        result.status === 'queued' ||
+        result.status === 'sent' ||
+        result.status === 'delivered',
       providerMessageId: result.sid,
     };
   } catch (err) {

@@ -21,12 +21,15 @@ export function errorHandler(
   reply: FastifyReply
 ) {
   // Log the error
-  logger.error({
-    err: error,
-    requestId: request.id,
-    method: request.method,
-    url: request.url,
-  }, 'Request error');
+  logger.error(
+    {
+      err: error,
+      requestId: request.id,
+      method: request.method,
+      url: request.url,
+    },
+    'Request error'
+  );
 
   // Handle known AppErrors
   if (error instanceof AppError) {
@@ -55,7 +58,10 @@ export function errorHandler(
   }
 
   // Handle rate limit errors
-  if ('statusCode' in error && (error as { statusCode?: number }).statusCode === 429) {
+  if (
+    'statusCode' in error &&
+    (error as { statusCode?: number }).statusCode === 429
+  ) {
     return reply.status(429).send({
       success: false,
       error: {

@@ -28,7 +28,9 @@ function getClient() {
  *
  * In stub mode (no credentials), returns a fake SID and logs the would-be call.
  */
-export async function sendOtp(phone: string): Promise<{ sid: string; status: string }> {
+export async function sendOtp(
+  phone: string
+): Promise<{ sid: string; status: string }> {
   const client = getClient();
   const verifyServiceSid = config.TWILIO_VERIFY_SID;
 
@@ -43,8 +45,12 @@ export async function sendOtp(phone: string): Promise<{ sid: string; status: str
       .verifications.create({ to: phone, channel: 'sms' });
 
     logger.info(
-      { sid: verification.sid, status: verification.status, phone: maskPhone(phone) },
-      'OTP sent via Twilio Verify',
+      {
+        sid: verification.sid,
+        status: verification.status,
+        phone: maskPhone(phone),
+      },
+      'OTP sent via Twilio Verify'
     );
 
     return { sid: verification.sid, status: verification.status };
@@ -65,7 +71,10 @@ export async function verifyOtp(phone: string, code: string): Promise<boolean> {
   const verifyServiceSid = config.TWILIO_VERIFY_SID;
 
   if (!client || !verifyServiceSid) {
-    logger.info({ phone, code }, '[STUB MODE] Would verify OTP via Twilio Verify');
+    logger.info(
+      { phone, code },
+      '[STUB MODE] Would verify OTP via Twilio Verify'
+    );
     return code === '123456';
   }
 
@@ -76,7 +85,7 @@ export async function verifyOtp(phone: string, code: string): Promise<boolean> {
 
     logger.info(
       { status: verificationCheck.status, phone: maskPhone(phone) },
-      'OTP verification result',
+      'OTP verification result'
     );
 
     return verificationCheck.status === 'approved';

@@ -10,7 +10,7 @@ export const redis = new Redis(config.REDIS_URL ?? 'redis://localhost:6379', {
   maxRetriesPerRequest: 3,
 });
 
-redis.on('error', (err) => logger.error({ err }, 'Redis error'));
+redis.on('error', err => logger.error({ err }, 'Redis error'));
 
 export async function connectRedis(): Promise<void> {
   await redis.connect();
@@ -53,8 +53,16 @@ export interface ClaimRecord {
   expiresAt: number;
 }
 
-export async function storeClaim(code: string, record: ClaimRecord): Promise<void> {
-  await redis.set(`claim:${code}`, JSON.stringify(record), 'EX', CLAIM_TTL_SECONDS);
+export async function storeClaim(
+  code: string,
+  record: ClaimRecord
+): Promise<void> {
+  await redis.set(
+    `claim:${code}`,
+    JSON.stringify(record),
+    'EX',
+    CLAIM_TTL_SECONDS
+  );
 }
 
 export async function readClaim(code: string): Promise<ClaimRecord | null> {
@@ -62,7 +70,10 @@ export async function readClaim(code: string): Promise<ClaimRecord | null> {
   return raw ? (JSON.parse(raw) as ClaimRecord) : null;
 }
 
-export async function updateClaim(code: string, updates: Partial<ClaimRecord>): Promise<ClaimRecord | null> {
+export async function updateClaim(
+  code: string,
+  updates: Partial<ClaimRecord>
+): Promise<ClaimRecord | null> {
   const current = await readClaim(code);
   if (!current) return null;
   const updated = { ...current, ...updates };
@@ -75,7 +86,10 @@ export async function deleteClaim(code: string): Promise<void> {
 }
 
 /** OTP rate limit — claim-side, 5 attempts per claim */
-export async function checkOtpRateLimit(code: string, ip: string): Promise<{ allowed: boolean; remaining: number }> {
+export async function checkOtpRateLimit(
+  code: string,
+  ip: string
+): Promise<{ allowed: boolean; remaining: number }> {
   const key = `claim-otp-rl:${code}:${ip}`;
   const count = await redis.incr(key);
   if (count === 1) {

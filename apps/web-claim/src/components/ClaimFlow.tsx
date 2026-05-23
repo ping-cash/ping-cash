@@ -11,7 +11,14 @@ import {
   type CashoutMethod,
 } from '@/lib/api';
 
-type Stage = 'loading' | 'view' | 'otp' | 'methods' | 'account' | 'success' | 'error';
+type Stage =
+  | 'loading'
+  | 'view'
+  | 'otp'
+  | 'methods'
+  | 'account'
+  | 'success'
+  | 'error';
 
 export function ClaimFlow({ code }: { code: string }) {
   const [stage, setStage] = useState<Stage>('loading');
@@ -117,8 +124,8 @@ export function ClaimFlow({ code }: { code: string }) {
         <h2>Couldn't load claim</h2>
         <p className="error">{error}</p>
         <p className="helper">
-          The link may have expired or already been used. If the sender resends, the new
-          link will work.
+          The link may have expired or already been used. If the sender resends,
+          the new link will work.
         </p>
       </div>
     );
@@ -131,7 +138,9 @@ export function ClaimFlow({ code }: { code: string }) {
     return (
       <>
         <div className="claim-card">
-          <p className="claim-from">{claim.sender.name ?? 'Someone'} sent you</p>
+          <p className="claim-from">
+            {claim.sender.name ?? 'Someone'} sent you
+          </p>
           <p className="claim-amount">
             ${claim.amount.value} {claim.amount.currency}
           </p>
@@ -177,7 +186,9 @@ export function ClaimFlow({ code }: { code: string }) {
             placeholder="000000"
             maxLength={6}
             value={otpCode}
-            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            onChange={e =>
+              setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+            }
             autoFocus
           />
           <button
@@ -205,7 +216,7 @@ export function ClaimFlow({ code }: { code: string }) {
         </div>
 
         <div className="method-list">
-          {methods.map((m) => (
+          {methods.map(m => (
             <div
               key={m.method}
               className="method-card"
@@ -240,17 +251,19 @@ export function ClaimFlow({ code }: { code: string }) {
             className="input"
             placeholder={getAccountPlaceholder(selectedMethod ?? '')}
             value={account}
-            onChange={(e) => setAccount(e.target.value)}
+            onChange={e => setAccount(e.target.value)}
             autoFocus
           />
           <p className="helper">{getAccountHelper(selectedMethod ?? '')}</p>
 
-          <label className="label section-spacing">Account holder name (optional)</label>
+          <label className="label section-spacing">
+            Account holder name (optional)
+          </label>
           <input
             className="input"
             placeholder="Full name"
             value={accountName}
-            onChange={(e) => setAccountName(e.target.value)}
+            onChange={e => setAccountName(e.target.value)}
           />
 
           <button
@@ -258,7 +271,9 @@ export function ClaimFlow({ code }: { code: string }) {
             onClick={handleSubmitAccount}
             disabled={busy || !account}
           >
-            {busy ? 'Sending...' : `Send ${claim.amount.value} ${claim.amount.currency} →`}
+            {busy
+              ? 'Sending...'
+              : `Send ${claim.amount.value} ${claim.amount.currency} →`}
           </button>
           {error ? <p className="error">{error}</p> : null}
         </div>
@@ -272,14 +287,19 @@ export function ClaimFlow({ code }: { code: string }) {
       <div className="claim-card">
         <h2 style={{ marginBottom: 16, fontSize: 28 }}>✓ Sent!</h2>
         <p style={{ marginBottom: 16 }}>
-          {claim.amount.localValue ?? claim.amount.value} {claim.amount.localCurrency ?? claim.amount.currency}{' '}
-          is on its way to your {selectedMethod}.
+          {claim.amount.localValue ?? claim.amount.value}{' '}
+          {claim.amount.localCurrency ?? claim.amount.currency} is on its way to
+          your {selectedMethod}.
         </p>
         <p className="helper">Reference: {reference}</p>
       </div>
 
       <div className="section-spacing">
-        <a href="https://ping.cash/app" className="button center" style={{ display: 'block', textDecoration: 'none' }}>
+        <a
+          href="https://ping.cash/app"
+          className="button center"
+          style={{ display: 'block', textDecoration: 'none' }}
+        >
           Get the Ping app for free transfers →
         </a>
         <p className="helper center">
@@ -291,17 +311,21 @@ export function ClaimFlow({ code }: { code: string }) {
 }
 
 function getAccountPlaceholder(method: string): string {
-  if (method.includes('gcash') || method.includes('maya')) return '+63 9XX XXX XXXX';
+  if (method.includes('gcash') || method.includes('maya'))
+    return '+63 9XX XXX XXXX';
   if (method.includes('upi')) return 'username@bankname';
-  if (method.includes('jazzcash') || method.includes('easypaisa')) return '+92 3XX XXXXXXX';
-  if (method.includes('bkash') || method.includes('nagad')) return '+880 1XXX XXXXXX';
+  if (method.includes('jazzcash') || method.includes('easypaisa'))
+    return '+92 3XX XXXXXXX';
+  if (method.includes('bkash') || method.includes('nagad'))
+    return '+880 1XXX XXXXXX';
   if (method.includes('m-pesa')) return '+254 7XX XXX XXX';
   if (method.includes('bank')) return 'Account number or IBAN';
   return 'Account number';
 }
 
 function getAccountHelper(method: string): string {
-  if (method.includes('gcash') || method.includes('maya')) return 'Your GCash/Maya registered mobile number';
+  if (method.includes('gcash') || method.includes('maya'))
+    return 'Your GCash/Maya registered mobile number';
   if (method.includes('upi')) return 'Your UPI VPA (e.g. john@oksbi)';
   if (method.includes('bank')) return 'Account number or IBAN';
   return '';

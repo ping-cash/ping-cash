@@ -34,12 +34,27 @@ export default function RootLayout() {
             headerTitleStyle: { fontWeight: '600' },
           }}
         >
-          <Stack.Screen name="index" options={{ title: 'Ping', headerShown: false }} />
-          <Stack.Screen name="signup" options={{ title: 'Get started', headerShown: false }} />
-          <Stack.Screen name="verify" options={{ title: 'Verify phone', headerShown: false }} />
+          <Stack.Screen
+            name="index"
+            options={{ title: 'Ping', headerShown: false }}
+          />
+          <Stack.Screen
+            name="signup"
+            options={{ title: 'Get started', headerShown: false }}
+          />
+          <Stack.Screen
+            name="verify"
+            options={{ title: 'Verify phone', headerShown: false }}
+          />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="send" options={{ title: 'Send money', presentation: 'modal' }} />
-          <Stack.Screen name="transfer-detail" options={{ title: 'Transfer' }} />
+          <Stack.Screen
+            name="send"
+            options={{ title: 'Send money', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="transfer-detail"
+            options={{ title: 'Transfer' }}
+          />
         </Stack>
       </SafeAreaProvider>
     </QueryClientProvider>

@@ -52,9 +52,24 @@ export default function LandingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1A1A2E', padding: 24 },
   brandingArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  logo: { fontSize: 72, fontWeight: '800', color: '#FFFFFF', letterSpacing: -2 },
-  tagline: { fontSize: 22, color: '#FFFFFF', marginTop: 16, textAlign: 'center' },
-  subtagline: { fontSize: 14, color: '#A0A0C0', marginTop: 8, textAlign: 'center' },
+  logo: {
+    fontSize: 72,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -2,
+  },
+  tagline: {
+    fontSize: 22,
+    color: '#FFFFFF',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  subtagline: {
+    fontSize: 14,
+    color: '#A0A0C0',
+    marginTop: 8,
+    textAlign: 'center',
+  },
   actions: { gap: 12, marginBottom: 32 },
   primaryButton: {
     backgroundColor: '#10B981',

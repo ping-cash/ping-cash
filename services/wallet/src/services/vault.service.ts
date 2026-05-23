@@ -10,7 +10,11 @@
  *
  * Per ADR 0017 (Custody model): wallet-service NEVER signs on behalf of users.
  */
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import {
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
 
 import { WalletErrors } from '../utils/errors';
 import { logger } from '../utils/logger';
@@ -32,11 +36,11 @@ export interface VaultUnstakeIntent extends VaultStakeIntent {}
  */
 export async function buildStakeIntent(
   userWallet: string,
-  amountUsdc: string,
+  amountUsdc: string
 ): Promise<VaultStakeIntent> {
   logger.info(
     { userWallet, amountUsdc },
-    '[STUB] Building Earn Vault stake intent (vault not yet deployed)',
+    '[STUB] Building Earn Vault stake intent (vault not yet deployed)'
   );
 
   try {
@@ -49,7 +53,9 @@ export async function buildStakeIntent(
   // Phase 2: construct actual Anchor instruction once Earn Vault is live
   const tx = new Transaction();
   const dummyInstruction = new TransactionInstruction({
-    keys: [{ pubkey: new PublicKey(userWallet), isSigner: true, isWritable: true }],
+    keys: [
+      { pubkey: new PublicKey(userWallet), isSigner: true, isWritable: true },
+    ],
     programId: new PublicKey('11111111111111111111111111111111'), // SystemProgram (placeholder)
     data: Buffer.from([]),
   });
@@ -73,11 +79,11 @@ export async function buildStakeIntent(
  */
 export async function buildUnstakeIntent(
   userWallet: string,
-  amountUsdc: string,
+  amountUsdc: string
 ): Promise<VaultUnstakeIntent> {
   logger.info(
     { userWallet, amountUsdc },
-    '[STUB] Building Earn Vault unstake intent (vault not yet deployed)',
+    '[STUB] Building Earn Vault unstake intent (vault not yet deployed)'
   );
 
   try {
@@ -88,7 +94,9 @@ export async function buildUnstakeIntent(
 
   const tx = new Transaction();
   const dummyInstruction = new TransactionInstruction({
-    keys: [{ pubkey: new PublicKey(userWallet), isSigner: true, isWritable: true }],
+    keys: [
+      { pubkey: new PublicKey(userWallet), isSigner: true, isWritable: true },
+    ],
     programId: new PublicKey('11111111111111111111111111111111'),
     data: Buffer.from([]),
   });
@@ -115,14 +123,19 @@ export interface VaultPosition {
   apyDisplay: string;
 }
 
-export async function getVaultPosition(walletAddress: string): Promise<VaultPosition> {
+export async function getVaultPosition(
+  walletAddress: string
+): Promise<VaultPosition> {
   try {
     new PublicKey(walletAddress);
   } catch {
     throw WalletErrors.InvalidAddress();
   }
 
-  logger.info({ walletAddress }, '[STUB] Reading Earn Vault position (Phase 1)');
+  logger.info(
+    { walletAddress },
+    '[STUB] Reading Earn Vault position (Phase 1)'
+  );
 
   return {
     walletAddress,

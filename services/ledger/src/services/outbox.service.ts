@@ -83,7 +83,7 @@ async function drainBatch(): Promise<void> {
       } else {
         logger.info(
           { eventId: event.id, topic: event.topic },
-          '[STUB] Would publish event to Kafka',
+          '[STUB] Would publish event to Kafka'
         );
       }
 
@@ -107,7 +107,7 @@ async function drainBatch(): Promise<void> {
       });
       logger.warn(
         { eventId: event.id, retryCount, backoffSeconds, err },
-        'Outbox publish failed — backing off',
+        'Outbox publish failed — backing off'
       );
     }
   }
@@ -115,7 +115,10 @@ async function drainBatch(): Promise<void> {
 
 export function startPolling(): void {
   if (pollerHandle) return;
-  logger.info({ intervalMs: POLL_INTERVAL_MS, batchSize: BATCH_SIZE }, 'Starting outbox poller');
+  logger.info(
+    { intervalMs: POLL_INTERVAL_MS, batchSize: BATCH_SIZE },
+    'Starting outbox poller'
+  );
   const tick = async () => {
     try {
       await drainBatch();

@@ -16,26 +16,26 @@ Per ADR 0015 (Phased launch) and ADR 0010 (Welcome stake):
 
 ## Endpoints
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/users/internal/create-or-fetch` | Internal | Called by auth-service after Privy bind |
-| POST | `/users/internal/welcome-stake` | Internal | Called by transfer-service on first outbound ≥ $10 |
-| GET | `/users/me` | Bearer JWT | User profile + tier + Ping Points |
-| PATCH | `/users/me` | Bearer JWT | Update displayName / email / avatar / language |
-| GET | `/users/me/contacts` | Bearer JWT | List user's synced contacts |
-| POST | `/users/me/contacts/sync` | Bearer JWT | Bulk-sync phone contacts |
-| GET | `/healthz` | Public | K8s liveness |
-| GET | `/readyz` | Public | K8s readiness (Postgres check) |
+| Method | Path                              | Auth       | Notes                                              |
+| ------ | --------------------------------- | ---------- | -------------------------------------------------- |
+| POST   | `/users/internal/create-or-fetch` | Internal   | Called by auth-service after Privy bind            |
+| POST   | `/users/internal/welcome-stake`   | Internal   | Called by transfer-service on first outbound ≥ $10 |
+| GET    | `/users/me`                       | Bearer JWT | User profile + tier + Ping Points                  |
+| PATCH  | `/users/me`                       | Bearer JWT | Update displayName / email / avatar / language     |
+| GET    | `/users/me/contacts`              | Bearer JWT | List user's synced contacts                        |
+| POST   | `/users/me/contacts/sync`         | Bearer JWT | Bulk-sync phone contacts                           |
+| GET    | `/healthz`                        | Public     | K8s liveness                                       |
+| GET    | `/readyz`                         | Public     | K8s readiness (Postgres check)                     |
 
 ## Data model
 
 Per ADR 0003 (CAP-aware data layer):
 
-| Storage | Used for | Why |
-|---|---|---|
-| PostgreSQL | User identity, Ping Points balance + ledger, milestones | ACID for points balance is critical for tier correctness |
-| PostgreSQL | Contacts (Phase 1) | Small per-user lists; ACID OK |
-| Redis (no direct use) | n/a | user-service doesn't have its own Redis state |
+| Storage               | Used for                                                | Why                                                      |
+| --------------------- | ------------------------------------------------------- | -------------------------------------------------------- |
+| PostgreSQL            | User identity, Ping Points balance + ledger, milestones | ACID for points balance is critical for tier correctness |
+| PostgreSQL            | Contacts (Phase 1)                                      | Small per-user lists; ACID OK                            |
+| Redis (no direct use) | n/a                                                     | user-service doesn't have its own Redis state            |
 
 Schema in `prisma/schema.prisma`:
 
@@ -71,10 +71,10 @@ Tier is **derived** from the user's total Ping Points balance (free + locked + u
 
 ## Sovereign-side secrets (OpenBao paths)
 
-| Secret | Path |
-|---|---|
-| `POSTGRES_URL` | `ping/user-svc/postgres_url` |
-| `JWT_SECRET` | `ping/auth/jwt_secret` (shared with auth-service for token verification) |
+| Secret         | Path                                                                     |
+| -------------- | ------------------------------------------------------------------------ |
+| `POSTGRES_URL` | `ping/user-svc/postgres_url`                                             |
+| `JWT_SECRET`   | `ping/auth/jwt_secret` (shared with auth-service for token verification) |
 
 ## Phase 1 vs Phase 2
 

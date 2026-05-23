@@ -20,7 +20,10 @@ config.resolver.disableHierarchicalLookup = false;
 
 // Extra modules for pnpm compatibility
 config.resolver.extraNodeModules = {
-  '@expo/metro-runtime': path.resolve(projectRoot, 'node_modules/@expo/metro-runtime'),
+  '@expo/metro-runtime': path.resolve(
+    projectRoot,
+    'node_modules/@expo/metro-runtime'
+  ),
 };
 
 module.exports = config;

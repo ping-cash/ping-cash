@@ -10,7 +10,7 @@ export const redis = new Redis(config.REDIS_URL ?? 'redis://localhost:6379', {
   maxRetriesPerRequest: 3,
 });
 
-redis.on('error', (err) => {
+redis.on('error', err => {
   logger.error({ err }, 'Redis connection error');
 });
 
@@ -37,11 +37,21 @@ export interface OtpSession {
   createdAt: number;
 }
 
-export async function storeOtpSession(sessionId: string, data: OtpSession): Promise<void> {
-  await redis.set(`otp:${sessionId}`, JSON.stringify(data), 'EX', OTP_TTL_SECONDS);
+export async function storeOtpSession(
+  sessionId: string,
+  data: OtpSession
+): Promise<void> {
+  await redis.set(
+    `otp:${sessionId}`,
+    JSON.stringify(data),
+    'EX',
+    OTP_TTL_SECONDS
+  );
 }
 
-export async function readOtpSession(sessionId: string): Promise<OtpSession | null> {
+export async function readOtpSession(
+  sessionId: string
+): Promise<OtpSession | null> {
   const raw = await redis.get(`otp:${sessionId}`);
   return raw ? (JSON.parse(raw) as OtpSession) : null;
 }
@@ -71,11 +81,21 @@ export interface RefreshTokenRecord {
   deviceId?: string;
 }
 
-export async function storeRefreshToken(jti: string, data: RefreshTokenRecord): Promise<void> {
-  await redis.set(`refresh:${jti}`, JSON.stringify(data), 'EX', REFRESH_TTL_SECONDS);
+export async function storeRefreshToken(
+  jti: string,
+  data: RefreshTokenRecord
+): Promise<void> {
+  await redis.set(
+    `refresh:${jti}`,
+    JSON.stringify(data),
+    'EX',
+    REFRESH_TTL_SECONDS
+  );
 }
 
-export async function readRefreshToken(jti: string): Promise<RefreshTokenRecord | null> {
+export async function readRefreshToken(
+  jti: string
+): Promise<RefreshTokenRecord | null> {
   const raw = await redis.get(`refresh:${jti}`);
   return raw ? (JSON.parse(raw) as RefreshTokenRecord) : null;
 }
@@ -91,7 +111,9 @@ export async function revokeRefreshToken(jti: string): Promise<void> {
 const INIT_RATE_WINDOW = 10 * 60; // seconds
 const INIT_RATE_MAX = 5;
 
-export async function checkInitRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number; resetIn: number }> {
+export async function checkInitRateLimit(
+  ip: string
+): Promise<{ allowed: boolean; remaining: number; resetIn: number }> {
   const key = `ratelimit:init:${ip}`;
   const count = await redis.incr(key);
   if (count === 1) {

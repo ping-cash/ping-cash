@@ -8,6 +8,7 @@
 Ping's target users — migrant workers in GCC, families in PH/IN/BD — **cannot tolerate token price volatility.** If `$PING` swings 10× up then 5× down, the brand is destroyed. They are not crypto speculators; they hold $PING as a utility tier badge + fee-payment medium.
 
 We must:
+
 1. Dampen volatility within a corridor (no pump-and-dump)
 2. Provide a continuous buy floor that grows with the platform
 3. Capture forex spread on $PING buy/sell flows (revenue line)
@@ -104,12 +105,12 @@ Internal user-facing swaps execute against Ping's own inventory (no DEX hop), so
 
 ## Revenue Capture Math
 
-| Source | Rate | At $1M monthly $PING swap volume | At $50M monthly |
-|---|---|---|---|
-| Internal-swap spread (buy side) | 0.3% | $3,000 | $150,000 |
-| Internal-swap spread (sell side) | 0.3% | $3,000 | $150,000 |
-| POMM net positive (sells > buys in growth phase) | variable | growing | growing significantly |
-| **Total monthly** | | **$6,000+** | **$300,000+** |
+| Source                                           | Rate     | At $1M monthly $PING swap volume | At $50M monthly       |
+| ------------------------------------------------ | -------- | -------------------------------- | --------------------- |
+| Internal-swap spread (buy side)                  | 0.3%     | $3,000                           | $150,000              |
+| Internal-swap spread (sell side)                 | 0.3%     | $3,000                           | $150,000              |
+| POMM net positive (sells > buys in growth phase) | variable | growing                          | growing significantly |
+| **Total monthly**                                |          | **$6,000+**                      | **$300,000+**         |
 
 Plus the Stability Reserve USDC itself earns ~5% APY via Circle Yield → compounding secondary revenue line.
 
@@ -117,24 +118,26 @@ Plus the Stability Reserve USDC itself earns ~5% APY via Circle Yield → compou
 
 POMM is structured to mirror Frax's AMO (Algorithmic Market Operations) pattern, which has operated since 2021 without SEC enforcement:
 
-| Property | How POMM achieves it |
-|---|---|
-| Algorithmic, no discretion | Smart contract code — Pyth oracle in, action out, no human can override direction |
-| On-chain transparent | Every intervention public on Solana explorer + `pomm.ping.cash` dashboard |
-| Serves transactional utility | Volatility damping for user fee predictability, not investor returns |
-| No price guarantee promise | Marketing language explicitly: "we damp extremes, we don't peg" |
-| Stability Reserve is locked | Cannot be drained as profit; serves stability function |
-| Multisig can only pause | Cannot redirect or skim |
+| Property                     | How POMM achieves it                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------- |
+| Algorithmic, no discretion   | Smart contract code — Pyth oracle in, action out, no human can override direction |
+| On-chain transparent         | Every intervention public on Solana explorer + `pomm.ping.cash` dashboard         |
+| Serves transactional utility | Volatility damping for user fee predictability, not investor returns              |
+| No price guarantee promise   | Marketing language explicitly: "we damp extremes, we don't peg"                   |
+| Stability Reserve is locked  | Cannot be drained as profit; serves stability function                            |
+| Multisig can only pause      | Cannot redirect or skim                                                           |
 
 ## Consequences
 
 **Good:**
+
 - User price stability — Filipino aunties won't get rugged at $0.01 or FOMOd at $5
 - Continuous buy floor from treasury-yield buybacks (Layer 3 of deflation stack)
 - Spread revenue line scales with $PING velocity (5th revenue line alongside treasury yield, FX, cash-out, B2B)
 - POMM-acquired Stability Reserve USDC itself earns yield → compounding revenue
 
 **Bad / trade-offs:**
+
 - Stability Reserve must be funded sufficiently to absorb attack volumes — Year 1 it's small (~$4K), grows annually. Mitigation: capital injection from Foundation Treasury (Squads multisig) if attacked
 - 0.5%/day intervention cap could be exceeded by determined attackers — they can technically push price beyond band briefly. Mitigation: 24h cap of 5% limits how much we can be drained
 - Pyth oracle dependency — if Pyth is compromised, POMM mis-fires. Mitigation: secondary oracle (Switchboard) cross-check before acting

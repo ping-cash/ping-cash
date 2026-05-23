@@ -30,9 +30,12 @@ const TIER_THRESHOLDS: Array<{ tier: Tier; min: number }> = [
 export function computeTier(
   pingPointsFreeBalance: DecimalLike | number,
   welcomeLocked: DecimalLike | number,
-  welcomeUnlocked: DecimalLike | number,
+  welcomeUnlocked: DecimalLike | number
 ): Tier {
-  const total = toNumber(pingPointsFreeBalance) + toNumber(welcomeLocked) + toNumber(welcomeUnlocked);
+  const total =
+    toNumber(pingPointsFreeBalance) +
+    toNumber(welcomeLocked) +
+    toNumber(welcomeUnlocked);
   for (const { tier, min } of TIER_THRESHOLDS) {
     if (total >= min) return tier;
   }
@@ -73,7 +76,7 @@ export const PAY_IN_PING_FURTHER_DISCOUNT = 0.75;
 export function computeFinalMarkup(
   fullMarkup: number,
   tier: Tier,
-  payInPing: boolean,
+  payInPing: boolean
 ): number {
   const tierDiscount = discountForTier(tier);
   let markup = fullMarkup * (1 - tierDiscount);

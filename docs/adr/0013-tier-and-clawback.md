@@ -13,6 +13,7 @@ The `$PING` tier system (Bronze / Silver / Gold / Platinum) drives fee discounts
 4. **Be on-chain enforceable** — no off-chain database tricks
 
 Two extremes don't work:
+
 - **30-day TWA before tier applies** → punishes honest users; they'd have to wait a month for benefits
 - **Instant tier with no clawback** → trivially gamed; cheaters extract free discounts
 
@@ -29,12 +30,12 @@ TIER RECONCILIATION: At each sell, compute "fair tier" over last 365 days,
 
 ## Tier Thresholds (recap from ADR 0008)
 
-| Tier | Min held + locked $PING (instant snapshot) | Platform-markup discount |
-|---|---|---|
-| **Bronze** | 0 | 0% |
-| **Silver** | ≥ 1,000 | 50% off |
-| **Gold** | ≥ 10,000 | 75% off |
-| **Platinum** | ≥ 100,000 | 90% off (capped at provider cost) |
+| Tier         | Min held + locked $PING (instant snapshot) | Platform-markup discount          |
+| ------------ | ------------------------------------------ | --------------------------------- |
+| **Bronze**   | 0                                          | 0%                                |
+| **Silver**   | ≥ 1,000                                    | 50% off                           |
+| **Gold**     | ≥ 10,000                                   | 75% off                           |
+| **Platinum** | ≥ 100,000                                  | 90% off (capped at provider cost) |
 
 Tier basis = (free $PING balance) + (welcome stake locked balance) + (vault $PING distributions, vesting or not)
 
@@ -64,20 +65,20 @@ When user attempts to sell $PING (via internal swap):
 
   1. Calculate post-sale tier basis:
        basis_after_sale = current_balance - sale_amount + locked_balance
-  
+
   2. For each fee payment in last 365 days:
        a. Determine time-weighted average tier basis from fee_timestamp to NOW
           (after the proposed sale)
        b. Determine fair_tier given that TWA basis
        c. Calculate fair_discount given fair_tier
        d. unfair_benefit_this_fee = discount_taken - fair_discount
-  
+
   3. Sum all unfair_benefit_this_fee → clawback_amount
-  
+
   4. clawback_amount_in_ping = clawback_amount_usdc / current_ping_price
-  
+
   5. Deduct clawback_amount_in_ping from sale proceeds → BURN
-  
+
   6. User receives sale - clawback - spread fee
 ```
 
@@ -90,22 +91,22 @@ Day 0:    Buys 1,500 PING. Welcome stake gives another 1,200 = 2,700 PING total.
 Day 30:   Transfers $400, pays $1.30 fee (Silver tier × pay-in-PING).
           Records: discount_taken = $0.70 (vs Bronze full fee)
 Day 60:   Sells 1,500 PING (keeping welcome stake's 1,200 PING).
-          
+
 Clawback calc:
   post_sale_basis = 0 + 1,200 = 1,200 → still Silver
-  
-  Fee on Day 30: 
+
+  Fee on Day 30:
     TWA basis from Day 30 → Day 60: held 2,700 for 30 days, then drops to 1,200
     But this is BEFORE the sale; Day 30 to Day 60 she held 2,700
     AFTER the sale: she'll hold 1,200 going forward
     Question: what tier basis did she "earn" for the fee taken on Day 30?
-    
+
     Time held at ≥2,700 basis (Silver-Gold range): 30 days (Day 30 → Day 60)
     Time will hold at 1,200 (Silver) going forward: indefinite
-    
+
     Fair tier = Silver (she's still Silver, she got Silver discount)
     Unfair benefit: $0 → no clawback
-  
+
 She receives full sale proceeds. No friction.
 ```
 
@@ -113,35 +114,35 @@ She receives full sale proceeds. No friction.
 
 ```
 Day 0, 10:00:  Buys 100,000 PING. Tier: Platinum.
-Day 0, 10:05:  Sends $5,000 to PH. 
+Day 0, 10:05:  Sends $5,000 to PH.
                Full fee = $25, paid at Platinum + pay-in-PING = $2.50
                Discount taken = $22.50
 Day 0, 10:10:  Tries to sell 100,000 PING.
 
 Clawback calc:
   post_sale_basis = 0 + (any welcome stake she has, say 1,200) = 1,200 → Silver tier
-  
+
   Fee on Day 0 at 10:05:
     Held 100K PING for 5 minutes total (from 10:00 to 10:05)
     Will hold 1,200 forever after
     TWA basis weighted heavily toward the long-term hold = Silver (not Platinum)
-    
+
     Fair tier = Silver
     Fair discount on $25 fee at Silver + pay-in-PING = $25 × 0.50 × 0.25 = $3.125
     Wait, this gives a fair fee of $25 - $3.125 = $21.875
-    
+
     Hmm, let me restate: actual fee paid was $2.50 (at Platinum × pay-in-PING)
-    Fair fee (at Silver × pay-in-PING) = $25 × 0.50 × 0.25 (discount on the markup) 
-    
+    Fair fee (at Silver × pay-in-PING) = $25 × 0.50 × 0.25 (discount on the markup)
+
     Actually, given the discount structure:
       Standard fee: $25
       Silver tier discount: 50% → $12.50
       Pay-in-PING (75% off the discounted): $12.50 × 0.25 = $3.125
-    
+
     Fair discount = $25 - $3.125 = $21.875
     Actual discount = $25 - $2.50 = $22.50
     Unfair benefit = $22.50 - $21.875 = $0.625
-    
+
   Wait, that's barely any clawback. Let me reconsider.
 ```
 
@@ -279,6 +280,7 @@ Transfers between Ping-recognized wallets trigger NO clawback (the basis just mo
 ## Consequences
 
 **Good:**
+
 - Honest users get instant benefits (no waiting period)
 - Cheaters cannot profit from flash gaming (math-enforced)
 - Every clawback adds to deflation (burned $PING)
@@ -286,6 +288,7 @@ Transfers between Ping-recognized wallets trigger NO clawback (the basis just mo
 - On-chain enforced (no off-chain logic to dispute)
 
 **Bad / trade-offs:**
+
 - Adds computational cost to every sell (clawback calc over 365 days of fees)
   - Mitigation: amortized via incremental cumulative discount tracking
 - Complex to communicate — some users won't understand. Mitigation: UX makes it transparent + customer support runbook

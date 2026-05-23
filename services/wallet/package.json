@@ -2,7 +2,7 @@
   "name": "@ping/wallet-service",
   "version": "0.1.0",
   "private": true,
-  "description": "Wallet indexer \u2014 Privy MPC + external wallets, vUSDC + $PING balance, Earn Vault interaction",
+  "description": "Wallet indexer — Privy MPC + external wallets, vUSDC + $PING balance, Earn Vault interaction",
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsup",

@@ -29,12 +29,17 @@ function getClient() {
   return _client;
 }
 
-export async function sendClaimOtp(phone: string): Promise<{ sid: string; status: string }> {
+export async function sendClaimOtp(
+  phone: string
+): Promise<{ sid: string; status: string }> {
   const client = getClient();
   const verifyServiceSid = config.TWILIO_VERIFY_SID;
 
   if (!client || !verifyServiceSid) {
-    logger.info({ phone }, '[STUB MODE] Would send claim OTP via Twilio Verify');
+    logger.info(
+      { phone },
+      '[STUB MODE] Would send claim OTP via Twilio Verify'
+    );
     return { sid: `stub_${Date.now()}`, status: 'pending' };
   }
 
@@ -44,17 +49,26 @@ export async function sendClaimOtp(phone: string): Promise<{ sid: string; status
       .verifications.create({ to: phone, channel: 'sms' });
     return { sid: verification.sid, status: verification.status };
   } catch (err) {
-    logger.error({ err, phone: maskPhone(phone) }, 'Twilio sendClaimOtp failed');
+    logger.error(
+      { err, phone: maskPhone(phone) },
+      'Twilio sendClaimOtp failed'
+    );
     throw ClaimErrors.TwilioFailure({ message: (err as Error).message });
   }
 }
 
-export async function verifyClaimOtp(phone: string, code: string): Promise<boolean> {
+export async function verifyClaimOtp(
+  phone: string,
+  code: string
+): Promise<boolean> {
   const client = getClient();
   const verifyServiceSid = config.TWILIO_VERIFY_SID;
 
   if (!client || !verifyServiceSid) {
-    logger.info({ phone, code }, '[STUB MODE] Would verify claim OTP via Twilio Verify');
+    logger.info(
+      { phone, code },
+      '[STUB MODE] Would verify claim OTP via Twilio Verify'
+    );
     return code === '123456';
   }
 
@@ -64,7 +78,10 @@ export async function verifyClaimOtp(phone: string, code: string): Promise<boole
       .verificationChecks.create({ to: phone, code });
     return check.status === 'approved';
   } catch (err) {
-    logger.error({ err, phone: maskPhone(phone) }, 'Twilio verifyClaimOtp failed');
+    logger.error(
+      { err, phone: maskPhone(phone) },
+      'Twilio verifyClaimOtp failed'
+    );
     throw ClaimErrors.TwilioFailure({ message: (err as Error).message });
   }
 }

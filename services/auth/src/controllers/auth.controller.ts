@@ -33,7 +33,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       const body = InitBody.parse(request.body);
       const result = await authService.init(body.phone, request.ip);
       return reply.status(200).send(result);
-    },
+    }
   );
 
   // POST /auth/verify — Verify OTP, get JWT pair + wallet
@@ -53,9 +53,13 @@ export async function authRoutes(fastify: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const body = VerifyBody.parse(request.body);
-      const result = await authService.verify(body.sessionId, body.code, fastify);
+      const result = await authService.verify(
+        body.sessionId,
+        body.code,
+        fastify
+      );
       return reply.status(200).send(result);
-    },
+    }
   );
 
   // POST /auth/refresh — Refresh access token via refresh token
@@ -65,19 +69,29 @@ export async function authRoutes(fastify: FastifyInstance) {
       const authHeader = request.headers.authorization;
       if (!authHeader?.startsWith('Bearer ')) {
         return reply.status(401).send({
-          error: { code: 'UNAUTHORIZED', message: 'Bearer refresh token required' },
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Bearer refresh token required',
+          },
         });
       }
       const token = authHeader.slice(7);
-      const payload = fastify.jwt.verify(token) as { sub: string; jti: string; type?: string };
+      const payload = fastify.jwt.verify(token) as {
+        sub: string;
+        jti: string;
+        type?: string;
+      };
       if (payload.type !== 'refresh') {
         return reply.status(401).send({
-          error: { code: 'INVALID_REFRESH_TOKEN', message: 'Not a refresh token' },
+          error: {
+            code: 'INVALID_REFRESH_TOKEN',
+            message: 'Not a refresh token',
+          },
         });
       }
       const result = await authService.refresh(payload, fastify);
       return reply.status(200).send(result);
-    },
+    }
   );
 
   // POST /auth/logout — Revoke refresh token
@@ -87,13 +101,16 @@ export async function authRoutes(fastify: FastifyInstance) {
       const authHeader = request.headers.authorization;
       if (!authHeader?.startsWith('Bearer ')) {
         return reply.status(401).send({
-          error: { code: 'UNAUTHORIZED', message: 'Bearer refresh token required' },
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Bearer refresh token required',
+          },
         });
       }
       const token = authHeader.slice(7);
       const payload = fastify.jwt.verify(token) as { jti: string };
       await authService.logout(payload.jti);
       return reply.status(204).send();
-    },
+    }
   );
 }

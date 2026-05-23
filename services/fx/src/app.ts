@@ -9,7 +9,6 @@ import { errorHandler } from './utils/errors';
 import { logger } from './utils/logger';
 
 export async function buildApp() {
-  
   const app = Fastify({
     logger: logger as never,
     requestIdHeader: 'x-request-id',
@@ -22,8 +21,11 @@ export async function buildApp() {
   await app.register(rateLimit, { max: 300, timeWindow: '1 minute' });
 
   app.setErrorHandler(errorHandler as never);
-  app.addHook('onRequest', async (request) => {
-    request.log.info({ method: request.method, url: request.url }, 'Incoming request');
+  app.addHook('onRequest', async request => {
+    request.log.info(
+      { method: request.method, url: request.url },
+      'Incoming request'
+    );
   });
 
   await app.register(healthRoutes);

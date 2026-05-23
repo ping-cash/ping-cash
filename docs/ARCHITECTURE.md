@@ -5,6 +5,7 @@
 **AUTHORITY:** 📐 PERMANENT. If something contradicts this, the work is wrong.
 
 This document was consolidated on 2026-05-21 from the following predecessor files (now retired):
+
 - `docs/ARCHITECTURE.md` (original Phase 1 technical architecture)
 - `docs/NFR.md` (non-functional requirements — design patterns, infra, microservices)
 - `docs/API.md` (REST API specification)
@@ -104,15 +105,15 @@ flowchart TB
 
 We follow the [12-Factor methodology](https://12factor.net) plus our own additions:
 
-| Principle | Implementation |
-|---|---|
-| **API-First** | OpenAPI specs before implementation |
-| **Event-First** | Every state change emits an event |
-| **Observability-First** | Metrics, logs, traces from day one |
-| **Security-First** | Zero-trust, encrypt everything |
-| **Mobile-First** | UX optimized for 4G networks |
-| **Stateless Services** | All state in Redis/DB; pods are disposable |
-| **GitOps** | Flux/ArgoCD, immutable images, declarative config |
+| Principle               | Implementation                                    |
+| ----------------------- | ------------------------------------------------- |
+| **API-First**           | OpenAPI specs before implementation               |
+| **Event-First**         | Every state change emits an event                 |
+| **Observability-First** | Metrics, logs, traces from day one                |
+| **Security-First**      | Zero-trust, encrypt everything                    |
+| **Mobile-First**        | UX optimized for 4G networks                      |
+| **Stateless Services**  | All state in Redis/DB; pods are disposable        |
+| **GitOps**              | Flux/ArgoCD, immutable images, declarative config |
 
 > **Source:** previously docs/NFR.md § "Architecture Principles" (merged here on 2026-05-21).
 
@@ -169,24 +170,24 @@ flowchart TB
 
 ## Service Catalog
 
-| Service | Bounded Context | Responsibility | Database | Event Topic |
-|---|---|---|---|---|
-| `auth-service` | Identity | Phone verification, JWT tokens, Privy wallet bind | Redis | `auth.events` |
-| `user-service` | Identity | User profiles, contacts, Ping Points balance (Phase 1) | MongoDB | `user.events` |
-| `kyc-service` | Identity | Tier 1/2/3 via shared `dynolabs-io/kyc` SDK (per ADR 0011) | PostgreSQL | `kyc.events` |
-| `transfer-service` | Payment | Transfer orchestration, fee calc with tier discount | PostgreSQL | `transfer.events` |
-| `wallet-service` | Payment | Balance indexer, vault interaction, Privy MPC + external | MongoDB | `wallet.events` |
-| `fx-service` | Payment | Rates, quotes, **0.4% cost-covering spread (per ADR 0016)** | Redis | `fx.events` |
-| `ledger-service` | Payment | Double-entry accounting, audit trail | PostgreSQL | `ledger.events` |
-| `claim-service` | Delivery | Claim links, OTP verification, recipient flow | MongoDB | `claim.events` |
-| `offramp-service` | Delivery | Cash-out orchestration via TransFi/Wise/Cebuana | PostgreSQL | `offramp.events` |
-| `notify-service` | Delivery | WhatsApp, SMS, Push | MongoDB | `notify.events` |
-| `gamification-service` | Identity | Welcome stake milestone tracking, conditional unlocks | PostgreSQL | `gamification.events` |
-| `earn-vault-svc` | Payment | Non-custodial vault — see ADR 0012; Phase 1 uses USDC; Phase 2 distributes $PING | Solana state + indexer | `vault.events` |
-| `token-svc` | Payment | $PING price oracle reader, tier basis calculator, clawback computer | PostgreSQL | `token.events` |
-| `swap-svc` | Payment | Internal swap with 0.3% spread, Jupiter hedging — see ADR 0009 | Solana state | `swap.events` |
-| `pomm-svc` | Payment | Protocol-Owned Market Making algorithmic intervention | Solana state | `pomm.events` |
-| `compliance-svc` | Delivery | Sanctions screening (Chainalysis), AML monitoring | PostgreSQL | `compliance.events` |
+| Service                | Bounded Context | Responsibility                                                                   | Database               | Event Topic           |
+| ---------------------- | --------------- | -------------------------------------------------------------------------------- | ---------------------- | --------------------- |
+| `auth-service`         | Identity        | Phone verification, JWT tokens, Privy wallet bind                                | Redis                  | `auth.events`         |
+| `user-service`         | Identity        | User profiles, contacts, Ping Points balance (Phase 1)                           | MongoDB                | `user.events`         |
+| `kyc-service`          | Identity        | Tier 1/2/3 via shared `dynolabs-io/kyc` SDK (per ADR 0011)                       | PostgreSQL             | `kyc.events`          |
+| `transfer-service`     | Payment         | Transfer orchestration, fee calc with tier discount                              | PostgreSQL             | `transfer.events`     |
+| `wallet-service`       | Payment         | Balance indexer, vault interaction, Privy MPC + external                         | MongoDB                | `wallet.events`       |
+| `fx-service`           | Payment         | Rates, quotes, **0.4% cost-covering spread (per ADR 0016)**                      | Redis                  | `fx.events`           |
+| `ledger-service`       | Payment         | Double-entry accounting, audit trail                                             | PostgreSQL             | `ledger.events`       |
+| `claim-service`        | Delivery        | Claim links, OTP verification, recipient flow                                    | MongoDB                | `claim.events`        |
+| `offramp-service`      | Delivery        | Cash-out orchestration via TransFi/Wise/Cebuana                                  | PostgreSQL             | `offramp.events`      |
+| `notify-service`       | Delivery        | WhatsApp, SMS, Push                                                              | MongoDB                | `notify.events`       |
+| `gamification-service` | Identity        | Welcome stake milestone tracking, conditional unlocks                            | PostgreSQL             | `gamification.events` |
+| `earn-vault-svc`       | Payment         | Non-custodial vault — see ADR 0012; Phase 1 uses USDC; Phase 2 distributes $PING | Solana state + indexer | `vault.events`        |
+| `token-svc`            | Payment         | $PING price oracle reader, tier basis calculator, clawback computer              | PostgreSQL             | `token.events`        |
+| `swap-svc`             | Payment         | Internal swap with 0.3% spread, Jupiter hedging — see ADR 0009                   | Solana state           | `swap.events`         |
+| `pomm-svc`             | Payment         | Protocol-Owned Market Making algorithmic intervention                            | Solana state           | `pomm.events`         |
+| `compliance-svc`       | Delivery        | Sanctions screening (Chainalysis), AML monitoring                                | PostgreSQL             | `compliance.events`   |
 
 ### Auth Service
 
@@ -262,29 +263,29 @@ flowchart LR
 
 ### Notification Service Channels
 
-| Channel | Primary Use | Fallback |
-|---|---|---|
-| WhatsApp | Claim notifications | SMS |
-| SMS | OTP codes | — |
-| Push | App users | SMS |
+| Channel  | Primary Use         | Fallback |
+| -------- | ------------------- | -------- |
+| WhatsApp | Claim notifications | SMS      |
+| SMS      | OTP codes           | —        |
+| Push     | App users           | SMS      |
 
 **Templates:**
 
-| Template ID | Example |
-|---|---|
-| `TRANSFER_RECEIVED` | "You received $100 from Mom" |
-| `CLAIM_REMINDER` | "Don't forget to claim your $100" |
-| `CASHOUT_COMPLETE` | "₱5,580 sent to your GCash" |
+| Template ID         | Example                           |
+| ------------------- | --------------------------------- |
+| `TRANSFER_RECEIVED` | "You received $100 from Mom"      |
+| `CLAIM_REMINDER`    | "Don't forget to claim your $100" |
+| `CASHOUT_COMPLETE`  | "₱5,580 sent to your GCash"       |
 
 ### Service Communication Patterns
 
-| Pattern | Use Case | Implementation |
-|---|---|---|
-| Sync Query | Get user balance | gRPC with protobuf |
-| Sync Command | Validate phone | REST with circuit breaker |
-| Async Event | Transfer created | Kafka topic |
-| Async Command | Send notification | Kafka with reply topic |
-| Saga | Transfer + Claim + Offramp | Choreography via events |
+| Pattern       | Use Case                   | Implementation            |
+| ------------- | -------------------------- | ------------------------- |
+| Sync Query    | Get user balance           | gRPC with protobuf        |
+| Sync Command  | Validate phone             | REST with circuit breaker |
+| Async Event   | Transfer created           | Kafka topic               |
+| Async Command | Send notification          | Kafka with reply topic    |
+| Saga          | Transfer + Claim + Offramp | Choreography via events   |
 
 ---
 
@@ -296,23 +297,23 @@ flowchart LR
 
 `$PING` is a Solana SPL Token-2022 utility token issued by the **Ping Foundation (Cayman)**.
 
-| Parameter | Value |
-|---|---|
-| Symbol | $PING |
-| Supply cap | 1,000,000,000 (1B) |
-| Decimals | 9 |
+| Parameter    | Value                                                                                                                |
+| ------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Symbol       | $PING                                                                                                                |
+| Supply cap   | 1,000,000,000 (1B)                                                                                                   |
+| Decimals     | 9                                                                                                                    |
 | Distribution | 40% community (activity-earned), 15% B2B grants, 15% team, 10% treasury, 10% investors, 5% Foundation reserve, 5% LP |
-| Emission | Halving every 2 years; zero after Year 5 |
-| Burn | 5-layer deflation stack (per ADR 0008 § Deflation Stack) |
+| Emission     | Halving every 2 years; zero after Year 5                                                                             |
+| Burn         | 5-layer deflation stack (per ADR 0008 § Deflation Stack)                                                             |
 
 ### Tier system
 
-| Tier | Held + locked $PING | Discount on platform markup |
-|---|---|---|
-| Bronze | 0 | 0% |
-| Silver | ≥ 1,000 | 50% |
-| Gold | ≥ 10,000 | 75% |
-| Platinum | ≥ 100,000 | 90% (capped at provider cost) |
+| Tier     | Held + locked $PING | Discount on platform markup   |
+| -------- | ------------------- | ----------------------------- |
+| Bronze   | 0                   | 0%                            |
+| Silver   | ≥ 1,000             | 50%                           |
+| Gold     | ≥ 10,000            | 75%                           |
+| Platinum | ≥ 100,000           | 90% (capped at provider cost) |
 
 - Tier is **instant** on buy
 - **Pay-in-PING discount** stacks: 75% off the (already-discounted) markup
@@ -374,15 +375,15 @@ Spread captured by Ping: 0.6% round-trip on speculator volume.
 
 Per [ADR 0015](adr/0015-phased-launch-ping-points-to-token.md):
 
-| Capability | Phase 1 (Months 0-6) | Phase 2 (Months 4-12) |
-|---|---|---|
-| Platform features (transfers, cash-out, KYC) | ✅ Live | ✅ Live |
-| Earn Vault auto-stake | ✅ USDC only | ✅ USDC + $PING yield |
-| Welcome stake | ✅ Ping Points (database) | ✅ $PING (on-chain Streamflow) |
-| Tier system | ✅ DB-tracked points | ✅ On-chain $PING |
-| Fee discount in token | ✅ Ping Points | ✅ $PING burned |
-| $PING tradable / withdrawable | ❌ | ✅ |
-| 1:1 conversion at TGE | n/a | All Ping Points → $PING automatically |
+| Capability                                   | Phase 1 (Months 0-6)      | Phase 2 (Months 4-12)                 |
+| -------------------------------------------- | ------------------------- | ------------------------------------- |
+| Platform features (transfers, cash-out, KYC) | ✅ Live                   | ✅ Live                               |
+| Earn Vault auto-stake                        | ✅ USDC only              | ✅ USDC + $PING yield                 |
+| Welcome stake                                | ✅ Ping Points (database) | ✅ $PING (on-chain Streamflow)        |
+| Tier system                                  | ✅ DB-tracked points      | ✅ On-chain $PING                     |
+| Fee discount in token                        | ✅ Ping Points            | ✅ $PING burned                       |
+| $PING tradable / withdrawable                | ❌                        | ✅                                    |
+| 1:1 conversion at TGE                        | n/a                       | All Ping Points → $PING automatically |
 
 Phase 1 starts day-of-platform-launch. Phase 2 begins when Cayman Foundation incorporated + smart contracts audited.
 
@@ -520,6 +521,7 @@ stateDiagram-v2
 ```
 
 **Configuration:**
+
 - Failure threshold: 5 failures in 30 seconds
 - Open duration: 30 seconds
 - Half-open max requests: 3
@@ -603,14 +605,14 @@ flowchart TB
 
 **Why Istio over Kong/Traefik:**
 
-| Feature | Kong/Traefik | Istio |
-|---|---|---|
-| Service mesh | Separate add-on | Native |
-| mTLS | Plugin-based | Built-in, automatic |
-| Traffic mgmt | Basic routing | Canary, mirror, fault injection |
-| Observability | Requires plugins | Kiali / Jaeger / Prometheus built-in |
-| Cost | Enterprise features paid | Fully open source |
-| K8s integration | External resources | Native CRDs |
+| Feature         | Kong/Traefik             | Istio                                |
+| --------------- | ------------------------ | ------------------------------------ |
+| Service mesh    | Separate add-on          | Native                               |
+| mTLS            | Plugin-based             | Built-in, automatic                  |
+| Traffic mgmt    | Basic routing            | Canary, mirror, fault injection      |
+| Observability   | Requires plugins         | Kiali / Jaeger / Prometheus built-in |
+| Cost            | Enterprise features paid | Fully open source                    |
+| K8s integration | External resources       | Native CRDs                          |
 
 **Example VirtualService:**
 
@@ -659,17 +661,17 @@ flowchart TB
     style AP fill:#10b981,color:#fff
 ```
 
-| Service | Database | CAP | Rationale |
-|---|---|---|---|
-| `ledger-service` | PostgreSQL | CP | Financial data MUST be consistent, ACID required |
-| `transfer-service` | PostgreSQL | CP | Transaction integrity critical |
-| `kyc-service` | PostgreSQL | CP | Compliance data, audit requirements |
-| `user-service` | MongoDB | AP | Profile reads > writes, eventual consistency OK |
-| `wallet-service` | MongoDB | AP | Balance derived from events, fast reads |
-| `claim-service` | MongoDB | AP | High read volume for claim lookups |
-| `notify-service` | MongoDB | AP | Best-effort delivery, retries handle failures |
-| `auth-service` | Redis | AP | Session data, TTL-based, fast |
-| `fx-service` | Redis | AP | Cache, rates update frequently |
+| Service            | Database   | CAP | Rationale                                        |
+| ------------------ | ---------- | --- | ------------------------------------------------ |
+| `ledger-service`   | PostgreSQL | CP  | Financial data MUST be consistent, ACID required |
+| `transfer-service` | PostgreSQL | CP  | Transaction integrity critical                   |
+| `kyc-service`      | PostgreSQL | CP  | Compliance data, audit requirements              |
+| `user-service`     | MongoDB    | AP  | Profile reads > writes, eventual consistency OK  |
+| `wallet-service`   | MongoDB    | AP  | Balance derived from events, fast reads          |
+| `claim-service`    | MongoDB    | AP  | High read volume for claim lookups               |
+| `notify-service`   | MongoDB    | AP  | Best-effort delivery, retries handle failures    |
+| `auth-service`     | Redis      | AP  | Session data, TTL-based, fast                    |
+| `fx-service`       | Redis      | AP  | Cache, rates update frequently                   |
 
 ### PostgreSQL — Entity Relationships
 
@@ -1015,25 +1017,25 @@ db.claims.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });  // TTL
 
 ### Redis Data Structures
 
-| Key | Type | TTL | Purpose |
-|---|---|---|---|
-| `session:{session_id}` | Hash | 24h | Active sessions |
-| `otp:{phone_hash}` | Hash | 10m | OTP codes + attempts |
-| `ratelimit:{user_id}:{endpoint}` | Sorted Set | 1h | Rate limiting via sliding window |
-| `fx:rates:USD` | Hash | 60s | FX rates cache |
-| `claim:{code}` | String (JSON) | 7d | Fast claim code validation |
-| `balance:{user_id}` | String | 5m | User balance cache (invalidated on wallet event) |
+| Key                              | Type          | TTL | Purpose                                          |
+| -------------------------------- | ------------- | --- | ------------------------------------------------ |
+| `session:{session_id}`           | Hash          | 24h | Active sessions                                  |
+| `otp:{phone_hash}`               | Hash          | 10m | OTP codes + attempts                             |
+| `ratelimit:{user_id}:{endpoint}` | Sorted Set    | 1h  | Rate limiting via sliding window                 |
+| `fx:rates:USD`                   | Hash          | 60s | FX rates cache                                   |
+| `claim:{code}`                   | String (JSON) | 7d  | Fast claim code validation                       |
+| `balance:{user_id}`              | String        | 5m  | User balance cache (invalidated on wallet event) |
 
 ### Backup & Recovery
 
-| Database | Type | Frequency | Retention | Method |
-|---|---|---|---|---|
-| PostgreSQL | Full backup | Daily | 30 days | `pg_dump` |
-| PostgreSQL | WAL archiving | Continuous | 7 days | `pg_basebackup` |
-| MongoDB | Full backup | Daily | 30 days | `mongodump` |
-| MongoDB | Oplog backup | Continuous | 7 days | Oplog tailing |
-| Redis | RDB snapshot | Hourly | 24 hours | `BGSAVE` |
-| Redis | AOF | Continuous | 24 hours | `appendonly` |
+| Database   | Type          | Frequency  | Retention | Method          |
+| ---------- | ------------- | ---------- | --------- | --------------- |
+| PostgreSQL | Full backup   | Daily      | 30 days   | `pg_dump`       |
+| PostgreSQL | WAL archiving | Continuous | 7 days    | `pg_basebackup` |
+| MongoDB    | Full backup   | Daily      | 30 days   | `mongodump`     |
+| MongoDB    | Oplog backup  | Continuous | 7 days    | Oplog tailing   |
+| Redis      | RDB snapshot  | Hourly     | 24 hours  | `BGSAVE`        |
+| Redis      | AOF           | Continuous | 24 hours  | `appendonly`    |
 
 ---
 
@@ -1209,12 +1211,12 @@ flowchart TD
 
 ### Fee Comparison
 
-| Route | Fee | Speed | Recipient Need |
-|---|---|---|---|
-| In-Network (USDC→USDC) | **FREE** | Instant | Ping app |
-| PHPC Direct (PH) | 0.1% | Instant | Coins.ph account |
-| USDC → Coins.ph | 0.5% | Instant | Coins.ph account |
-| Claim link → TransFi → GCash | 1% | Instant | Just a phone |
+| Route                        | Fee      | Speed   | Recipient Need   |
+| ---------------------------- | -------- | ------- | ---------------- |
+| In-Network (USDC→USDC)       | **FREE** | Instant | Ping app         |
+| PHPC Direct (PH)             | 0.1%     | Instant | Coins.ph account |
+| USDC → Coins.ph              | 0.5%     | Instant | Coins.ph account |
+| Claim link → TransFi → GCash | 1%       | Instant | Just a phone     |
 
 ---
 
@@ -1226,11 +1228,11 @@ Ping API follows REST conventions with JSON payloads. All endpoints are versione
 
 ### Base URLs
 
-| Environment | URL |
-|---|---|
-| Production | `https://api.ping.cash/v1` |
-| Staging | `https://api.staging.ping.cash/v1` |
-| Development | `http://localhost:3000/v1` |
+| Environment | URL                                |
+| ----------- | ---------------------------------- |
+| Production  | `https://api.ping.cash/v1`         |
+| Staging     | `https://api.staging.ping.cash/v1` |
+| Development | `http://localhost:3000/v1`         |
 
 ### Authentication
 
@@ -1242,11 +1244,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 
 ```typescript
 interface JWTPayload {
-  sub: string;     // User ID
-  phone: string;   // Phone number (hashed)
-  tier: number;    // KYC tier (0-3)
+  sub: string; // User ID
+  phone: string; // Phone number (hashed)
+  tier: number; // KYC tier (0-3)
   iat: number;
-  exp: number;     // 15 min TTL on access tokens
+  exp: number; // 15 min TTL on access tokens
   jti: string;
 }
 ```
@@ -1271,31 +1273,32 @@ Authorization: Bearer {refresh_token}
 }
 ```
 
-| Code | HTTP | Description |
-|---|---|---|
-| `UNAUTHORIZED` | 401 | Invalid or expired token |
-| `FORBIDDEN` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `VALIDATION_ERROR` | 400 | Invalid request parameters |
-| `RATE_LIMITED` | 429 | Too many requests |
-| `INSUFFICIENT_BALANCE` | 400 | Not enough funds |
-| `KYC_REQUIRED` | 403 | Higher KYC tier needed |
-| `TRANSFER_LIMIT_EXCEEDED` | 400 | Daily/monthly limit reached |
-| `CLAIM_EXPIRED` | 400 | Claim link has expired |
-| `CLAIM_ALREADY_USED` | 400 | Claim already processed |
-| `INTERNAL_ERROR` | 500 | Server error |
+| Code                      | HTTP | Description                 |
+| ------------------------- | ---- | --------------------------- |
+| `UNAUTHORIZED`            | 401  | Invalid or expired token    |
+| `FORBIDDEN`               | 403  | Insufficient permissions    |
+| `NOT_FOUND`               | 404  | Resource not found          |
+| `VALIDATION_ERROR`        | 400  | Invalid request parameters  |
+| `RATE_LIMITED`            | 429  | Too many requests           |
+| `INSUFFICIENT_BALANCE`    | 400  | Not enough funds            |
+| `KYC_REQUIRED`            | 403  | Higher KYC tier needed      |
+| `TRANSFER_LIMIT_EXCEEDED` | 400  | Daily/monthly limit reached |
+| `CLAIM_EXPIRED`           | 400  | Claim link has expired      |
+| `CLAIM_ALREADY_USED`      | 400  | Claim already processed     |
+| `INTERNAL_ERROR`          | 500  | Server error                |
 
 ### Rate Limits
 
-| Endpoint | Limit | Window |
-|---|---|---|
-| `POST /auth/init` | 5 | 10 min |
-| `POST /auth/verify` | 10 | 10 min |
-| `POST /transfers` | 20 | 1 hour |
-| `POST /claims/:code/verify` | 5 | 10 min |
-| General | 100 | 1 min |
+| Endpoint                    | Limit | Window |
+| --------------------------- | ----- | ------ |
+| `POST /auth/init`           | 5     | 10 min |
+| `POST /auth/verify`         | 10    | 10 min |
+| `POST /transfers`           | 20    | 1 hour |
+| `POST /claims/:code/verify` | 5     | 10 min |
+| General                     | 100   | 1 min  |
 
 Response includes:
+
 ```http
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
@@ -1304,41 +1307,43 @@ X-RateLimit-Reset: 1642000000
 
 ### Endpoint Summary
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/auth/init` | Public | Start phone verification |
-| POST | `/auth/verify` | Public | Verify OTP, get JWT |
-| POST | `/auth/refresh` | Refresh JWT | Refresh access token |
-| POST | `/auth/logout` | Required | Invalidate session |
-| GET | `/users/me` | Required | Get current user |
-| PATCH | `/users/me` | Required | Update profile |
-| GET | `/users/me/contacts` | Required | List contacts |
-| POST | `/users/me/contacts/sync` | Required | Sync phone contacts |
-| POST | `/transfers` | Required | Create new transfer |
-| GET | `/transfers` | Required | List user's transfers |
-| GET | `/transfers/:id` | Required | Get transfer details |
-| POST | `/transfers/:id/cancel` | Required | Cancel pending transfer |
-| GET | `/claims/:code` | Public | Get claim details |
-| POST | `/claims/:code/otp` | Public | Request OTP for claim |
-| POST | `/claims/:code/verify` | Public | Verify claim ownership |
-| POST | `/claims/:code/cashout` | Public + verify token | Execute cash-out |
-| GET | `/claims/:code/status` | Public | Poll cash-out status |
-| GET | `/wallet/balance` | Required | Get USDC balance |
-| GET | `/wallet/address` | Required | Get deposit address |
-| GET | `/wallet/transactions` | Required | Transaction history |
-| GET | `/fx/rates` | Public | Exchange rates |
-| POST | `/fx/quote` | Required | FX quote with fees |
+| Method | Endpoint                  | Auth                  | Description              |
+| ------ | ------------------------- | --------------------- | ------------------------ |
+| POST   | `/auth/init`              | Public                | Start phone verification |
+| POST   | `/auth/verify`            | Public                | Verify OTP, get JWT      |
+| POST   | `/auth/refresh`           | Refresh JWT           | Refresh access token     |
+| POST   | `/auth/logout`            | Required              | Invalidate session       |
+| GET    | `/users/me`               | Required              | Get current user         |
+| PATCH  | `/users/me`               | Required              | Update profile           |
+| GET    | `/users/me/contacts`      | Required              | List contacts            |
+| POST   | `/users/me/contacts/sync` | Required              | Sync phone contacts      |
+| POST   | `/transfers`              | Required              | Create new transfer      |
+| GET    | `/transfers`              | Required              | List user's transfers    |
+| GET    | `/transfers/:id`          | Required              | Get transfer details     |
+| POST   | `/transfers/:id/cancel`   | Required              | Cancel pending transfer  |
+| GET    | `/claims/:code`           | Public                | Get claim details        |
+| POST   | `/claims/:code/otp`       | Public                | Request OTP for claim    |
+| POST   | `/claims/:code/verify`    | Public                | Verify claim ownership   |
+| POST   | `/claims/:code/cashout`   | Public + verify token | Execute cash-out         |
+| GET    | `/claims/:code/status`    | Public                | Poll cash-out status     |
+| GET    | `/wallet/balance`         | Required              | Get USDC balance         |
+| GET    | `/wallet/address`         | Required              | Get deposit address      |
+| GET    | `/wallet/transactions`    | Required              | Transaction history      |
+| GET    | `/fx/rates`               | Public                | Exchange rates           |
+| POST   | `/fx/quote`               | Required              | FX quote with fees       |
 
 ### Key Request/Response Examples
 
 #### POST /auth/verify
 
 **Request:**
+
 ```json
 { "sessionId": "sess_abc123", "code": "123456" }
 ```
 
 **Response 200:**
+
 ```json
 {
   "user": {
@@ -1359,6 +1364,7 @@ X-RateLimit-Reset: 1642000000
 #### POST /transfers
 
 **Request:**
+
 ```json
 {
   "recipientPhone": "+639181234567",
@@ -1369,11 +1375,18 @@ X-RateLimit-Reset: 1642000000
 ```
 
 **Response 201:**
+
 ```json
 {
   "id": "txn_abc123",
   "status": "pending",
-  "amount": { "value": "100.00", "currency": "USD", "localValue": "5580.00", "localCurrency": "PHP", "fxRate": "55.80" },
+  "amount": {
+    "value": "100.00",
+    "currency": "USD",
+    "localValue": "5580.00",
+    "localCurrency": "PHP",
+    "fxRate": "55.80"
+  },
   "fees": { "platform": "0.50", "network": "0.01", "total": "0.51" },
   "claim": {
     "code": "x7Kp2mN9qL4r",
@@ -1386,6 +1399,7 @@ X-RateLimit-Reset: 1642000000
 #### POST /claims/:code/cashout
 
 **Request:**
+
 ```json
 {
   "method": "gcash",
@@ -1395,6 +1409,7 @@ X-RateLimit-Reset: 1642000000
 ```
 
 **Response 200:**
+
 ```json
 {
   "status": "processing",
@@ -1413,21 +1428,22 @@ X-RateLimit-Reset: 1642000000
 
 Verify with HMAC-SHA256 of the body using shared secret, via `X-Ping-Signature` header.
 
-| Event | Description |
-|---|---|
-| `transfer.created` | Transfer initiated |
+| Event                | Description          |
+| -------------------- | -------------------- |
+| `transfer.created`   | Transfer initiated   |
 | `transfer.confirmed` | Blockchain confirmed |
-| `transfer.claimed` | Recipient verified |
-| `transfer.completed` | Cash-out complete |
-| `transfer.failed` | Transfer failed |
-| `transfer.expired` | Claim expired |
-| `kyc.submitted` | KYC submitted |
-| `kyc.verified` | KYC approved |
-| `kyc.rejected` | KYC rejected |
+| `transfer.claimed`   | Recipient verified   |
+| `transfer.completed` | Cash-out complete    |
+| `transfer.failed`    | Transfer failed      |
+| `transfer.expired`   | Claim expired        |
+| `kyc.submitted`      | KYC submitted        |
+| `kyc.verified`       | KYC approved         |
+| `kyc.rejected`       | KYC rejected         |
 
 ### API Versioning
 
 URL-path versioned (`/v1/`, `/v2/`). When breaking changes ship:
+
 1. New version released
 2. Previous version remains for 12 months
 3. Deprecation notices via email + dashboard
@@ -1485,13 +1501,13 @@ flowchart TB
 
 ### Provider Catalog
 
-| Provider | Coverage | Use Case |
-|---|---|---|
+| Provider              | Coverage      | Use Case                                      |
+| --------------------- | ------------- | --------------------------------------------- |
 | **TransFi** (primary) | 70+ countries | Mobile wallets + bank transfers in EM markets |
-| **Wise Business API** | EU, UK, US | Developed markets, large transfers |
-| **Flutterwave** | Africa | Nigeria, Ghana backup |
-| **Yellow Card** | Africa | Crypto-native African rails |
-| **Thunes** | Global | Cash pickup network |
+| **Wise Business API** | EU, UK, US    | Developed markets, large transfers            |
+| **Flutterwave**       | Africa        | Nigeria, Ghana backup                         |
+| **Yellow Card**       | Africa        | Crypto-native African rails                   |
+| **Thunes**            | Global        | Cash pickup network                           |
 
 ### Off-Ramp Sequence (TransFi → GCash)
 
@@ -1532,12 +1548,12 @@ flowchart TB
     L1 --> L2 --> L3 --> L4
 ```
 
-| Pattern | Use Case | Implementation |
-|---|---|---|
-| Cache-Aside | User profiles | Read cache → fallback to DB → populate cache |
-| Write-Through | Session data | Write cache + DB simultaneously |
-| Write-Behind | Analytics | Write cache, async persist to DB |
-| Refresh-Ahead | FX rates | Proactively refresh before expiry |
+| Pattern       | Use Case      | Implementation                               |
+| ------------- | ------------- | -------------------------------------------- |
+| Cache-Aside   | User profiles | Read cache → fallback to DB → populate cache |
+| Write-Through | Session data  | Write cache + DB simultaneously              |
+| Write-Behind  | Analytics     | Write cache, async persist to DB             |
+| Refresh-Ahead | FX rates      | Proactively refresh before expiry            |
 
 ### Event-Driven Cache Invalidation
 
@@ -1579,15 +1595,15 @@ flowchart TB
 
 ```typescript
 interface CloudEvent<T> {
-  specversion: "1.0";
-  type: string;            // e.g., "com.ping.transfer.created"
-  source: string;          // e.g., "/services/transfer"
-  id: string;              // UUID
-  time: string;            // ISO 8601
-  datacontenttype: "application/json";
+  specversion: '1.0';
+  type: string; // e.g., "com.ping.transfer.created"
+  source: string; // e.g., "/services/transfer"
+  id: string; // UUID
+  time: string; // ISO 8601
+  datacontenttype: 'application/json';
   data: T;
-  correlationid: string;   // For distributed tracing
-  causationid: string;     // Event that caused this event
+  correlationid: string; // For distributed tracing
+  causationid: string; // Event that caused this event
 }
 ```
 
@@ -1675,6 +1691,7 @@ flowchart LR
 ```
 
 The Sovereign provides:
+
 - Kubernetes cluster (vCluster-isolated per tenant)
 - Istio service mesh with automatic mTLS
 - PostgreSQL (CNPG operator), MongoDB (replica set), Redis (Sentinel), Redpanda (3 brokers)
@@ -1685,6 +1702,7 @@ The Sovereign provides:
 - PowerDNS authoritative + DNSSEC + lua-records for geo-failover
 
 Ping's responsibility is to:
+
 1. Build container images in CI (one per service)
 2. Publish a versioned Blueprint that declares: which images, which Helm charts to compose, what config values to surface to the Sovereign
 3. Open a SHA-bump PR against `openova-io/openova-private` when a new Blueprint version ships
@@ -1693,18 +1711,18 @@ The Sovereign's Flux picks up the PR merge and deploys.
 
 ### What Ping Repo Owns vs Doesn't
 
-| Concern | Owner |
-|---|---|
-| Application code (services, mobile app) | **Ping repo** |
-| Service Helm charts (under `platform/<chart>/`) | **Ping repo** |
-| Blueprint manifests (`bp-ping/blueprint.yaml`) | **Ping repo** |
-| Container build (CI matrix per service) | **Ping repo** |
-| Image registry (ghcr.io) | Shared (GitHub) |
-| Kubernetes cluster lifecycle | OpenOva Sovereign |
-| Istio mesh + observability | OpenOva Sovereign |
-| DNS records (`*.ping.cash`) | OpenOva Sovereign (PowerDNS + Dynadot for apex) |
-| Secrets (Privy, TransFi, Twilio, WhatsApp, Persona keys) | OpenBao on the Sovereign; ESO mounts |
-| Backups, DR, multi-region failover | OpenOva Sovereign |
+| Concern                                                  | Owner                                           |
+| -------------------------------------------------------- | ----------------------------------------------- |
+| Application code (services, mobile app)                  | **Ping repo**                                   |
+| Service Helm charts (under `platform/<chart>/`)          | **Ping repo**                                   |
+| Blueprint manifests (`bp-ping/blueprint.yaml`)           | **Ping repo**                                   |
+| Container build (CI matrix per service)                  | **Ping repo**                                   |
+| Image registry (ghcr.io)                                 | Shared (GitHub)                                 |
+| Kubernetes cluster lifecycle                             | OpenOva Sovereign                               |
+| Istio mesh + observability                               | OpenOva Sovereign                               |
+| DNS records (`*.ping.cash`)                              | OpenOva Sovereign (PowerDNS + Dynadot for apex) |
+| Secrets (Privy, TransFi, Twilio, WhatsApp, Persona keys) | OpenBao on the Sovereign; ESO mounts            |
+| Backups, DR, multi-region failover                       | OpenOva Sovereign                               |
 
 ### CI/CD Pipeline
 
@@ -1717,7 +1735,21 @@ jobs:
   matrix-build:
     strategy:
       matrix:
-        service: [auth, user, kyc, transfer, wallet, fx, ledger, claim, offramp, notify, mobile, web]
+        service:
+          [
+            auth,
+            user,
+            kyc,
+            transfer,
+            wallet,
+            fx,
+            ledger,
+            claim,
+            offramp,
+            notify,
+            mobile,
+            web,
+          ]
     steps:
       - uses: actions/checkout@v4
       - uses: docker/build-push-action@v6
@@ -1730,7 +1762,7 @@ jobs:
       - uses: peter-evans/create-pull-request@v6
         with:
           repository: openova-io/openova-private
-          title: "bump(ping): SHA ${{ github.sha }}"
+          title: 'bump(ping): SHA ${{ github.sha }}'
 ```
 
 ### Public-Repo Toggle for iOS Builds
@@ -1781,7 +1813,7 @@ metadata:
   name: ping-api-secrets
 spec:
   secretStoreRef:
-    name: openbao-cluster        # provided by Sovereign
+    name: openbao-cluster # provided by Sovereign
     kind: ClusterSecretStore
   target:
     name: ping-api-secrets
@@ -1846,22 +1878,22 @@ const buttonPress = {
 };
 ```
 
-| Action | Haptic | Duration |
-|---|---|---|
-| Button press | Light | 10ms |
-| Toggle switch | Medium | 15ms |
-| Amount confirm | Heavy | 25ms |
-| Transfer success | Success | — |
-| Error | Error | — |
+| Action           | Haptic  | Duration |
+| ---------------- | ------- | -------- |
+| Button press     | Light   | 10ms     |
+| Toggle switch    | Medium  | 15ms     |
+| Amount confirm   | Heavy   | 25ms     |
+| Transfer success | Success | —        |
+| Error            | Error   | —        |
 
 ### Loading State Strategy
 
-| Latency | Indicator |
-|---|---|
-| < 100ms | None (imperceptible) |
+| Latency    | Indicator                             |
+| ---------- | ------------------------------------- |
+| < 100ms    | None (imperceptible)                  |
 | 100ms – 1s | Skeleton screen (pulsing placeholder) |
-| 1s – 5s | Skeleton + progress bar |
-| > 5s | Full progress + cancel button |
+| 1s – 5s    | Skeleton + progress bar               |
+| > 5s       | Full progress + cancel button         |
 
 ### Web Claim — Responsive Design
 
@@ -1870,19 +1902,19 @@ const buttonPress = {
 --tablet: 768px;
 --desktop: 1024px;
 
---min-touch-target: 44px;  /* Apple HIG */
+--min-touch-target: 44px; /* Apple HIG */
 --comfortable-touch: 56px;
 
---text-base: 16px;   /* Minimum for mobile forms */
---text-3xl: 48px;    /* Hero amounts */
+--text-base: 16px; /* Minimum for mobile forms */
+--text-3xl: 48px; /* Hero amounts */
 ```
 
 ### Accessibility (WCAG 2.2 AA)
 
-| Requirement | Implementation |
-|---|---|
-| Color contrast | 4.5:1 minimum for text |
-| Touch targets | 44x44px minimum |
-| Screen reader | Full VoiceOver/TalkBack support |
-| Reduce motion | Respect system preference |
-| Text scaling | Support up to 200% |
+| Requirement    | Implementation                  |
+| -------------- | ------------------------------- |
+| Color contrast | 4.5:1 minimum for text          |
+| Touch targets  | 44x44px minimum                 |
+| Screen reader  | Full VoiceOver/TalkBack support |
+| Reduce motion  | Respect system preference       |
+| Text scaling   | Support up to 200%              |

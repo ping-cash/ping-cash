@@ -9,7 +9,6 @@ import { logger } from '../utils/logger';
 
 import type { ChannelResult } from './whatsapp.channel';
 
-
 export interface PushSendInput {
   deviceToken: string;
   title: string;
@@ -21,7 +20,7 @@ export async function sendPush(input: PushSendInput): Promise<ChannelResult> {
   // Phase 1: stub only. Phase 2: full FCM via firebase-admin SDK.
   logger.info(
     { deviceTokenPrefix: input.deviceToken.slice(0, 8) },
-    '[STUB MODE] Would send push notification (FCM integration pending)',
+    '[STUB MODE] Would send push notification (FCM integration pending)'
   );
   return {
     channel: 'push',

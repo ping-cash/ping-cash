@@ -21,7 +21,10 @@ import { authStore } from '../lib/auth-store';
 
 export default function VerifyScreen() {
   const router = useRouter();
-  const { phone, sessionId } = useLocalSearchParams<{ phone: string; sessionId: string }>();
+  const { phone, sessionId } = useLocalSearchParams<{
+    phone: string;
+    sessionId: string;
+  }>();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +39,12 @@ export default function VerifyScreen() {
       // Server returns { user: {...}, tokens: { accessToken, refreshToken }, isNewUser }
       // Adapt to whichever shape we get
       const r = result as unknown as {
-        user: { id: string; phone: string; walletAddress: string; phoneHash?: string };
+        user: {
+          id: string;
+          phone: string;
+          walletAddress: string;
+          phoneHash?: string;
+        };
         tokens?: { accessToken: string; refreshToken: string };
         token?: string;
       };
@@ -78,21 +86,29 @@ export default function VerifyScreen() {
             placeholder="000000"
             placeholderTextColor="#6B6B8C"
             value={code}
-            onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))}
+            onChangeText={t => setCode(t.replace(/\D/g, '').slice(0, 6))}
             keyboardType="number-pad"
             autoFocus
             editable={!loading}
             maxLength={6}
           />
 
-          <TouchableOpacity onPress={() => router.back()} style={styles.resendArea}>
-            <Text style={styles.resendText}>Didn't get a code? Change number</Text>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.resendArea}
+          >
+            <Text style={styles.resendText}>
+              Didn't get a code? Change number
+            </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.actions}>
           <TouchableOpacity
-            style={[styles.button, (loading || code.length !== 6) && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              (loading || code.length !== 6) && styles.buttonDisabled,
+            ]}
             onPress={handleVerify}
             disabled={loading || code.length !== 6}
           >

@@ -26,6 +26,7 @@ Build the **Ping Earn Vault** — an open-source Anchor program on Solana that:
 ### Auto-stake (default behaviour)
 
 At first wallet setup, user signs **one delegated-authority transaction** approving the Earn Vault contract to:
+
 - Stake USDC from their wallet to the vault PDA
 - Unstake USDC from the vault back to their wallet
 - (Scope limited to USDC token account; no other token authority)
@@ -80,24 +81,24 @@ pub fn harvest(ctx: Context<Harvest>) -> Result<()> {
     let aave_yield = withdraw_yield(ctx.aave, ...)?;
     let drift_yield = withdraw_yield(ctx.drift, ...)?;
     let total_yield = kamino_yield + marginfi_yield + aave_yield + drift_yield;
-    
+
     // 2. SPLIT atomically — code-enforced, not policy
     let ping_split = total_yield.checked_mul(40).unwrap().checked_div(100).unwrap();
     let user_split = total_yield.checked_sub(ping_split).unwrap();
-    
+
     // 3. Transfer 40% to Ping fee account (HARDCODED address, multisig-controlled)
     token::transfer_checked(
         ctx.accounts.vault_authority,
         ctx.accounts.ping_fee_account,  // ← hardcoded SquadsMultisig PDA
         ping_split,
     )?;
-    
+
     // 4. Use 60% to buy $PING from market via Jupiter
     let ping_bought = jupiter_swap(user_split, USDC_MINT, PING_MINT)?;
-    
+
     // 5. Distribute $PING pro-rata to vault depositors
     distribute_pro_rata(ping_bought, &ctx.accounts.depositor_shares)?;
-    
+
     emit!(HarvestEvent {
         total_yield,
         ping_split,
@@ -105,7 +106,7 @@ pub fn harvest(ctx: Context<Harvest>) -> Result<()> {
         ping_bought,
         timestamp: Clock::get()?.unix_timestamp,
     });
-    
+
     Ok(())
 }
 ```
@@ -115,12 +116,12 @@ pub fn harvest(ctx: Context<Harvest>) -> Result<()> {
 ### vUSDC Receipt Token
 
 ```
-Property               vUSDC                          
+Property               vUSDC
 ─────────────────────────────────────────────────────────
-Token program          SPL Token-2022                   
-Mint authority         Vault program PDA                
-Redeemable for         1 vUSDC = 1 USDC always (1:1)    
-Transferable           Yes (secondary market possible)  
+Token program          SPL Token-2022
+Mint authority         Vault program PDA
+Redeemable for         1 vUSDC = 1 USDC always (1:1)
+Transferable           Yes (secondary market possible)
 Value appreciation     No (yield paid in $PING separately)
 Burn on redeem         Yes (user burns vUSDC, gets USDC)
 ```
@@ -148,15 +149,16 @@ The word "vUSDC" never appears in user-facing UI. Power users can see it via wal
 
 ## Underlying Protocol Selection
 
-| Protocol | Type | Target weight | Real APY (2026 est) | Liquidity | Risk |
-|---|---|---|---|---|---|
-| **Kamino Lend** | USDC lending market | 40% | 4.5-5.5% | Very high | Established, audited (OtterSec) |
-| **Marginfi** | USDC lending market | 25% | 4.5-5.5% | High | Established, audited |
-| **Aave Solana** | USDC lending (Aave port) | 20% | 4.0-5.0% | High | Aave protocol mature on EVM, Solana port newer |
-| **Drift** | USDC lending in perps DEX | 10% | 5.0-6.5% | Medium | Higher utilization |
-| **Liquid buffer** | Idle USDC at vault | 5% | 0% | Instant | None — instant redemption |
+| Protocol          | Type                      | Target weight | Real APY (2026 est) | Liquidity | Risk                                           |
+| ----------------- | ------------------------- | ------------- | ------------------- | --------- | ---------------------------------------------- |
+| **Kamino Lend**   | USDC lending market       | 40%           | 4.5-5.5%            | Very high | Established, audited (OtterSec)                |
+| **Marginfi**      | USDC lending market       | 25%           | 4.5-5.5%            | High      | Established, audited                           |
+| **Aave Solana**   | USDC lending (Aave port)  | 20%           | 4.0-5.0%            | High      | Aave protocol mature on EVM, Solana port newer |
+| **Drift**         | USDC lending in perps DEX | 10%           | 5.0-6.5%            | Medium    | Higher utilization                             |
+| **Liquid buffer** | Idle USDC at vault        | 5%            | 0%                  | Instant   | None — instant redemption                      |
 
 Total blended target APY: ~4.5% real, of which:
+
 - 40% (1.8%) → Ping fee account
 - 60% (2.7%) → user paid in $PING (market-bought)
 
@@ -173,6 +175,7 @@ Single-protocol concentration risk eliminated by spreading across 4 venues. No s
 Vault operates at **100% reserves at all times** (not fractional banking). All underlying protocols (Kamino, Marginfi, Aave, Drift) support instant USDC withdrawal. The 5% liquid buffer covers same-block redemptions before any underlying protocol needs to be tapped.
 
 In extreme stress (mass-withdrawal event):
+
 1. Liquid buffer covers first 5% of redemptions
 2. Remaining underlying positions are unwound in 30-second windows
 3. Worst-case redemption time: ~5 minutes if all 4 protocols hit simultaneously
@@ -188,6 +191,7 @@ In extreme stress (mass-withdrawal event):
 ### Oracle Risk
 
 USDC price assumed = $1.00 for accounting. Real-time depeg monitoring via Pyth:
+
 - Soft circuit breaker: if Pyth USDC/USD drops below $0.99 for >5 minutes, harvest() pauses; auto-resume when stable
 - Hard circuit breaker: if drops below $0.95, all underlying yield positions liquidated to liquid USDC; vault enters "preservation mode"
 
@@ -201,13 +205,13 @@ USDC price assumed = $1.00 for accounting. Real-time depeg monitoring via Pyth:
 
 While the default is 100% auto-stake, power users can adjust via "Power user mode" in app settings:
 
-| Setting | Default | Override |
-|---|---|---|
-| Auto-stake percentage | 100% | Slider 0-100% |
-| Auto-stake on incoming | ON | Toggle per token |
-| Spending source priority | "Best available" (vault first) | "Wallet only" / "Vault only" |
-| Yield denomination | $PING | Switch to USDC |
-| Auto-stake delay on deposit | 0 sec (immediate) | Delay 1-24 hours |
+| Setting                     | Default                        | Override                     |
+| --------------------------- | ------------------------------ | ---------------------------- |
+| Auto-stake percentage       | 100%                           | Slider 0-100%                |
+| Auto-stake on incoming      | ON                             | Toggle per token             |
+| Spending source priority    | "Best available" (vault first) | "Wallet only" / "Vault only" |
+| Yield denomination          | $PING                          | Switch to USDC               |
+| Auto-stake delay on deposit | 0 sec (immediate)              | Delay 1-24 hours             |
 
 99% of users never see these settings. They exist for crypto-natives + developers + integration partners.
 
@@ -252,6 +256,7 @@ Live at `vault.ping.cash` (post-launch):
 ## Consequences
 
 **Good:**
+
 - Captures the largest projected revenue line (treasury yield) without becoming custodial
 - Creates massive continuous buy pressure on `$PING` (60% of yield = market-bought $PING)
 - Tier benefits accrue to users organically over time without them buying $PING explicitly
@@ -259,6 +264,7 @@ Live at `vault.ping.cash` (post-launch):
 - Open-source, auditable, on-chain enforced — no trust required
 
 **Bad / trade-offs:**
+
 - Smart contract risk (mitigated by audit + insurance + multi-protocol split)
 - DeFi protocol risk (mitigated by diversification across 4 venues)
 - Daily harvest gas cost (~$0.05-0.20 per harvest, immaterial)

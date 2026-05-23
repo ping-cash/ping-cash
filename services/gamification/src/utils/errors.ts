@@ -5,7 +5,7 @@ export class AppError extends Error {
     public code: string,
     message: string,
     public status: number = 400,
-    public details?: Record<string, unknown>,
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -15,12 +15,17 @@ export class AppError extends Error {
 export function errorHandler(
   error: Error | FastifyError | AppError,
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ) {
   request.log.error({ err: error, url: request.url }, 'Request error');
   if (error instanceof AppError) {
     return reply.status(error.status).send({
-      error: { code: error.code, message: error.message, details: error.details, requestId: request.id },
+      error: {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        requestId: request.id,
+      },
     });
   }
   if ('validation' in error && error.validation) {
@@ -34,6 +39,10 @@ export function errorHandler(
     });
   }
   return reply.status(500).send({
-    error: { code: 'INTERNAL_ERROR', message: 'Unknown error', requestId: request.id },
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'Unknown error',
+      requestId: request.id,
+    },
   });
 }

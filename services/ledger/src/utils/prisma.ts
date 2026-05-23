@@ -10,5 +10,9 @@ export const prisma = new PrismaClient({
   ],
 });
 
-prisma.$on('error' as never, (e: unknown) => logger.error({ err: e }, 'Prisma error'));
-prisma.$on('warn' as never, (e: unknown) => logger.warn({ msg: e }, 'Prisma warning'));
+prisma.$on('error' as never, (e: unknown) =>
+  logger.error({ err: e }, 'Prisma error')
+);
+prisma.$on('warn' as never, (e: unknown) =>
+  logger.warn({ msg: e }, 'Prisma warning')
+);

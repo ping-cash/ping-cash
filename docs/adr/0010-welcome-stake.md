@@ -35,13 +35,13 @@ Welcome stake is **1,200 $PING granted on first verified outbound transfer of �
 
 Each milestone unlocks **200 $PING** of the locked reserve into the user's free balance:
 
-| Milestone | Reward | Why |
-|---|---|---|
-| Refer 3 active users (each completes ≥ 3 outbound transfers in 30 days) | 200 $PING unlocked | Drives viral acquisition |
-| Complete 50 successful outbound transfers | 200 $PING unlocked | Rewards platform usage |
-| 6 months of active usage (≥ 1 transfer/month) | 200 $PING unlocked | Retention reward |
-| 12 months of active usage | 200 $PING unlocked | Long-term retention |
-| Reach Silver organically (own ≥ 1,000 $PING outside of welcome stake) | 200 $PING unlocked | Rewards real $PING buyers |
+| Milestone                                                               | Reward             | Why                       |
+| ----------------------------------------------------------------------- | ------------------ | ------------------------- |
+| Refer 3 active users (each completes ≥ 3 outbound transfers in 30 days) | 200 $PING unlocked | Drives viral acquisition  |
+| Complete 50 successful outbound transfers                               | 200 $PING unlocked | Rewards platform usage    |
+| 6 months of active usage (≥ 1 transfer/month)                           | 200 $PING unlocked | Retention reward          |
+| 12 months of active usage                                               | 200 $PING unlocked | Long-term retention       |
+| Reach Silver organically (own ≥ 1,000 $PING outside of welcome stake)   | 200 $PING unlocked | Rewards real $PING buyers |
 
 Total: 5 milestones × 200 = 1,000 $PING potentially unlockable. Any milestones not achieved by year 2 unlock automatically at the 2-year backstop.
 
@@ -123,6 +123,7 @@ Day 30:   After ~20 fee burns of 10 each, unlocked depleted to ~0
 ```
 
 When she buys her first 100 PING for fees:
+
 - Free balance: 100 → +100 to tier basis = 1,100 → comfortably Silver
 - Burning a fee of 10 → free goes to 90, tier basis 1,090 → still Silver
 - This is the "spiral of bottom pressure": every fee paid in $PING is burned, depleting her balance, driving her to buy more.
@@ -177,6 +178,7 @@ If we'd picked  800:     Doesn't reach Silver at all; tier broken from start
 ## Consequences
 
 **Good:**
+
 - Sybil farming structurally impossible (nothing extractable)
 - Dump-and-leave structurally impossible (locked + fee-only)
 - Strong gamification: 5 milestones drive referrals, usage, retention
@@ -184,6 +186,7 @@ If we'd picked  800:     Doesn't reach Silver at all; tier broken from start
 - Welcome bucket depletion creates natural CTA to buy more $PING
 
 **Bad / trade-offs:**
+
 - 5 milestones add complexity to gamification-service (manageable)
 - Some users will never complete milestones; their locked PING sits dormant for 2 years (acceptable — eventually unlocks)
 - Storage cost: per-user Streamflow vesting contracts cost ~$0.20 in Solana account rent. Mitigation: rent reclaimed when stake fully unlocks.

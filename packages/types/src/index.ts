@@ -12,7 +12,17 @@ export type PhoneHash = string;
 export type ISOTimestamp = string;
 export type Decimal = string; // String representation for precision
 
-export type Currency = 'USD' | 'PHP' | 'INR' | 'PKR' | 'KES' | 'NGN' | 'AED' | 'SAR' | 'GBP' | 'EUR';
+export type Currency =
+  | 'USD'
+  | 'PHP'
+  | 'INR'
+  | 'PKR'
+  | 'KES'
+  | 'NGN'
+  | 'AED'
+  | 'SAR'
+  | 'GBP'
+  | 'EUR';
 
 export type Chain = 'solana' | 'tron' | 'base';
 
@@ -100,14 +110,14 @@ export interface WalletBalance {
 // ============================================
 
 export type TransferStatus =
-  | 'pending'      // Awaiting blockchain confirmation
-  | 'confirmed'    // On-chain, awaiting claim
-  | 'claimed'      // Recipient verified, awaiting cash-out selection
-  | 'processing'   // Cash-out in progress
-  | 'completed'    // Successfully delivered
-  | 'cancelled'    // Cancelled by sender
-  | 'expired'      // Claim link expired
-  | 'failed';      // Transaction failed
+  | 'pending' // Awaiting blockchain confirmation
+  | 'confirmed' // On-chain, awaiting claim
+  | 'claimed' // Recipient verified, awaiting cash-out selection
+  | 'processing' // Cash-out in progress
+  | 'completed' // Successfully delivered
+  | 'cancelled' // Cancelled by sender
+  | 'expired' // Claim link expired
+  | 'failed'; // Transaction failed
 
 export interface Transfer {
   id: UUID;
@@ -154,11 +164,11 @@ export interface TransferSummary {
 // ============================================
 
 export type ClaimStatus =
-  | 'pending'      // Awaiting phone verification
-  | 'verified'     // Phone verified, awaiting cash-out
-  | 'processing'   // Cash-out in progress
-  | 'completed'    // Successfully cashed out
-  | 'expired';     // Claim expired
+  | 'pending' // Awaiting phone verification
+  | 'verified' // Phone verified, awaiting cash-out
+  | 'processing' // Cash-out in progress
+  | 'completed' // Successfully cashed out
+  | 'expired'; // Claim expired
 
 export interface Claim {
   id: UUID;

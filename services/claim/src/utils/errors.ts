@@ -5,7 +5,7 @@ export class AppError extends Error {
     public code: string,
     message: string,
     public status: number = 400,
-    public details?: Record<string, unknown>,
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -13,11 +13,24 @@ export class AppError extends Error {
 }
 
 export const ClaimErrors = {
-  ClaimNotFound: () => new AppError('CLAIM_NOT_FOUND', 'Claim not found or expired.', 404),
-  ClaimExpired: () => new AppError('CLAIM_EXPIRED', 'Claim link has expired.', 400),
-  ClaimAlreadyUsed: () => new AppError('CLAIM_ALREADY_USED', 'Claim has already been processed.', 400),
-  InvalidOtp: () => new AppError('INVALID_OTP', 'Invalid verification code.', 400),
-  MaxAttempts: () => new AppError('MAX_ATTEMPTS', 'Maximum verification attempts exceeded.', 429),
+  ClaimNotFound: () =>
+    new AppError('CLAIM_NOT_FOUND', 'Claim not found or expired.', 404),
+  ClaimExpired: () =>
+    new AppError('CLAIM_EXPIRED', 'Claim link has expired.', 400),
+  ClaimAlreadyUsed: () =>
+    new AppError(
+      'CLAIM_ALREADY_USED',
+      'Claim has already been processed.',
+      400
+    ),
+  InvalidOtp: () =>
+    new AppError('INVALID_OTP', 'Invalid verification code.', 400),
+  MaxAttempts: () =>
+    new AppError(
+      'MAX_ATTEMPTS',
+      'Maximum verification attempts exceeded.',
+      429
+    ),
   RateLimited: () => new AppError('RATE_LIMITED', 'Too many requests.', 429),
   TwilioFailure: (details?: Record<string, unknown>) =>
     new AppError('TWILIO_FAILURE', 'Failed to send OTP.', 502, details),
@@ -26,7 +39,7 @@ export const ClaimErrors = {
 export function errorHandler(
   error: Error | FastifyError | AppError,
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ) {
   request.log.error({ err: error, url: request.url }, 'Request error');
   if (error instanceof AppError) {
@@ -50,6 +63,10 @@ export function errorHandler(
     });
   }
   return reply.status(500).send({
-    error: { code: 'INTERNAL_ERROR', message: error.message ?? 'Unknown error', requestId: request.id },
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: error.message ?? 'Unknown error',
+      requestId: request.id,
+    },
   });
 }

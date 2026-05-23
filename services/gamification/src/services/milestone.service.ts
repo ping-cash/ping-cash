@@ -24,12 +24,24 @@ export type MilestoneId =
 
 const MILESTONE_UNLOCK_AMOUNT = 200;
 
-const MILESTONE_DEFINITIONS: Record<MilestoneId, { target: number; description: string }> = {
-  refer_3_active: { target: 3, description: '3 referred users each with 3+ successful transfers in 30d' },
-  complete_50_sends: { target: 50, description: '50 successful outbound transfers' },
+const MILESTONE_DEFINITIONS: Record<
+  MilestoneId,
+  { target: number; description: string }
+> = {
+  refer_3_active: {
+    target: 3,
+    description: '3 referred users each with 3+ successful transfers in 30d',
+  },
+  complete_50_sends: {
+    target: 50,
+    description: '50 successful outbound transfers',
+  },
   active_6mo: { target: 6, description: '6 months of monthly activity' },
   active_12mo: { target: 12, description: '12 months of monthly activity' },
-  silver_organic: { target: 1000, description: 'Hold 1,000+ $PING outside welcome stake' },
+  silver_organic: {
+    target: 1000,
+    description: 'Hold 1,000+ $PING outside welcome stake',
+  },
 };
 
 export interface MilestoneProgress {
@@ -47,7 +59,9 @@ export interface MilestoneProgress {
  * In production, this would query the user-service via API.
  * Stub version for now — returns synthetic progress.
  */
-export async function getProgress(userId: string): Promise<MilestoneProgress[]> {
+export async function getProgress(
+  userId: string
+): Promise<MilestoneProgress[]> {
   logger.info({ userId }, '[STUB] Reading milestone progress');
   return Object.entries(MILESTONE_DEFINITIONS).map(([id, def]) => ({
     userId,
@@ -70,7 +84,10 @@ export async function onTransferCompleted(input: {
   amount: string;
   timestamp: number;
 }): Promise<{ progressed: MilestoneId[]; unlocked: MilestoneId[] }> {
-  logger.info({ userId: input.userId, transferId: input.transferId }, 'Processing transfer event');
+  logger.info(
+    { userId: input.userId, transferId: input.transferId },
+    'Processing transfer event'
+  );
 
   // Phase 1 stub: in production, this calls user-service with updates.
   // For now, log the event flow.
@@ -103,7 +120,10 @@ export async function onReferralActivity(input: {
 /**
  * Daily cron: check active_6mo / active_12mo / backstop unlock for all users.
  */
-export async function dailyCronCheck(): Promise<{ usersProcessed: number; unlocksTriggered: number }> {
+export async function dailyCronCheck(): Promise<{
+  usersProcessed: number;
+  unlocksTriggered: number;
+}> {
   logger.info('[STUB] Daily cron — milestone backstop check');
   return { usersProcessed: 0, unlocksTriggered: 0 };
 }

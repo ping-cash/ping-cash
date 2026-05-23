@@ -40,7 +40,7 @@ function maskPhone(phone: string): string {
  */
 export async function sync(
   ownerUserId: string,
-  contacts: ContactSyncInput[],
+  contacts: ContactSyncInput[]
 ): Promise<{ syncedCount: number; registeredCount: number }> {
   let syncedCount = 0;
   let registeredCount = 0;
@@ -60,7 +60,10 @@ export async function sync(
 
       await prisma.contact.upsert({
         where: {
-          ownerUserId_contactPhoneHash: { ownerUserId, contactPhoneHash: phoneHash },
+          ownerUserId_contactPhoneHash: {
+            ownerUserId,
+            contactPhoneHash: phoneHash,
+          },
         },
         create: {
           ownerUserId,
@@ -90,7 +93,12 @@ export async function sync(
  */
 export async function list(
   ownerUserId: string,
-  options: { search?: string; registered?: boolean; limit?: number; cursor?: string } = {},
+  options: {
+    search?: string;
+    registered?: boolean;
+    limit?: number;
+    cursor?: string;
+  } = {}
 ): Promise<{ contacts: ContactPublic[]; nextCursor: string | null }> {
   const { search, registered, limit = 50 } = options;
 

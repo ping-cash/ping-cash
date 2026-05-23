@@ -36,11 +36,9 @@ describe('token.clawback.computeClawback — honest user', () => {
             pingBalanceAtTime: 2700,
           },
         ],
-        balanceHistory: [
-          { timestamp: day1, balance: 2700 },
-        ],
+        balanceHistory: [{ timestamp: day1, balance: 2700 }],
       },
-      0.01, // PING price = $0.01
+      0.01 // PING price = $0.01
     );
 
     // Post-sale: 2,700 - 1,500 = 1,200 → still Silver basis
@@ -67,7 +65,7 @@ describe('token.clawback.computeClawback — flash gamer', () => {
             timestamp: fiveMinutesAgo,
             feeAmountUsd: 25,
             tierUsedAtTime: 'platinum',
-            discountReceivedUsd: 22.50, // Platinum 90% off + pay-in-PING 75% off
+            discountReceivedUsd: 22.5, // Platinum 90% off + pay-in-PING 75% off
             pingBalanceAtTime: 100000,
           },
         ],
@@ -76,7 +74,7 @@ describe('token.clawback.computeClawback — flash gamer', () => {
           { timestamp: fiveMinutesAgo, balance: 100000 },
         ],
       },
-      0.10,
+      0.1
     );
 
     // Post-sale balance: 0 → Bronze
@@ -112,7 +110,7 @@ describe('token.clawback.computeClawback — outside window', () => {
         ],
         balanceHistory: [{ timestamp: yearAgoPlus, balance: 50000 }],
       },
-      0.10,
+      0.1
     );
 
     expect(result.totalClawbackUsd).toBe(0);

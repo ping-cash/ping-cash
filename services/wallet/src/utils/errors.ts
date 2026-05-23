@@ -5,7 +5,7 @@ export class AppError extends Error {
     public code: string,
     message: string,
     public status: number = 400,
-    public details?: Record<string, unknown>,
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -13,11 +13,19 @@ export class AppError extends Error {
 }
 
 export const WalletErrors = {
-  Unauthorized: () => new AppError('UNAUTHORIZED', 'Authentication required.', 401),
-  WalletNotFound: () => new AppError('WALLET_NOT_FOUND', 'Wallet not found.', 404),
+  Unauthorized: () =>
+    new AppError('UNAUTHORIZED', 'Authentication required.', 401),
+  WalletNotFound: () =>
+    new AppError('WALLET_NOT_FOUND', 'Wallet not found.', 404),
   SolanaRpcError: (details?: Record<string, unknown>) =>
-    new AppError('SOLANA_RPC_ERROR', 'Failed to query Solana RPC.', 502, details),
-  InvalidAddress: () => new AppError('INVALID_ADDRESS', 'Invalid Solana address.', 400),
+    new AppError(
+      'SOLANA_RPC_ERROR',
+      'Failed to query Solana RPC.',
+      502,
+      details
+    ),
+  InvalidAddress: () =>
+    new AppError('INVALID_ADDRESS', 'Invalid Solana address.', 400),
   InsufficientBalance: (details?: Record<string, unknown>) =>
     new AppError('INSUFFICIENT_BALANCE', 'Insufficient balance.', 400, details),
   PrivyFailure: (details?: Record<string, unknown>) =>
@@ -29,7 +37,7 @@ export const WalletErrors = {
 export function errorHandler(
   error: Error | FastifyError | AppError,
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ) {
   request.log.error({ err: error, url: request.url }, 'Request error');
   if (error instanceof AppError) {
@@ -53,6 +61,10 @@ export function errorHandler(
     });
   }
   return reply.status(500).send({
-    error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.', requestId: request.id },
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'An unexpected error occurred.',
+      requestId: request.id,
+    },
   });
 }

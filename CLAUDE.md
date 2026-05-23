@@ -26,6 +26,7 @@ Generic engineering principles live in user-global [`~/.claude/CLAUDE.md`](https
 **Product repo (per user-global §0.C).** Ships Blueprints (`bp-ping:<semver>`) to the OpenOva Sovereign at [`openova-io/openova-private`](https://github.com/openova-io/openova-private). We do NOT operate our own K8s cluster, Istio mesh, or observability stack — the Sovereign provides them. See [ADR 0006](docs/adr/0006-deployment-via-openova-sovereign.md).
 
 **Cardinal facts:**
+
 - Code → CI build → `ghcr.io/ping-cash/<service>:<sha>` → Blueprint version bump PR against `openova-io/openova-private` → Flux reconciles
 - No local builds ship anywhere; CI is the only build path (per user-global §4.3)
 - All deployment goes through `openova-private`; we do NOT deploy directly anywhere else
@@ -57,13 +58,13 @@ Mobile-app specifics → [`apps/mobile/README.md`](apps/mobile/README.md). Netwo
 
 ## Workspace Naming
 
-| Path | Package |
-|---|---|
-| `packages/types` | `@ping/types` |
-| `packages/config` | `@ping/config` |
-| `packages/utils` | `@ping/utils` |
+| Path              | Package                |
+| ----------------- | ---------------------- |
+| `packages/types`  | `@ping/types`          |
+| `packages/config` | `@ping/config`         |
+| `packages/utils`  | `@ping/utils`          |
 | `services/<name>` | `@ping/<name>-service` |
-| `apps/mobile` | `@ping/mobile` |
+| `apps/mobile`     | `@ping/mobile`         |
 
 When creating a new service, scaffold from `services/transfer` (template) and add an entry to [docs/ARCHITECTURE.md § Service Catalog](docs/ARCHITECTURE.md#service-catalog).
 
@@ -73,24 +74,24 @@ When creating a new service, scaffold from `services/transfer` (template) and ad
 
 Full list in [docs/GLOSSARY.md § Banned Terms](docs/GLOSSARY.md#banned-terms-do-not-use). Top hits:
 
-| Banned | Why |
-|---|---|
-| **"Cash"** as the product/brand | Pre-rebrand name (Cash → Ping on 2026-05-21). `cash-in` / `cash-out` as generic financial terms are fine. |
-| **"-pal" suffix** in any naming | PayPal-trained association; UDRP target |
-| **"PayPal" / "Venmo" / "Stripe" / "Wise"** in product naming | Fintech TM minefield |
-| **`STATE.md` / `WORK-LOG.md` / multi-status files** | Single source of truth = GH Issues + auto-memory + `docs/STATUS.md` |
-| **"For now" / "MVP-now-refactor-later"** | We ship target-state shape (per PRINCIPLES) |
+| Banned                                                       | Why                                                                                                       |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| **"Cash"** as the product/brand                              | Pre-rebrand name (Cash → Ping on 2026-05-21). `cash-in` / `cash-out` as generic financial terms are fine. |
+| **"-pal" suffix** in any naming                              | PayPal-trained association; UDRP target                                                                   |
+| **"PayPal" / "Venmo" / "Stripe" / "Wise"** in product naming | Fintech TM minefield                                                                                      |
+| **`STATE.md` / `WORK-LOG.md` / multi-status files**          | Single source of truth = GH Issues + auto-memory + `docs/STATUS.md`                                       |
+| **"For now" / "MVP-now-refactor-later"**                     | We ship target-state shape (per PRINCIPLES)                                                               |
 
 ---
 
 ## Repo-Specific Known Issues
 
-| Issue | Workaround | Tracking |
-|---|---|---|
-| Expo behind corporate VPN can't be accessed from iPhone | SSH SOCKS proxy + localtunnel (NOT ngrok — auth-required) | [docs/RUNBOOKS.md § Network Configuration](docs/RUNBOOKS.md#network-configuration) |
-| pnpm strict `node_modules` breaks Metro bundler | Add `node-linker=hoisted` to `.npmrc` | [docs/RUNBOOKS.md § Lessons Learned](docs/RUNBOOKS.md#lessons-learned-dev-env) |
-| `@babel/runtime` peer dep missing for Expo | `pnpm add @babel/runtime` in `apps/mobile` | Same |
-| iOS GHA build cap on private repos | Temporarily flip repo public: `gh repo edit --visibility public` | [ADR 0006 § iOS Build Toggle](docs/adr/0006-deployment-via-openova-sovereign.md#ios-build-toggle) |
+| Issue                                                   | Workaround                                                       | Tracking                                                                                          |
+| ------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Expo behind corporate VPN can't be accessed from iPhone | SSH SOCKS proxy + localtunnel (NOT ngrok — auth-required)        | [docs/RUNBOOKS.md § Network Configuration](docs/RUNBOOKS.md#network-configuration)                |
+| pnpm strict `node_modules` breaks Metro bundler         | Add `node-linker=hoisted` to `.npmrc`                            | [docs/RUNBOOKS.md § Lessons Learned](docs/RUNBOOKS.md#lessons-learned-dev-env)                    |
+| `@babel/runtime` peer dep missing for Expo              | `pnpm add @babel/runtime` in `apps/mobile`                       | Same                                                                                              |
+| iOS GHA build cap on private repos                      | Temporarily flip repo public: `gh repo edit --visibility public` | [ADR 0006 § iOS Build Toggle](docs/adr/0006-deployment-via-openova-sovereign.md#ios-build-toggle) |
 
 ---
 

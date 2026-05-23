@@ -15,12 +15,17 @@ const UpdateProfileBody = z.object({
 });
 
 const ContactSyncBody = z.object({
-  contacts: z.array(
-    z.object({
-      name: z.string().min(1).max(200),
-      phones: z.array(z.string().regex(/^\+[1-9]\d{6,14}$/)).min(1).max(10),
-    }),
-  ).max(2000),
+  contacts: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(200),
+        phones: z
+          .array(z.string().regex(/^\+[1-9]\d{6,14}$/))
+          .min(1)
+          .max(10),
+      })
+    )
+    .max(2000),
 });
 
 const CreateOrFetchBody = z.object({
@@ -39,7 +44,10 @@ const GrantWelcomeStakeBody = z.object({
 /**
  * JWT auth hook — extracts user ID from Bearer token.
  */
-async function requireAuth(request: FastifyRequest, reply: FastifyReply): Promise<string> {
+async function requireAuth(
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<string> {
   const authHeader = request.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     void reply.status(401).send({
@@ -49,9 +57,9 @@ async function requireAuth(request: FastifyRequest, reply: FastifyReply): Promis
   }
   const token = authHeader.slice(7);
   // verify() returns { sub, ... } — sub is the user ID
-  const payload = (request.server as { jwt: { verify: (t: string) => { sub: string } } }).jwt.verify(
-    token,
-  );
+  const payload = (
+    request.server as { jwt: { verify: (t: string) => { sub: string } } }
+  ).jwt.verify(token);
   return payload.sub;
 }
 
@@ -67,7 +75,7 @@ export async function userRoutes(fastify: FastifyInstance) {
       const body = CreateOrFetchBody.parse(request.body);
       const result = await userService.createOrFetch(body);
       return reply.status(result.isNewUser ? 201 : 200).send(result);
-    },
+    }
   );
 
   // POST /users/internal/welcome-stake — called by transfer-service on first outbound ≥ $10
@@ -77,7 +85,7 @@ export async function userRoutes(fastify: FastifyInstance) {
       const body = GrantWelcomeStakeBody.parse(request.body);
       await welcomeStakeService.grant(body.userId, body.transferId);
       return reply.status(204).send();
-    },
+    }
   );
 
   // ────────────────────────────────────────────────────────────────────
@@ -100,28 +108,39 @@ export async function userRoutes(fastify: FastifyInstance) {
   });
 
   // GET /users/me/contacts — list contacts with filters
-  fastify.get('/me/contacts', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = await requireAuth(request, reply);
-    const { q, registered, limit, cursor } = request.query as {
-      q?: string;
-      registered?: string;
-      limit?: string;
-      cursor?: string;
-    };
-    const result = await contactsService.list(userId, {
-      search: q,
-      registered: registered === 'true' ? true : registered === 'false' ? false : undefined,
-      limit: limit ? Number(limit) : 50,
-      cursor,
-    });
-    return reply.status(200).send(result);
-  });
+  fastify.get(
+    '/me/contacts',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const userId = await requireAuth(request, reply);
+      const { q, registered, limit, cursor } = request.query as {
+        q?: string;
+        registered?: string;
+        limit?: string;
+        cursor?: string;
+      };
+      const result = await contactsService.list(userId, {
+        search: q,
+        registered:
+          registered === 'true'
+            ? true
+            : registered === 'false'
+              ? false
+              : undefined,
+        limit: limit ? Number(limit) : 50,
+        cursor,
+      });
+      return reply.status(200).send(result);
+    }
+  );
 
   // POST /users/me/contacts/sync — bulk-sync phone contacts
-  fastify.post('/me/contacts/sync', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = await requireAuth(request, reply);
-    const body = ContactSyncBody.parse(request.body);
-    const result = await contactsService.sync(userId, body.contacts);
-    return reply.status(200).send(result);
-  });
+  fastify.post(
+    '/me/contacts/sync',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const userId = await requireAuth(request, reply);
+      const body = ContactSyncBody.parse(request.body);
+      const result = await contactsService.sync(userId, body.contacts);
+      return reply.status(200).send(result);
+    }
+  );
 }

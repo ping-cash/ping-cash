@@ -30,19 +30,24 @@ proposals/draft-X.md  →  proposals/<slug>.md (under discussion)  →  adr/NNNN
 **Status:** Draft | Under Review | Accepted (→ ADR XXXX) | Rejected
 
 ## Context
+
 What's the situation we're considering?
 
 ## Proposal
+
 What's the specific design / change?
 
 ## Alternatives
+
 What did we evaluate?
 
 ## Open Questions
+
 - [ ] Question 1
 - [ ] Question 2
 
 ## Decision Criteria
+
 What would make us choose this proposal over alternatives?
 ```
 
@@ -50,11 +55,11 @@ What would make us choose this proposal over alternatives?
 
 ## Active Proposals
 
-*(No active proposals.)*
+_(No active proposals.)_
 
 | Proposal | Author | Status | Last Updated |
-|---|---|---|---|
-| — | — | — | — |
+| -------- | ------ | ------ | ------------ |
+| —        | —      | —      | —            |
 
 ---
 
@@ -65,6 +70,7 @@ What would make us choose this proposal over alternatives?
 - When more than 2-3 alternatives need side-by-side comparison
 
 Don't write a proposal for:
+
 - Tactical code-organization questions (just open a PR)
 - Decisions that are already obvious from existing canon
 - Things the founder needs to decide directly (just ask the founder)

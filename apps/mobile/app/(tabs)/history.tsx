@@ -2,7 +2,14 @@
  * Activity / Transfers history screen.
  */
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, type Transfer } from '../../lib/api';
 
@@ -35,7 +42,11 @@ export default function HistoryScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#10B981" style={{ marginTop: 50 }} />
+        <ActivityIndicator
+          size="large"
+          color="#10B981"
+          style={{ marginTop: 50 }}
+        />
       </SafeAreaView>
     );
   }
@@ -44,15 +55,23 @@ export default function HistoryScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <FlatList
         data={transfers}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={transfers.length === 0 ? styles.emptyContainer : { padding: 16 }}
+        keyExtractor={item => item.id}
+        contentContainerStyle={
+          transfers.length === 0 ? styles.emptyContainer : { padding: 16 }
+        }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10B981" />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#10B981"
+          />
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No activity yet</Text>
-            <Text style={styles.emptySub}>Your sent and received transfers will appear here</Text>
+            <Text style={styles.emptySub}>
+              Your sent and received transfers will appear here
+            </Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -83,7 +102,12 @@ const styles = StyleSheet.create({
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyState: { padding: 32, alignItems: 'center' },
   emptyTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '700' },
-  emptySub: { color: '#A0A0C0', fontSize: 14, marginTop: 8, textAlign: 'center' },
+  emptySub: {
+    color: '#A0A0C0',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

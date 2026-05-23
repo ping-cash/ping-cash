@@ -35,19 +35,19 @@ export async function buildApp() {
     max: 100,
     timeWindow: '1 minute',
     redis,
-    keyGenerator: (request) => request.ip,
+    keyGenerator: request => request.ip,
   });
 
   app.setErrorHandler(errorHandler as never);
 
-  app.addHook('onRequest', async (request) => {
+  app.addHook('onRequest', async request => {
     request.log.info(
       {
         method: request.method,
         url: request.url,
         userAgent: request.headers['user-agent'],
       },
-      'Incoming request',
+      'Incoming request'
     );
   });
 

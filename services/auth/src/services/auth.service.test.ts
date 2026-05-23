@@ -75,10 +75,14 @@ vi.mock('../utils/redis', () => {
 });
 
 vi.mock('./twilio.service', () => ({
-  sendOtp: vi.fn().mockResolvedValue({ sid: 'twilio_mock_sid', status: 'pending' }),
-  verifyOtp: vi.fn().mockImplementation((_phone: string, code: string) =>
-    Promise.resolve(code === '123456'),
-  ),
+  sendOtp: vi
+    .fn()
+    .mockResolvedValue({ sid: 'twilio_mock_sid', status: 'pending' }),
+  verifyOtp: vi
+    .fn()
+    .mockImplementation((_phone: string, code: string) =>
+      Promise.resolve(code === '123456')
+    ),
 }));
 
 vi.mock('./privy.service', () => ({
@@ -95,13 +99,19 @@ import * as redisMock from '../utils/redis';
 import * as authService from './auth.service';
 
 const mockJwt = {
-  sign: vi.fn().mockImplementation((payload: object) => `mock_jwt_${JSON.stringify(payload).slice(0, 20)}`),
+  sign: vi
+    .fn()
+    .mockImplementation(
+      (payload: object) => `mock_jwt_${JSON.stringify(payload).slice(0, 20)}`
+    ),
 };
 const mockApp = { jwt: mockJwt as never };
 
 describe('auth.service.init', () => {
   beforeEach(() => {
-    (redisMock as unknown as { __resetMockState: () => void }).__resetMockState();
+    (
+      redisMock as unknown as { __resetMockState: () => void }
+    ).__resetMockState();
     vi.clearAllMocks();
   });
 
@@ -124,13 +134,17 @@ describe('auth.service.init', () => {
       await authService.init('+971501234567', '1.2.3.4');
     }
     // 6th should fail
-    await expect(authService.init('+971501234567', '1.2.3.4')).rejects.toThrow(/RATE_LIMITED|Too many/);
+    await expect(authService.init('+971501234567', '1.2.3.4')).rejects.toThrow(
+      /RATE_LIMITED|Too many/
+    );
   });
 });
 
 describe('auth.service.verify', () => {
   beforeEach(() => {
-    (redisMock as unknown as { __resetMockState: () => void }).__resetMockState();
+    (
+      redisMock as unknown as { __resetMockState: () => void }
+    ).__resetMockState();
     vi.clearAllMocks();
   });
 
@@ -139,7 +153,9 @@ describe('auth.service.verify', () => {
     const result = await authService.verify(init.sessionId, '123456', mockApp);
 
     expect(result.user.id).toMatch(/^usr_/);
-    expect(result.user.walletAddress).toBe('7xKp2mN9qL4rYzAhmd5xKp2mN9qL4rYzAhmd5xKp2');
+    expect(result.user.walletAddress).toBe(
+      '7xKp2mN9qL4rYzAhmd5xKp2mN9qL4rYzAhmd5xKp2'
+    );
     expect(result.tokens.accessToken).toBeTruthy();
     expect(result.tokens.refreshToken).toBeTruthy();
     expect(result.tokens.expiresIn).toBe(900);
@@ -155,42 +171,56 @@ describe('auth.service.verify', () => {
 
   it('rejects invalid OTP', async () => {
     const init = await authService.init('+971501234567', '1.2.3.4');
-    await expect(authService.verify(init.sessionId, '000000', mockApp)).rejects.toMatchObject({ code: 'INVALID_OTP' });
+    await expect(
+      authService.verify(init.sessionId, '000000', mockApp)
+    ).rejects.toMatchObject({ code: 'INVALID_OTP' });
   });
 
   it('rejects invalid OTP format', async () => {
     const init = await authService.init('+971501234567', '1.2.3.4');
-    await expect(authService.verify(init.sessionId, 'abc', mockApp)).rejects.toThrow();
-    await expect(authService.verify(init.sessionId, '12345', mockApp)).rejects.toThrow();
+    await expect(
+      authService.verify(init.sessionId, 'abc', mockApp)
+    ).rejects.toThrow();
+    await expect(
+      authService.verify(init.sessionId, '12345', mockApp)
+    ).rejects.toThrow();
   });
 
   it('rejects unknown session', async () => {
-    await expect(authService.verify('sess_does_not_exist', '123456', mockApp)).rejects.toMatchObject(
-      { code: 'SESSION_NOT_FOUND' },
-    );
+    await expect(
+      authService.verify('sess_does_not_exist', '123456', mockApp)
+    ).rejects.toMatchObject({ code: 'SESSION_NOT_FOUND' });
   });
 
   it('locks out after 5 failed attempts', async () => {
     const init = await authService.init('+971501234567', '1.2.3.4');
     for (let i = 0; i < 5; i++) {
-      await expect(authService.verify(init.sessionId, '000000', mockApp)).rejects.toThrow();
+      await expect(
+        authService.verify(init.sessionId, '000000', mockApp)
+      ).rejects.toThrow();
     }
     // 6th attempt should hit MAX_ATTEMPTS
-    await expect(authService.verify(init.sessionId, '123456', mockApp)).rejects.toMatchObject(
-      { code: 'MAX_ATTEMPTS' },
-    );
+    await expect(
+      authService.verify(init.sessionId, '123456', mockApp)
+    ).rejects.toMatchObject({ code: 'MAX_ATTEMPTS' });
   });
 });
 
 describe('auth.service.refresh', () => {
   beforeEach(() => {
-    (redisMock as unknown as { __resetMockState: () => void }).__resetMockState();
+    (
+      redisMock as unknown as { __resetMockState: () => void }
+    ).__resetMockState();
     vi.clearAllMocks();
   });
 
   it('issues new tokens via valid refresh token', async () => {
     const init = await authService.init('+971501234567', '1.2.3.4');
-    const verifyResult = await authService.verify(init.sessionId, '123456', mockApp);
+    const verifyResult = await authService.verify(
+      init.sessionId,
+      '123456',
+      mockApp
+    );
 
     // Extract jti — in real flow, jwt.verify would decode this
     // For the test, we just simulate the refresh path with a valid payload
@@ -211,13 +241,17 @@ describe('auth.service.refresh', () => {
 
   it('rejects revoked refresh token', async () => {
     const payload = { sub: 'usr_test', jti: 'revoked-jti' };
-    await expect(authService.refresh(payload, mockApp)).rejects.toMatchObject({ code: 'INVALID_REFRESH_TOKEN' });
+    await expect(authService.refresh(payload, mockApp)).rejects.toMatchObject({
+      code: 'INVALID_REFRESH_TOKEN',
+    });
   });
 });
 
 describe('auth.service.logout', () => {
   beforeEach(() => {
-    (redisMock as unknown as { __resetMockState: () => void }).__resetMockState();
+    (
+      redisMock as unknown as { __resetMockState: () => void }
+    ).__resetMockState();
     vi.clearAllMocks();
   });
 

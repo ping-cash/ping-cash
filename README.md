@@ -13,13 +13,13 @@
 
 ## The Problem
 
-| Service | Fee to send $200 | Speed |
-|---|---|---|
-| Western Union | $10-15 (5-7%) | 1-3 days |
-| Bank wire | $25-50 | 3-5 days |
-| PayPal | $6-10 (3-5%) | Instant |
-| Wise | $2-4 (1-2%) | Hours |
-| **Ping** | **$1-2 (<1%)** | **Seconds** |
+| Service       | Fee to send $200 | Speed       |
+| ------------- | ---------------- | ----------- |
+| Western Union | $10-15 (5-7%)    | 1-3 days    |
+| Bank wire     | $25-50           | 3-5 days    |
+| PayPal        | $6-10 (3-5%)     | Instant     |
+| Wise          | $2-4 (1-2%)      | Hours       |
+| **Ping**      | **$1-2 (<1%)**   | **Seconds** |
 
 > 300 million migrant workers send $700 billion home every year, losing **$40+ billion to fees**. We're building the rails to make that flow free.
 

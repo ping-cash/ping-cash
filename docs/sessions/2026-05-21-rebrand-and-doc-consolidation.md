@@ -19,6 +19,7 @@ Founder's original placeholder domain (`sociable.cash`) was taken. We ran a comb
 - Ranked by length × decomposition strength × TLD-lockability
 
 Founder rejected several iterations:
+
 - "Too India-corridor specific" (ghar, apna, yaar)
 - "Too family-only" (pamilya, familia, baytna)
 - "Sounds like PayPal" (anything with `-pal` suffix)
@@ -26,6 +27,7 @@ Founder rejected several iterations:
 Final pick: **`ping.cash`**. Brand reads "Ping" — the `.cash` TLD completes the brand-as-sentence. Universally recognizable verb in the messaging-app generation ("ping someone"). No PayPal echo.
 
 Research artifacts archived at:
+
 - [`../archive/2026-05-21-domain-search-results.csv`](../archive/2026-05-21-domain-search-results.csv) — 1,315 brand-safe names with TLD availability
 - [`../archive/2026-05-21-domain-ranking-full.txt`](../archive/2026-05-21-domain-ranking-full.txt) — 549 candidates with full scoring breakdown
 
@@ -60,17 +62,17 @@ Per [user-global CLAUDE.md §11](https://github.com/openova-io/openova/blob/main
 
 **Fold map:**
 
-| Predecessor | → Successor | Treatment |
-|---|---|---|
-| `docs/API.md` (1039L) | `docs/ARCHITECTURE.md § API Reference` | Inline merge, audit-trail header |
-| `docs/DATABASE.md` (865L) | `docs/ARCHITECTURE.md § Data Layer` | Inline merge |
-| `docs/FLOWS.md` (555L) | `docs/ARCHITECTURE.md § User Journeys` | Inline merge |
-| `docs/NFR.md` (1356L) | Split: `ARCHITECTURE.md` (design patterns, infra), `SECURITY.md` (security req), `SRE.md` (perf/SLO) | Split by topic |
-| `docs/BUSINESS.md` (417L) | `docs/BUSINESS-STRATEGY.md` | Inline merge |
-| `docs/STRATEGY.md` (519L) | `docs/BUSINESS-STRATEGY.md` | Inline merge |
-| `docs/COMPETITORS.md` (343L) | `docs/BUSINESS-STRATEGY.md` | Inline merge |
-| `docs/CASHFLOW.md` (465L) | Split: country fee tables → `BUSINESS-STRATEGY.md`, on/off-ramp arch → `ARCHITECTURE.md` | Split by topic |
-| `docs/DEV-ENVIRONMENT.md` (528L) | `docs/RUNBOOKS.md` | Inline merge |
+| Predecessor                      | → Successor                                                                                          | Treatment                        |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `docs/API.md` (1039L)            | `docs/ARCHITECTURE.md § API Reference`                                                               | Inline merge, audit-trail header |
+| `docs/DATABASE.md` (865L)        | `docs/ARCHITECTURE.md § Data Layer`                                                                  | Inline merge                     |
+| `docs/FLOWS.md` (555L)           | `docs/ARCHITECTURE.md § User Journeys`                                                               | Inline merge                     |
+| `docs/NFR.md` (1356L)            | Split: `ARCHITECTURE.md` (design patterns, infra), `SECURITY.md` (security req), `SRE.md` (perf/SLO) | Split by topic                   |
+| `docs/BUSINESS.md` (417L)        | `docs/BUSINESS-STRATEGY.md`                                                                          | Inline merge                     |
+| `docs/STRATEGY.md` (519L)        | `docs/BUSINESS-STRATEGY.md`                                                                          | Inline merge                     |
+| `docs/COMPETITORS.md` (343L)     | `docs/BUSINESS-STRATEGY.md`                                                                          | Inline merge                     |
+| `docs/CASHFLOW.md` (465L)        | Split: country fee tables → `BUSINESS-STRATEGY.md`, on/off-ramp arch → `ARCHITECTURE.md`             | Split by topic                   |
+| `docs/DEV-ENVIRONMENT.md` (528L) | `docs/RUNBOOKS.md`                                                                                   | Inline merge                     |
 
 **New keepers created:** `PRINCIPLES.md`, `DOD.md`, `STATUS.md`, `SECURITY.md`, `SRE.md`, `GLOSSARY.md`, `ROADMAP.md`.
 

@@ -8,6 +8,7 @@
 To deliver money to recipients in their local currency, we need an "off-ramp" — a service that takes USDC and pays out in PHP / INR / KES / NGN / etc. via local rails (mobile wallets, banks, cash pickup).
 
 Building our own off-ramps requires:
+
 - Money transmission licenses in EACH destination country (12-24 months per country, $300K-$1M each)
 - Local bank partnerships
 - Local payment-processor accounts
@@ -16,6 +17,7 @@ Building our own off-ramps requires:
 That's 2-3 years of work before we ship a single transfer. We need a partner.
 
 Off-ramp provider landscape:
+
 - **TransFi** — 70+ countries, mobile wallets + bank transfers, competitive rates, webhook support
 - **Wise Business API** — strong in EU/UK/US, less coverage in Africa/SEA
 - **Flutterwave** — Africa-focused, especially Nigeria
@@ -28,6 +30,7 @@ Off-ramp provider landscape:
 **Primary:** TransFi for cash-out across all Phase 1 corridors (PH, IN, PK, BD, KE).
 
 **Fallback strategy:**
+
 - **Wise** for EU/UK/US bank rails
 - **Flutterwave** for Africa backup (Nigeria, Ghana)
 - **Yellow Card** for Africa crypto-native rails
@@ -38,6 +41,7 @@ Provider failover is built into `offramp-service` — see [ARCHITECTURE.md § Of
 ## Consequences
 
 **Good:**
+
 - Single-provider integration to start (faster MVP)
 - TransFi covers all Phase 1 corridors
 - Webhook-based status updates fit our event-driven architecture
@@ -45,6 +49,7 @@ Provider failover is built into `offramp-service` — see [ARCHITECTURE.md § Of
 - They handle licensing in each country (we ride on their licenses for now)
 
 **Bad / trade-offs:**
+
 - Single-vendor risk — TransFi outage = our cash-out flow is down
 - Mitigation: failover logic + multi-provider strategy from day one (even if backup providers don't carry volume yet)
 - Margin compression — our 0.5% mobile-wallet fee is split with TransFi (we keep ~0.2%)

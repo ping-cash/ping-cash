@@ -5,7 +5,7 @@ export class AppError extends Error {
     public code: string,
     message: string,
     public status: number = 400,
-    public details?: Record<string, unknown>,
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -15,7 +15,11 @@ export class AppError extends Error {
 // Common errors specific to auth-service
 export const AuthErrors = {
   RateLimited: () =>
-    new AppError('RATE_LIMITED', 'Too many requests. Please try again later.', 429),
+    new AppError(
+      'RATE_LIMITED',
+      'Too many requests. Please try again later.',
+      429
+    ),
   InvalidPhone: () =>
     new AppError('INVALID_PHONE', 'Invalid phone number format.', 400),
   TwilioFailure: (details?: Record<string, unknown>) =>
@@ -27,11 +31,19 @@ export const AuthErrors = {
   OtpExpired: () =>
     new AppError('OTP_EXPIRED', 'Verification code has expired.', 400),
   MaxAttempts: () =>
-    new AppError('MAX_ATTEMPTS', 'Maximum verification attempts exceeded.', 429),
+    new AppError(
+      'MAX_ATTEMPTS',
+      'Maximum verification attempts exceeded.',
+      429
+    ),
   PrivyFailure: (details?: Record<string, unknown>) =>
     new AppError('PRIVY_FAILURE', 'Failed to create wallet.', 502, details),
   InvalidRefreshToken: () =>
-    new AppError('INVALID_REFRESH_TOKEN', 'Invalid or expired refresh token.', 401),
+    new AppError(
+      'INVALID_REFRESH_TOKEN',
+      'Invalid or expired refresh token.',
+      401
+    ),
   Unauthorized: () =>
     new AppError('UNAUTHORIZED', 'Authentication required.', 401),
 };
@@ -39,7 +51,7 @@ export const AuthErrors = {
 export function errorHandler(
   error: Error | FastifyError | AppError,
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ) {
   request.log.error({ err: error, url: request.url }, 'Request error');
 

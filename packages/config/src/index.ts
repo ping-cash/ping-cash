@@ -6,7 +6,9 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   // Environment
-  NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'test', 'staging', 'production'])
+    .default('development'),
 
   // Database
   POSTGRES_URL: z.string().url().optional(),
@@ -14,7 +16,10 @@ const envSchema = z.object({
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
 
   // Kafka
-  KAFKA_BROKERS: z.string().transform(s => s.split(',')).optional(),
+  KAFKA_BROKERS: z
+    .string()
+    .transform(s => s.split(','))
+    .optional(),
   KAFKA_CLIENT_ID: z.string().default('cash-platform'),
   KAFKA_GROUP_ID: z.string().optional(),
 
@@ -66,11 +71,19 @@ const envSchema = z.object({
   PERSONA_WEBHOOK_SECRET: z.string().optional(),
 
   // Blockchain
-  SOLANA_RPC_URL: z.string().url().default('https://api.mainnet-beta.solana.com'),
-  SOLANA_USDC_MINT: z.string().default('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
+  SOLANA_RPC_URL: z
+    .string()
+    .url()
+    .default('https://api.mainnet-beta.solana.com'),
+  SOLANA_USDC_MINT: z
+    .string()
+    .default('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
 
   // JWT
-  JWT_SECRET: z.string().min(32).default('dev-only-secret-32-characters-minimum-length-for-hs256'),
+  JWT_SECRET: z
+    .string()
+    .min(32)
+    .default('dev-only-secret-32-characters-minimum-length-for-hs256'),
   JWT_ACCESS_TOKEN_TTL: z.string().default('15m'),
   JWT_REFRESH_TOKEN_TTL: z.string().default('7d'),
 
@@ -89,9 +102,18 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().url().optional(),
 
   // Feature Flags
-  FEATURE_MULTI_CHAIN: z.string().transform(s => s === 'true').default('false'),
-  FEATURE_BANK_OFFRAMP: z.string().transform(s => s === 'true').default('false'),
-  FEATURE_RECURRING_TRANSFERS: z.string().transform(s => s === 'true').default('false'),
+  FEATURE_MULTI_CHAIN: z
+    .string()
+    .transform(s => s === 'true')
+    .default('false'),
+  FEATURE_BANK_OFFRAMP: z
+    .string()
+    .transform(s => s === 'true')
+    .default('false'),
+  FEATURE_RECURRING_TRANSFERS: z
+    .string()
+    .transform(s => s === 'true')
+    .default('false'),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -218,7 +240,14 @@ export const constants = {
 // Feature Flags
 // ============================================
 
-export function isFeatureEnabled(feature: keyof Pick<Env, 'FEATURE_MULTI_CHAIN' | 'FEATURE_BANK_OFFRAMP' | 'FEATURE_RECURRING_TRANSFERS'>): boolean {
+export function isFeatureEnabled(
+  feature: keyof Pick<
+    Env,
+    | 'FEATURE_MULTI_CHAIN'
+    | 'FEATURE_BANK_OFFRAMP'
+    | 'FEATURE_RECURRING_TRANSFERS'
+  >
+): boolean {
   const config = getConfig();
   return config[feature];
 }

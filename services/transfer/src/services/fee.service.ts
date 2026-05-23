@@ -27,38 +27,54 @@ export type CashOutMethod =
 export type Tier = 'bronze' | 'silver' | 'gold' | 'platinum';
 
 interface FeeRates {
-  totalPercent: number;     // 0.005 = 0.5%
-  providerPercent: number;  // 0.003 = 0.3%
-  markupPercent: number;    // 0.002 = 0.2%
+  totalPercent: number; // 0.005 = 0.5%
+  providerPercent: number; // 0.003 = 0.3%
+  markupPercent: number; // 0.002 = 0.2%
 }
 
 const FEE_TABLE: Record<CashOutMethod, FeeRates> = {
-  'in-network':     { totalPercent: 0,      providerPercent: 0,      markupPercent: 0 },
-  'phpc-direct':    { totalPercent: 0.001,  providerPercent: 0.0005, markupPercent: 0.0005 },
-  'mobile-wallet':  { totalPercent: 0.005,  providerPercent: 0.003,  markupPercent: 0.002 },
-  'bank-transfer':  { totalPercent: 0.0075, providerPercent: 0.004,  markupPercent: 0.0035 },
-  'cash-pickup':    { totalPercent: 0.01,   providerPercent: 0.007,  markupPercent: 0.003 },
+  'in-network': { totalPercent: 0, providerPercent: 0, markupPercent: 0 },
+  'phpc-direct': {
+    totalPercent: 0.001,
+    providerPercent: 0.0005,
+    markupPercent: 0.0005,
+  },
+  'mobile-wallet': {
+    totalPercent: 0.005,
+    providerPercent: 0.003,
+    markupPercent: 0.002,
+  },
+  'bank-transfer': {
+    totalPercent: 0.0075,
+    providerPercent: 0.004,
+    markupPercent: 0.0035,
+  },
+  'cash-pickup': {
+    totalPercent: 0.01,
+    providerPercent: 0.007,
+    markupPercent: 0.003,
+  },
 };
 
 // Per ADR 0013 — pay-in-PING discount on the (tier-discounted) markup
 export const PAY_IN_PING_FURTHER_DISCOUNT = 0.75;
 
 const TIER_DISCOUNT: Record<Tier, number> = {
-  bronze:   0,
-  silver:   0.5,
-  gold:     0.75,
+  bronze: 0,
+  silver: 0.5,
+  gold: 0.75,
   platinum: 0.9,
 };
 
 export interface FeeBreakdown {
   method: CashOutMethod;
   amountUsd: string;
-  providerCostUsd: string;     // Pass-through USDC
-  pingMarkupFullUsd: string;   // Before discounts
+  providerCostUsd: string; // Pass-through USDC
+  pingMarkupFullUsd: string; // Before discounts
   pingMarkupAfterTierUsd: string;
   pingMarkupAfterPayInPingUsd: string; // What user actually pays in $PING (Phase 2) / Ping Points (Phase 1)
   totalFeeUsd: string;
-  totalFeeAtBronze: string;    // What it would be with no discount
+  totalFeeAtBronze: string; // What it would be with no discount
   savingsVsBronzeUsd: string;
   payInPing: boolean;
   tier: Tier;

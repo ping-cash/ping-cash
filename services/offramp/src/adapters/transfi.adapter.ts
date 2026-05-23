@@ -22,7 +22,9 @@ import type {
 const config = loadConfig();
 
 // Mapping our internal method → TransFi's method codes
-const TRANSFI_METHOD_MAP: Partial<Record<CashOutMethod, { service: string; subservice: string }>> = {
+const TRANSFI_METHOD_MAP: Partial<
+  Record<CashOutMethod, { service: string; subservice: string }>
+> = {
   gcash: { service: 'mobile-wallet', subservice: 'GCASH_PH' },
   maya: { service: 'mobile-wallet', subservice: 'MAYA_PH' },
   'bdo-bank': { service: 'bank-transfer', subservice: 'PH_BDO' },
@@ -52,7 +54,7 @@ export const transfiAdapter: ProviderAdapter = {
     if (!apiKey || !apiSecret) {
       logger.info(
         { reference: request.reference, method: request.method },
-        '[STUB MODE] TransFi payout',
+        '[STUB MODE] TransFi payout'
       );
       return {
         reference: request.reference,
@@ -73,7 +75,7 @@ export const transfiAdapter: ProviderAdapter = {
       const response = await fetch('https://api.transfi.com/v1/payouts', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -97,8 +99,15 @@ export const transfiAdapter: ProviderAdapter = {
 
       if (!response.ok) {
         const errBody = await response.text();
-        logger.error({ status: response.status, body: errBody }, 'TransFi payout failed');
-        throw OfframpErrors.PayoutFailed({ provider: 'transfi', status: response.status, body: errBody });
+        logger.error(
+          { status: response.status, body: errBody },
+          'TransFi payout failed'
+        );
+        throw OfframpErrors.PayoutFailed({
+          provider: 'transfi',
+          status: response.status,
+          body: errBody,
+        });
       }
 
       const body = (await response.json()) as {
@@ -115,7 +124,10 @@ export const transfiAdapter: ProviderAdapter = {
         estimatedCompletionSeconds: (body.estimatedCompletionMinutes ?? 0) * 60,
       };
     } catch (err) {
-      logger.error({ err, reference: request.reference }, 'TransFi payout error');
+      logger.error(
+        { err, reference: request.reference },
+        'TransFi payout error'
+      );
       if (err instanceof Error && err.name === 'AppError') throw err;
       throw OfframpErrors.PayoutFailed({ message: (err as Error).message });
     }
@@ -124,7 +136,9 @@ export const transfiAdapter: ProviderAdapter = {
   verifyWebhook(payload: string, signature: string): boolean {
     const secret = config.TRANSFI_WEBHOOK_SECRET;
     if (!secret) {
-      logger.warn('TRANSFI_WEBHOOK_SECRET not set — accepting webhook (STUB MODE ONLY)');
+      logger.warn(
+        'TRANSFI_WEBHOOK_SECRET not set — accepting webhook (STUB MODE ONLY)'
+      );
       return true;
     }
     const expected = createHmac('sha256', secret).update(payload).digest('hex');
@@ -137,7 +151,11 @@ export const transfiAdapter: ProviderAdapter = {
     return result === 0;
   },
 
-  parseWebhook(payload: string): { reference: string; status: PayoutStatus; metadata?: Record<string, unknown> } {
+  parseWebhook(payload: string): {
+    reference: string;
+    status: PayoutStatus;
+    metadata?: Record<string, unknown>;
+  } {
     const parsed = JSON.parse(payload) as {
       orderId: string;
       status: string;

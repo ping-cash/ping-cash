@@ -47,29 +47,31 @@ User sees: "Received $200 from <sender>" — never sees the swap.
 ## Consequences
 
 **Good:**
+
 - Single integration covers iogrid + every future token tenant — no per-token adapter code
 - Solana ecosystem effect: as new local-currency stablecoins launch (cKES, cNGN, AE Coin), they integrate "for free" via Jupiter routing
 - User UX simplification: always sees their balance in USDC, never confused by multiple tokens
 - Cheapest local-currency routes (PHPC at 0.1% to Coins.ph) work mechanically
 
 **Bad / trade-offs:**
+
 - Slippage risk for very illiquid tokens — we cap at 0.5% but some long-tail tokens fail the swap. Mitigation: hold native, notify user, let them swap manually with custom slippage
 - Sandwich-attack exposure — Jupiter's MEV-protected mode adds ~50ms latency. Acceptable.
 - We forgo any "swap spread" we could capture on the incoming swap. Mitigation: this is the off-ramp leg, where iogrid's framing applies — Ping doesn't charge on the swap leg, only on the cash-out leg. The volume effect compensates.
 
 ## Per-token Routing Policy
 
-| Incoming token | Auto-swap target | Why |
-|---|---|---|
-| USDC | (no swap) | Already canonical |
-| USDT | USDC | Single accounting unit |
-| FDUSD | USDC | Single accounting unit |
-| PHPC | (no swap, special case) | PH off-ramp prefers PHPC direct (0.1% route to Coins.ph) |
-| cKES | USDC, then re-swap to cKES at cash-out if KE destination | Single ledger; route optimisation at outbound |
-| EURC / GBPT | USDC, then re-swap at cash-out | Same |
-| $GRID (iogrid) | USDC | Standard tenant pattern |
-| Any other SPL | USDC if liquid; held native + alert if not | Risk management |
-| Sanctions-blocked mints | Reject | OFAC compliance |
+| Incoming token          | Auto-swap target                                         | Why                                                      |
+| ----------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| USDC                    | (no swap)                                                | Already canonical                                        |
+| USDT                    | USDC                                                     | Single accounting unit                                   |
+| FDUSD                   | USDC                                                     | Single accounting unit                                   |
+| PHPC                    | (no swap, special case)                                  | PH off-ramp prefers PHPC direct (0.1% route to Coins.ph) |
+| cKES                    | USDC, then re-swap to cKES at cash-out if KE destination | Single ledger; route optimisation at outbound            |
+| EURC / GBPT             | USDC, then re-swap at cash-out                           | Same                                                     |
+| $GRID (iogrid)          | USDC                                                     | Standard tenant pattern                                  |
+| Any other SPL           | USDC if liquid; held native + alert if not               | Risk management                                          |
+| Sanctions-blocked mints | Reject                                                   | OFAC compliance                                          |
 
 ## Alternatives Considered
 

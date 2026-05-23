@@ -7,7 +7,7 @@ const config = getConfig();
 
 export const redis = new Redis(config.REDIS_URL, {
   maxRetriesPerRequest: 3,
-  retryStrategy: (times) => {
+  retryStrategy: times => {
     if (times > 3) {
       logger.error('Redis connection failed after 3 retries');
       return null;
@@ -20,7 +20,7 @@ redis.on('connect', () => {
   logger.info('Redis connected');
 });
 
-redis.on('error', (err) => {
+redis.on('error', err => {
   logger.error({ err }, 'Redis error');
 });
 

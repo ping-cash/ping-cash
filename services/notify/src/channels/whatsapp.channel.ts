@@ -23,7 +23,9 @@ export interface ChannelResult {
   error?: string;
 }
 
-export async function sendWhatsApp(input: WhatsAppSendInput): Promise<ChannelResult> {
+export async function sendWhatsApp(
+  input: WhatsAppSendInput
+): Promise<ChannelResult> {
   const phoneNumberId = config.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = config.WHATSAPP_ACCESS_TOKEN;
 
@@ -42,7 +44,7 @@ export async function sendWhatsApp(input: WhatsAppSendInput): Promise<ChannelRes
     const response = await fetch(`${GRAPH_API_URL}/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -56,7 +58,10 @@ export async function sendWhatsApp(input: WhatsAppSendInput): Promise<ChannelRes
 
     if (!response.ok) {
       const errBody = await response.text();
-      logger.error({ status: response.status, body: errBody }, 'WhatsApp API error');
+      logger.error(
+        { status: response.status, body: errBody },
+        'WhatsApp API error'
+      );
       return {
         channel: 'whatsapp',
         delivered: false,

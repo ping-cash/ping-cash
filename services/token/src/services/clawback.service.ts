@@ -30,10 +30,10 @@ const TIER_DISCOUNT: Record<Tier, number> = {
 };
 
 export interface FeeRecord {
-  timestamp: number;            // unix seconds when fee was paid
-  feeAmountUsd: number;         // full standard fee (before any discount)
+  timestamp: number; // unix seconds when fee was paid
+  feeAmountUsd: number; // full standard fee (before any discount)
   tierUsedAtTime: Tier;
-  discountReceivedUsd: number;  // standard - actual_paid
+  discountReceivedUsd: number; // standard - actual_paid
   pingBalanceAtTime: number;
 }
 
@@ -44,9 +44,9 @@ export interface BalanceSnapshot {
 
 export interface ClawbackInput {
   userId: string;
-  saleAmount: number;            // PING being sold
-  currentBalance: number;        // pre-sale total $PING balance
-  feeHistory: FeeRecord[];       // last 365 days
+  saleAmount: number; // PING being sold
+  currentBalance: number; // pre-sale total $PING balance
+  feeHistory: FeeRecord[]; // last 365 days
   balanceHistory: BalanceSnapshot[]; // for TWA computation
 }
 
@@ -80,13 +80,13 @@ function timeWeightedAverage(
   startTime: number,
   endTime: number,
   history: BalanceSnapshot[],
-  postSaleBalance: number,
+  postSaleBalance: number
 ): number {
   if (startTime >= endTime) return postSaleBalance;
 
   // Filter history to entries within the window
   const inWindow = history
-    .filter((h) => h.timestamp >= startTime && h.timestamp <= endTime)
+    .filter(h => h.timestamp >= startTime && h.timestamp <= endTime)
     .sort((a, b) => a.timestamp - b.timestamp);
 
   if (inWindow.length === 0) return postSaleBalance;
@@ -122,7 +122,10 @@ function timeWeightedAverage(
  * If the user has never used a higher tier (or sold so long ago all fees
  * are outside the 365-day window), clawback = 0.
  */
-export function computeClawback(input: ClawbackInput, pingPriceAtSale: number): ClawbackResult {
+export function computeClawback(
+  input: ClawbackInput,
+  pingPriceAtSale: number
+): ClawbackResult {
   const now = Math.floor(Date.now() / 1000);
   const postSaleBasis = input.currentBalance - input.saleAmount;
 
@@ -137,7 +140,7 @@ export function computeClawback(input: ClawbackInput, pingPriceAtSale: number): 
       fee.timestamp,
       now,
       input.balanceHistory,
-      postSaleBasis,
+      postSaleBasis
     );
 
     const fairTier = tierFromBalance(fairBasis);
@@ -160,7 +163,8 @@ export function computeClawback(input: ClawbackInput, pingPriceAtSale: number): 
     }
   }
 
-  const totalClawbackPing = pingPriceAtSale > 0 ? totalClawbackUsd / pingPriceAtSale : 0;
+  const totalClawbackPing =
+    pingPriceAtSale > 0 ? totalClawbackUsd / pingPriceAtSale : 0;
 
   return {
     totalClawbackUsd,

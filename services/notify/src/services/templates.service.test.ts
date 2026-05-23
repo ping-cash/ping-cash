@@ -64,6 +64,8 @@ describe('templates.service', () => {
   });
 
   it('throws on unknown template', () => {
-    expect(() => renderTemplate('NONEXISTENT' as never, 'sms', {})).toThrow(/Unknown template/);
+    expect(() => renderTemplate('NONEXISTENT' as never, 'sms', {})).toThrow(
+      /Unknown template/
+    );
   });
 });

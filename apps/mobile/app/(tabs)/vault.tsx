@@ -4,7 +4,14 @@
  * Per ADR 0012 (Earn Vault): non-custodial, auto-stake by default,
  * 40/60 split (40% Ping / 60% user paid in $PING).
  */
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Switch,
+} from 'react-native';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -36,7 +43,8 @@ export default function VaultScreen() {
             <View style={styles.settingTextArea}>
               <Text style={styles.settingTitle}>Auto-stake</Text>
               <Text style={styles.settingSub}>
-                Incoming USDC is automatically staked. Spending is instant via atomic unstake.
+                Incoming USDC is automatically staked. Spending is instant via
+                atomic unstake.
               </Text>
             </View>
             <Switch
@@ -54,10 +62,12 @@ export default function VaultScreen() {
             • Your USDC is deployed across Kamino, Marginfi, Aave, and Drift
           </Text>
           <Text style={styles.infoBullet}>
-            • You stay non-custodial — delegated authority can be revoked anytime
+            • You stay non-custodial — delegated authority can be revoked
+            anytime
           </Text>
           <Text style={styles.infoBullet}>
-            • Yield is auto-converted to $PING at the daily harvest (40% Ping / 60% you)
+            • Yield is auto-converted to $PING at the daily harvest (40% Ping /
+            60% you)
           </Text>
           <Text style={styles.infoBullet}>
             • Spending unstakes atomically in ~1 second — no waiting period
@@ -84,7 +94,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardLabel: { color: '#A0A0C0', fontSize: 14 },
-  cardValue: { color: '#10B981', fontSize: 48, fontWeight: '800', marginVertical: 4 },
+  cardValue: {
+    color: '#10B981',
+    fontSize: 48,
+    fontWeight: '800',
+    marginVertical: 4,
+  },
   cardSub: { color: '#A0A0C0', fontSize: 12 },
   statsRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
   statTile: {
@@ -94,7 +109,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statLabel: { color: '#A0A0C0', fontSize: 12 },
-  statValue: { color: '#FFFFFF', fontSize: 20, fontWeight: '700', marginTop: 4 },
+  statValue: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 4,
+  },
   settingsCard: {
     backgroundColor: '#2A2A4A',
     padding: 16,
@@ -111,7 +131,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 16,
   },
-  infoTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', marginBottom: 8 },
+  infoTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
   infoBullet: { color: '#A0A0C0', fontSize: 13, lineHeight: 20 },
   viewDashboardLink: { alignItems: 'center', marginTop: 24, padding: 16 },
   viewDashboardText: { color: '#10B981', fontSize: 13 },

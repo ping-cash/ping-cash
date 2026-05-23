@@ -36,7 +36,7 @@ async function main() {
   process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
-main().catch((err) => {
+main().catch(err => {
   console.error('Fatal error:', err);
   process.exit(1);
 });

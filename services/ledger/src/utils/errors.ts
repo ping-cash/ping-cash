@@ -5,7 +5,7 @@ export class AppError extends Error {
     public code: string,
     message: string,
     public status: number = 400,
-    public details?: Record<string, unknown>,
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -13,23 +13,30 @@ export class AppError extends Error {
 }
 
 export const LedgerErrors = {
-  Unauthorized: () => new AppError('UNAUTHORIZED', 'Authentication required.', 401),
+  Unauthorized: () =>
+    new AppError('UNAUTHORIZED', 'Authentication required.', 401),
   ImbalancedTransaction: (details: Record<string, unknown>) =>
     new AppError(
       'IMBALANCED_TRANSACTION',
       'Ledger entries do not balance — debits must equal credits per transaction.',
       400,
-      details,
+      details
     ),
   InsufficientFunds: (details?: Record<string, unknown>) =>
-    new AppError('INSUFFICIENT_FUNDS', 'Insufficient account balance.', 400, details),
-  AccountNotFound: () => new AppError('ACCOUNT_NOT_FOUND', 'Account not found.', 404),
+    new AppError(
+      'INSUFFICIENT_FUNDS',
+      'Insufficient account balance.',
+      400,
+      details
+    ),
+  AccountNotFound: () =>
+    new AppError('ACCOUNT_NOT_FOUND', 'Account not found.', 404),
 };
 
 export function errorHandler(
   error: Error | FastifyError | AppError,
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ) {
   request.log.error({ err: error, url: request.url }, 'Request error');
   if (error instanceof AppError) {

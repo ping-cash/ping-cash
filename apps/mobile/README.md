@@ -84,8 +84,8 @@ For testing on a physical phone behind a corporate VPN (the bastion's common set
 
 ## Common Issues
 
-| Symptom | Fix |
-|---|---|
+| Symptom                   | Fix                                                                |
+| ------------------------- | ------------------------------------------------------------------ |
 | "Network Error" on device | Verify the phone reaches the Sovereign API URL; check VPN / tunnel |
-| Metro bundler stuck | `npx expo start --clear` |
-| TypeScript errors | `pnpm typecheck` |
+| Metro bundler stuck       | `npx expo start --clear`                                           |
+| TypeScript errors         | `pnpm typecheck`                                                   |

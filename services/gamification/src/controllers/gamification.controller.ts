@@ -28,7 +28,7 @@ export async function gamificationRoutes(fastify: FastifyInstance) {
         milestones: progress,
         definitions: milestoneService.getMilestoneDefinitions(),
       });
-    },
+    }
   );
 
   // POST /gamification/events/transfer — consume transfer-completed event
@@ -38,7 +38,7 @@ export async function gamificationRoutes(fastify: FastifyInstance) {
       const body = TransferEventBody.parse(request.body);
       const result = await milestoneService.onTransferCompleted(body);
       return reply.status(200).send(result);
-    },
+    }
   );
 
   // POST /gamification/events/referral — consume referral activity event
@@ -48,7 +48,7 @@ export async function gamificationRoutes(fastify: FastifyInstance) {
       const body = ReferralEventBody.parse(request.body);
       const result = await milestoneService.onReferralActivity(body);
       return reply.status(200).send(result);
-    },
+    }
   );
 
   // POST /gamification/cron/daily — operator-triggered daily check
@@ -57,6 +57,6 @@ export async function gamificationRoutes(fastify: FastifyInstance) {
     async (_request: FastifyRequest, reply: FastifyReply) => {
       const result = await milestoneService.dailyCronCheck();
       return reply.status(200).send(result);
-    },
+    }
   );
 }

@@ -40,22 +40,28 @@ export async function buildApp() {
   app.setErrorHandler(errorHandler as never);
 
   // Request logging
-  app.addHook('onRequest', async (request) => {
-    request.log.info({
-      method: request.method,
-      url: request.url,
-      userAgent: request.headers['user-agent'],
-    }, 'Incoming request');
+  app.addHook('onRequest', async request => {
+    request.log.info(
+      {
+        method: request.method,
+        url: request.url,
+        userAgent: request.headers['user-agent'],
+      },
+      'Incoming request'
+    );
   });
 
   // Response logging
   app.addHook('onResponse', async (request, reply) => {
-    request.log.info({
-      method: request.method,
-      url: request.url,
-      statusCode: reply.statusCode,
-      responseTime: reply.elapsedTime,
-    }, 'Request completed');
+    request.log.info(
+      {
+        method: request.method,
+        url: request.url,
+        statusCode: reply.statusCode,
+        responseTime: reply.elapsedTime,
+      },
+      'Request completed'
+    );
   });
 
   // Routes

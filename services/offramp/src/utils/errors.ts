@@ -5,7 +5,7 @@ export class AppError extends Error {
     public code: string,
     message: string,
     public status: number = 400,
-    public details?: Record<string, unknown>,
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -14,12 +14,25 @@ export class AppError extends Error {
 
 export const OfframpErrors = {
   ProviderUnavailable: (provider: string) =>
-    new AppError('PROVIDER_UNAVAILABLE', `Provider ${provider} unavailable.`, 503),
+    new AppError(
+      'PROVIDER_UNAVAILABLE',
+      `Provider ${provider} unavailable.`,
+      503
+    ),
   AllProvidersFailed: () =>
-    new AppError('ALL_PROVIDERS_FAILED', 'All off-ramp providers are unavailable.', 503),
-  InvalidMethod: () => new AppError('INVALID_METHOD', 'Invalid cash-out method.', 400),
+    new AppError(
+      'ALL_PROVIDERS_FAILED',
+      'All off-ramp providers are unavailable.',
+      503
+    ),
+  InvalidMethod: () =>
+    new AppError('INVALID_METHOD', 'Invalid cash-out method.', 400),
   InvalidWebhookSignature: () =>
-    new AppError('INVALID_WEBHOOK_SIGNATURE', 'Webhook signature verification failed.', 401),
+    new AppError(
+      'INVALID_WEBHOOK_SIGNATURE',
+      'Webhook signature verification failed.',
+      401
+    ),
   PayoutFailed: (details?: Record<string, unknown>) =>
     new AppError('PAYOUT_FAILED', 'Provider payout failed.', 502, details),
 };
@@ -27,7 +40,7 @@ export const OfframpErrors = {
 export function errorHandler(
   error: Error | FastifyError | AppError,
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ) {
   request.log.error({ err: error, url: request.url }, 'Request error');
   if (error instanceof AppError) {
@@ -51,6 +64,10 @@ export function errorHandler(
     });
   }
   return reply.status(500).send({
-    error: { code: 'INTERNAL_ERROR', message: 'Unknown error', requestId: request.id },
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'Unknown error',
+      requestId: request.id,
+    },
   });
 }

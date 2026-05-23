@@ -11,7 +11,10 @@ const CreateClaimBody = z.object({
   amount: z.object({
     value: z.string().regex(/^\d+(\.\d{1,8})?$/),
     currency: z.string().min(3).max(8),
-    localValue: z.string().regex(/^\d+(\.\d{1,8})?$/).optional(),
+    localValue: z
+      .string()
+      .regex(/^\d+(\.\d{1,8})?$/)
+      .optional(),
     localCurrency: z.string().min(3).max(8).optional(),
     fxRate: z.number().optional(),
   }),
@@ -35,7 +38,7 @@ export async function claimRoutes(fastify: FastifyInstance) {
       const body = CreateClaimBody.parse(request.body);
       const result = await claimService.create(body);
       return reply.status(201).send(result);
-    },
+    }
   );
 
   // GET /claims/:code — public claim landing data
@@ -45,7 +48,7 @@ export async function claimRoutes(fastify: FastifyInstance) {
       const { code } = request.params as { code: string };
       const result = await claimService.getPublic(code, request.ip);
       return reply.status(200).send(result);
-    },
+    }
   );
 
   // POST /claims/:code/otp — request OTP delivery to the recipient phone
@@ -55,7 +58,7 @@ export async function claimRoutes(fastify: FastifyInstance) {
       const { code } = request.params as { code: string };
       const result = await claimService.requestOtp(code, request.ip);
       return reply.status(200).send(result);
-    },
+    }
   );
 
   // POST /claims/:code/verify — submit OTP, get verification token + cashout options
@@ -66,7 +69,7 @@ export async function claimRoutes(fastify: FastifyInstance) {
       const body = VerifyOtpBody.parse(request.body);
       const result = await claimService.verifyOtp(code, body.code);
       return reply.status(200).send(result);
-    },
+    }
   );
 
   // POST /claims/:code/cashout — execute the selected cash-out method
@@ -80,6 +83,6 @@ export async function claimRoutes(fastify: FastifyInstance) {
         ...body,
       });
       return reply.status(200).send(result);
-    },
+    }
   );
 }

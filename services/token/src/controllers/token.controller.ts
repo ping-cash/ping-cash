@@ -15,13 +15,13 @@ const ClawbackBody = z.object({
       tierUsedAtTime: z.enum(['bronze', 'silver', 'gold', 'platinum']),
       discountReceivedUsd: z.number().nonnegative(),
       pingBalanceAtTime: z.number().nonnegative(),
-    }),
+    })
   ),
   balanceHistory: z.array(
     z.object({
       timestamp: z.number().int().positive(),
       balance: z.number().nonnegative(),
-    }),
+    })
   ),
 });
 
@@ -43,15 +43,20 @@ export async function tokenRoutes(fastify: FastifyInstance) {
           feeHistory: body.feeHistory,
           balanceHistory: body.balanceHistory,
         },
-        body.pingPriceAtSale,
+        body.pingPriceAtSale
       );
       return reply.status(200).send(result);
-    },
+    }
   );
 
   // POST /token/tier — compute tier from a balance number
-  fastify.post('/tier', async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = TierBody.parse(request.body);
-    return reply.status(200).send({ balance: body.balance, tier: tierFromBalance(body.balance) });
-  });
+  fastify.post(
+    '/tier',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = TierBody.parse(request.body);
+      return reply
+        .status(200)
+        .send({ balance: body.balance, tier: tierFromBalance(body.balance) });
+    }
+  );
 }

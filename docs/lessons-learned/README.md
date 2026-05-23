@@ -26,11 +26,11 @@ One file per topic, named `<short-slug>.md`. Each entry follows:
 
 ## Index
 
-*(No lessons yet — entries will land as we accumulate operational experience.)*
+_(No lessons yet — entries will land as we accumulate operational experience.)_
 
 | Lesson | Date | Topic |
-|---|---|---|
-| — | — | — |
+| ------ | ---- | ----- |
+| —      | —    | —     |
 
 ---
 
@@ -42,6 +42,7 @@ One file per topic, named `<short-slug>.md`. Each entry follows:
 - When a vendor SLA / failure mode surprised us
 
 Don't write a lesson for:
+
 - Things obviously documented in upstream docs (Postgres syntax, K8s concepts)
 - One-off code bugs (those belong in commit messages)
 - Tactical decisions adequately covered by an ADR or runbook

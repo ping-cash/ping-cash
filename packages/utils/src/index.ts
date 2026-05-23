@@ -23,7 +23,8 @@ export const generateId = {
 };
 
 // Claim code: 12 alphanumeric characters
-const claimCodeAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+const claimCodeAlphabet =
+  'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
 const generateClaimCode = customAlphabet(claimCodeAlphabet, 12);
 
 export { generateClaimCode };
@@ -88,7 +89,10 @@ export function isValidPhone(phone: string): boolean {
 /**
  * Format amount with currency symbol
  */
-export function formatCurrency(amount: string | number, currency: string): string {
+export function formatCurrency(
+  amount: string | number,
+  currency: string
+): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
 
   const symbols: Record<string, string> = {
@@ -160,7 +164,8 @@ export function addDuration(date: Date, duration: string): Date {
  * Check if date is expired
  */
 export function isExpired(expiresAt: string | Date): boolean {
-  const expiry = typeof expiresAt === 'string' ? new Date(expiresAt) : expiresAt;
+  const expiry =
+    typeof expiresAt === 'string' ? new Date(expiresAt) : expiresAt;
   return expiry.getTime() < Date.now();
 }
 

@@ -49,11 +49,16 @@ function inferCountry(phone?: string): string {
 /**
  * Pick the ordered list of adapters that support the method+country.
  */
-export function selectAdapters(method: CashOutMethod, country: string): ProviderAdapter[] {
+export function selectAdapters(
+  method: CashOutMethod,
+  country: string
+): ProviderAdapter[] {
   const preferenceOrder = ROUTING_PREFERENCE[country] ?? ['transfi', 'wise'];
   const result: ProviderAdapter[] = [];
   for (const name of preferenceOrder) {
-    const adapter = ALL_ADAPTERS.find((a) => a.name === name && a.supports(method, country));
+    const adapter = ALL_ADAPTERS.find(
+      a => a.name === name && a.supports(method, country)
+    );
     if (adapter) result.push(adapter);
   }
   // Fallback: any adapter that supports the method
@@ -68,12 +73,17 @@ export function selectAdapters(method: CashOutMethod, country: string): Provider
 /**
  * Execute the payout with provider failover.
  */
-export async function executePayout(request: PayoutRequest): Promise<PayoutResult> {
+export async function executePayout(
+  request: PayoutRequest
+): Promise<PayoutResult> {
   const country = inferCountry(request.recipient.phone);
   const adapters = selectAdapters(request.method, country);
 
   if (adapters.length === 0) {
-    logger.error({ method: request.method, country }, 'No adapter supports this method+country');
+    logger.error(
+      { method: request.method, country },
+      'No adapter supports this method+country'
+    );
     throw OfframpErrors.InvalidMethod();
   }
 
@@ -82,8 +92,12 @@ export async function executePayout(request: PayoutRequest): Promise<PayoutResul
   for (const adapter of adapters) {
     try {
       logger.info(
-        { provider: adapter.name, method: request.method, reference: request.reference },
-        'Attempting payout',
+        {
+          provider: adapter.name,
+          method: request.method,
+          reference: request.reference,
+        },
+        'Attempting payout'
       );
       const result = await adapter.payout(request);
       logger.info(
@@ -93,13 +107,13 @@ export async function executePayout(request: PayoutRequest): Promise<PayoutResul
           providerReference: result.providerReference,
           status: result.status,
         },
-        'Payout succeeded',
+        'Payout succeeded'
       );
       return result;
     } catch (err) {
       logger.warn(
         { provider: adapter.name, err: (err as Error).message },
-        'Provider failed — trying next',
+        'Provider failed — trying next'
       );
       errors.push({ provider: adapter.name, error: err });
     }
@@ -113,5 +127,5 @@ export async function executePayout(request: PayoutRequest): Promise<PayoutResul
  * Look up an adapter by name (for webhook handling).
  */
 export function getAdapter(name: ProviderName): ProviderAdapter | null {
-  return ALL_ADAPTERS.find((a) => a.name === name) ?? null;
+  return ALL_ADAPTERS.find(a => a.name === name) ?? null;
 }

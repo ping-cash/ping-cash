@@ -13,6 +13,7 @@
 All of the following is the TARGET STATE that gets built. Build order reflects dependency chains, not "phase 1 vs phase 2" feature scoping — every feature ships to target-state quality the first time.
 
 ### Sender mobile app (React Native + Expo)
+
 - [ ] Phone OTP signup (Twilio Verify)
 - [ ] Privy MPC wallet creation
 - [ ] External wallet connect (Phantom / Solflare / Backpack)
@@ -30,6 +31,7 @@ All of the following is the TARGET STATE that gets built. Build order reflects d
 - [ ] Privy MPC recovery flow
 
 ### Web claim flow (Next.js)
+
 - [ ] Claim link landing (with sender + amount visible)
 - [ ] Phone OTP verification
 - [ ] Smart country detection from phone
@@ -40,6 +42,7 @@ All of the following is the TARGET STATE that gets built. Build order reflects d
 - [ ] "Get the app for free transfers" CTA (viral loop)
 
 ### Backend microservices
+
 - [ ] `auth-service` — phone OTP + JWT + Privy wallet bind
 - [ ] `user-service` — profiles + contacts + Ping Points balance
 - [ ] `kyc-service` — orchestrator using `dynolabs-io/kyc` SDK
@@ -58,6 +61,7 @@ All of the following is the TARGET STATE that gets built. Build order reflects d
 - [ ] `compliance-svc` — Chainalysis sanctions screening
 
 ### Solana smart contracts (Anchor / Rust)
+
 - [ ] Earn Vault program (auto-stake, harvest, 40/60 split, vUSDC mint)
 - [ ] Phase 2: $PING SPL Token-2022 with emission halving + transfer hooks
 - [ ] Phase 2: Welcome stake Streamflow contracts (per-user lockup)
@@ -66,6 +70,7 @@ All of the following is the TARGET STATE that gets built. Build order reflects d
 - [ ] Phase 2: Squads multisig + governance timelock contracts
 
 ### Off-ramp / Cash-out coverage (target)
+
 - [ ] Philippines: GCash, Maya, BDO/BPI/UnionBank/Metrobank, Cebuana (TransFi + PHPC direct)
 - [ ] India: UPI/IMPS, NEFT, Paytm, PhonePe (TransFi)
 - [ ] Pakistan: JazzCash, Easypaisa, Bank (TransFi)
@@ -77,6 +82,7 @@ All of the following is the TARGET STATE that gets built. Build order reflects d
 - [ ] Multi-chain expansion: TRON, Base (Wormhole NTT bridges)
 
 ### Infrastructure (deployed as Blueprints to Sovereign)
+
 - [ ] `platform/<service>/` Helm charts (one per microservice)
 - [ ] `products/bp-ping/blueprint.yaml` Blueprint manifest
 - [ ] `.github/workflows/build.yml` matrix-build + Blueprint publish + Sovereign SHA-bump PR
@@ -86,6 +92,7 @@ All of the following is the TARGET STATE that gets built. Build order reflects d
 - [ ] Status page at `status.ping.cash`
 
 ### Compliance + Trust
+
 - [ ] Persona KYC integration (Tier 1/2/3 flows)
 - [ ] Chainalysis sanctions screening on every transfer
 - [ ] OFAC + UN + EU sanctions list integration
@@ -96,6 +103,7 @@ All of the following is the TARGET STATE that gets built. Build order reflects d
 - [ ] OtterSec / Halborn audit of smart contracts (Phase 2 prerequisite)
 
 ### Growth + Network Effects
+
 - [ ] Welcome stake gamification (5 milestone unlocks)
 - [ ] Referral program with milestone tracking
 - [ ] WhatsApp Mini App (lower-friction onboarding)
@@ -103,6 +111,7 @@ All of the following is the TARGET STATE that gets built. Build order reflects d
 - [ ] Premium subscriptions (priority support, higher KYC tier limits, scheduled transfers)
 
 ### B2B / API (built in from day one, not deferred)
+
 - [ ] B2B API for embedded payroll / disbursement (Platinum tier requirement)
 - [ ] White-label solution scaffolding
 - [ ] Per-transfer API pricing ($0.10/transfer)
@@ -113,6 +122,7 @@ All of the following is the TARGET STATE that gets built. Build order reflects d
 ## Execution Sequence (NOT Feature Tiers — Just Build Order)
 
 ### Wave 1 — Foundation (Months 0-1)
+
 Per dependency analysis: foundation services must exist before any user-visible flow works.
 
 1. CI matrix workflow (per-service build + Blueprint publish + Sovereign SHA-PR)
@@ -125,6 +135,7 @@ Per dependency analysis: foundation services must exist before any user-visible 
 8. `dynolabs-io/kyc` shared service scaffold (separate repo, per [ADR 0011](adr/0011-kyc-shared-service.md))
 
 ### Wave 2 — Core money flows (Months 1-2)
+
 9. `transfer-service` (orchestration, fee calc, outbox events)
 10. `wallet-service` (balance indexer, Privy + external wallet support)
 11. `fx-service` (Pyth oracle, 0.4% spread, currency conversion)
@@ -133,6 +144,7 @@ Per dependency analysis: foundation services must exist before any user-visible 
 14. Initial Sovereign deploy + walks
 
 ### Wave 3 — Cash flows (Months 2-3)
+
 15. `claim-service` (claim links, OTP, recipient flow)
 16. `offramp-service` (TransFi integration first, then Wise + Flutterwave)
 17. `notify-service` (WhatsApp + SMS + Push)
@@ -140,12 +152,14 @@ Per dependency analysis: foundation services must exist before any user-visible 
 19. End-to-end walks: send $X from Dubai → recipient claims via WhatsApp → cashes to GCash
 
 ### Wave 4 — Token + Vault (Months 2-4 in parallel with above)
+
 20. Earn Vault Anchor program (auto-stake, harvest, 40/60 split, vUSDC mint)
 21. `earn-vault-svc` indexer + UX integration
 22. `token-svc` (Ping Points database for Phase 1, on-chain $PING reader for Phase 2)
 23. Gamification-service (welcome-stake milestone tracking)
 
 ### Wave 5 — Phase 2 token launch (Months 3-12)
+
 24. Cayman Foundation incorporation
 25. Engage crypto-fintech counsel (DLA Piper / Cooley / Latham)
 26. AML / KYC / Sanctions / Privacy policy drafting
@@ -162,6 +176,7 @@ Per dependency analysis: foundation services must exist before any user-visible 
 37. Earn Vault yield distribution switches to $PING
 
 ### Wave 6 — Scale (Year 2+)
+
 38. UAE DMCC entity + VARA license application
 39. Singapore Pte Ltd for Asia operations
 40. Wormhole NTT bridge to Base (Coinbase listing path)
@@ -174,6 +189,7 @@ Per dependency analysis: foundation services must exist before any user-visible 
 ## Operational Cadence
 
 ### Daily
+
 - Earn Vault harvest (40/60 split + $PING buyback distribution)
 - POMM heartbeat (price band check, intervene if outside)
 - Sanctions screening list refresh from Chainalysis
@@ -181,17 +197,20 @@ Per dependency analysis: foundation services must exist before any user-visible 
 - TRACKER / TRUST ledger cron refresh
 
 ### Weekly
+
 - Closed PR audit + Refs-vs-Closes verification
 - Coverage analysis per pillar
 - Founder review of TRACKER status
 
 ### Monthly
+
 - TRUST ledger walk-with-screenshot for each pillar
 - Provider partnership review (TransFi, Lean, Tarabut)
 - Treasury yield + revenue report
 - POMM intervention log review
 
 ### Quarterly
+
 - Foundation transparency report (treasury, burns, emissions)
 - Smart contract upgrade review (with 30-day timelock if changing)
 - Compliance audit (sanctions, AML, KYC)
@@ -201,12 +220,14 @@ Per dependency analysis: foundation services must exist before any user-visible 
 ## Strategic Priorities
 
 ### Year 1 — Establish Beachhead
+
 1. **Launch platform** (Phase 1 — no token) with GCC → PH/IN/PK/BD/KE corridors + Turkey corridor
 2. **Build network effects** via Welcome Stake gamification + referral milestones
 3. **Secure first 10K MAU + $2M monthly volume**
 4. **Incorporate Cayman Foundation** + draft tokenomics legal package
 
 ### Year 2 — Token Launch + Expand
+
 1. **$PING TGE** on Jupiter Launchpad + Raydium CLMM seeding
 2. **Earn Vault $PING yield distribution** activates
 3. **Add Africa corridors** (Kenya, Nigeria, Ghana, Tanzania, Uganda)
@@ -214,6 +235,7 @@ Per dependency analysis: foundation services must exist before any user-visible 
 5. **VARA license** application (UAE DMCC entity)
 
 ### Year 3 — Scale or Exit
+
 1. **500K MAU + $150M monthly volume + $1M+ MRR**
 2. **Strategic options:** continue scaling, acquisition target (GCash / Wise / bank), Series A/B raise
 3. **B2B API public availability** (Platinum tier embedded products)
@@ -222,14 +244,14 @@ Per dependency analysis: foundation services must exist before any user-visible 
 
 ## Decision Points (Forward-Looking)
 
-| Question | When We'll Know |
-|---|---|
-| Token launch timing (4-6 months after platform launch) | Once Foundation incorporated + audit complete |
-| Multi-chain expansion (Base, TRON) | When Solana TVL exceeds $50M or specific corridor demands it |
-| Add Stripe US / US corridors | When ready to invest in US MTL or partner |
-| Issue stablecoin pegged to local currency | Never — partner with existing local stablecoins (PHPC, cKES, etc.) |
-| Compete with TransFi (build own off-ramp) | When 2-3% partnership fees exceed our own license maintenance cost |
-| Acquisition exit | If valued > $500M at Year 3+ |
+| Question                                               | When We'll Know                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------------------ |
+| Token launch timing (4-6 months after platform launch) | Once Foundation incorporated + audit complete                      |
+| Multi-chain expansion (Base, TRON)                     | When Solana TVL exceeds $50M or specific corridor demands it       |
+| Add Stripe US / US corridors                           | When ready to invest in US MTL or partner                          |
+| Issue stablecoin pegged to local currency              | Never — partner with existing local stablecoins (PHPC, cKES, etc.) |
+| Compete with TransFi (build own off-ramp)              | When 2-3% partnership fees exceed our own license maintenance cost |
+| Acquisition exit                                       | If valued > $500M at Year 3+                                       |
 
 ---
 

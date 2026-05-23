@@ -84,7 +84,10 @@ describe('tier.service.computeFinalMarkup', () => {
   });
 
   it('platinum + pay-in-PING: 90% off then 75% off', () => {
-    expect(computeFinalMarkup(fullMarkup, 'platinum', true)).toBeCloseTo(0.02, 4);
+    expect(computeFinalMarkup(fullMarkup, 'platinum', true)).toBeCloseTo(
+      0.02,
+      4
+    );
   });
 
   it('PAY_IN_PING_FURTHER_DISCOUNT is exactly 0.75', () => {

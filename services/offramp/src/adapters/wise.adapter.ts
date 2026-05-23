@@ -22,7 +22,11 @@ import type {
 const config = loadConfig();
 
 const WISE_METHODS = new Set<CashOutMethod>([
-  'sepa', 'sepa-instant', 'uk-faster-payments', 'us-ach', 'us-wire',
+  'sepa',
+  'sepa-instant',
+  'uk-faster-payments',
+  'us-ach',
+  'us-wire',
 ]);
 
 export const wiseAdapter: ProviderAdapter = {
@@ -38,7 +42,7 @@ export const wiseAdapter: ProviderAdapter = {
     if (!apiKey) {
       logger.info(
         { reference: request.reference, method: request.method },
-        '[STUB MODE] Wise payout',
+        '[STUB MODE] Wise payout'
       );
       return {
         reference: request.reference,
@@ -52,7 +56,10 @@ export const wiseAdapter: ProviderAdapter = {
 
     // Real Wise API integration is more complex (quote → recipient → transfer)
     // For Phase 1 we stub it cleanly; real integration in Phase 2 expansion.
-    logger.info({ reference: request.reference }, '[PLACEHOLDER] Wise full integration');
+    logger.info(
+      { reference: request.reference },
+      '[PLACEHOLDER] Wise full integration'
+    );
     return {
       reference: request.reference,
       providerName: 'wise',
@@ -75,7 +82,10 @@ export const wiseAdapter: ProviderAdapter = {
   },
 
   parseWebhook(payload: string): { reference: string; status: PayoutStatus } {
-    const parsed = JSON.parse(payload) as { reference: string; current_state: string };
+    const parsed = JSON.parse(payload) as {
+      reference: string;
+      current_state: string;
+    };
     const statusMap: Record<string, PayoutStatus> = {
       incoming_payment_waiting: 'pending',
       processing: 'processing',

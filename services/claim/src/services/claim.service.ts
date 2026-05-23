@@ -23,9 +23,9 @@ import {
 
 import { sendClaimOtp, verifyClaimOtp } from './twilio.service';
 
-
 const CLAIM_CODE_LENGTH = 12;
-const CLAIM_CODE_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const CLAIM_CODE_ALPHABET =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const CLAIM_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
 
 /**
@@ -58,7 +58,13 @@ export async function create(input: {
   senderId: string;
   senderName?: string;
   recipientPhone: string;
-  amount: { value: string; currency: string; localValue?: string; localCurrency?: string; fxRate?: number };
+  amount: {
+    value: string;
+    currency: string;
+    localValue?: string;
+    localCurrency?: string;
+    fxRate?: number;
+  };
 }): Promise<{ code: string; url: string; expiresAt: number }> {
   // Generate unique code (retry on collision — improbable but safe)
   let code = generateClaimCode();
@@ -107,7 +113,7 @@ export async function create(input: {
  */
 export async function getPublic(
   code: string,
-  ip: string,
+  ip: string
 ): Promise<{
   code: string;
   status: string;
@@ -148,7 +154,10 @@ export async function getPublic(
  * Request OTP for a claim.
  * Sends to the recipient phone stored on the claim.
  */
-export async function requestOtp(code: string, ip: string): Promise<{ sent: true; attemptsRemaining: number; expiresIn: number }> {
+export async function requestOtp(
+  code: string,
+  ip: string
+): Promise<{ sent: true; attemptsRemaining: number; expiresIn: number }> {
   const record = await readClaim(code);
   if (!record) throw ClaimErrors.ClaimNotFound();
 
@@ -175,8 +184,12 @@ export async function requestOtp(code: string, ip: string): Promise<{ sent: true
  */
 export async function verifyOtp(
   code: string,
-  otpCode: string,
-): Promise<{ verified: true; verificationToken: string; cashoutMethods: Array<{ method: string; estimatedTime: string; fee: string }> }> {
+  otpCode: string
+): Promise<{
+  verified: true;
+  verificationToken: string;
+  cashoutMethods: Array<{ method: string; estimatedTime: string; fee: string }>;
+}> {
   const record = await readClaim(code);
   if (!record) throw ClaimErrors.ClaimNotFound();
 
@@ -259,7 +272,7 @@ export async function executeCashout(input: {
 
   logger.info(
     { code: input.code, method: input.method, offrampReference },
-    'Cash-out initiated',
+    'Cash-out initiated'
   );
 
   // In production: emit Kafka event to offramp-service via outbox in ledger-service
@@ -270,7 +283,9 @@ export async function executeCashout(input: {
   };
 }
 
-function inferCashoutMethods(phone: string): Array<{ method: string; estimatedTime: string; fee: string }> {
+function inferCashoutMethods(
+  phone: string
+): Array<{ method: string; estimatedTime: string; fee: string }> {
   // E.164 country code mapping → available methods
   if (phone.startsWith('+63')) {
     return [
@@ -307,12 +322,8 @@ function inferCashoutMethods(phone: string): Array<{ method: string; estimatedTi
     ];
   }
   if (phone.startsWith('+90')) {
-    return [
-      { method: 'turkish-bank', estimatedTime: 'Instant', fee: '0.75%' },
-    ];
+    return [{ method: 'turkish-bank', estimatedTime: 'Instant', fee: '0.75%' }];
   }
   // Default
-  return [
-    { method: 'bank-transfer', estimatedTime: '1-24 hrs', fee: '0.75%' },
-  ];
+  return [{ method: 'bank-transfer', estimatedTime: '1-24 hrs', fee: '0.75%' }];
 }

@@ -59,11 +59,16 @@ export async function getClaim(code: string): Promise<ClaimPublic> {
   return request<ClaimPublic>(`/claims/${code}`);
 }
 
-export async function requestOtp(code: string): Promise<{ sent: true; expiresIn: number }> {
+export async function requestOtp(
+  code: string
+): Promise<{ sent: true; expiresIn: number }> {
   return request(`/claims/${code}/otp`, { method: 'POST' });
 }
 
-export async function verifyOtp(code: string, otpCode: string): Promise<VerifyResult> {
+export async function verifyOtp(
+  code: string,
+  otpCode: string
+): Promise<VerifyResult> {
   return request<VerifyResult>(`/claims/${code}/verify`, {
     method: 'POST',
     body: JSON.stringify({ code: otpCode }),

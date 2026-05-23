@@ -7,15 +7,16 @@
 
 Cross-border remittance providers silently pocket 2-5% in FX spread between the interbank mid-market rate and the rate they offer customers. For migrant workers sending $200-500 home monthly, this hidden cost compounds to hundreds of dollars per year per user — far more than the visible "fee."
 
-| Provider | Typical FX margin |
-|---|---|
-| Banks | 2-4% |
-| Western Union | 2-4% |
-| MoneyGram | 2-3% |
-| Remitly | 1-2% |
-| Wise | 0.5-1% |
+| Provider      | Typical FX margin |
+| ------------- | ----------------- |
+| Banks         | 2-4%              |
+| Western Union | 2-4%              |
+| MoneyGram     | 2-3%              |
+| Remitly       | 1-2%              |
+| Wise          | 0.5-1%            |
 
 Founder explicit direction (2026-05-23):
+
 > "I think FX is the biggest profit margin silently milking the customers, I saw with my own eyes 5% remittance, this is insane. But we have to be merciful, we just need to compensate the real costs such as cash-in cash-out."
 
 This is a brand-defining decision. Most users will never read the FX rate disclosure, but the ones who DO compare rates (and tell their friends) will create the viral story that defines us against the incumbents.
@@ -24,13 +25,13 @@ This is a brand-defining decision. Most users will never read the FX rate disclo
 
 **Ping charges 0.4% FX spread — covering real cost only, no extractive margin.**
 
-| Spread component | Cost |
-|---|---|
-| Real liquidity provider cost (Jupiter routing on Raydium / Orca / Phoenix) | 0.10-0.20% |
-| Local-currency-stablecoin swap cost (e.g., USDC ↔ PHPC) | 0.10-0.20% |
-| Provider FX margin (when route hits TransFi / Wise / Bitso) | 0.15-0.25% |
-| **Real cost total** | **~0.20-0.40%** |
-| **Ping's user-facing FX spread** | **0.40% (at the high end of real cost)** |
+| Spread component                                                           | Cost                                     |
+| -------------------------------------------------------------------------- | ---------------------------------------- |
+| Real liquidity provider cost (Jupiter routing on Raydium / Orca / Phoenix) | 0.10-0.20%                               |
+| Local-currency-stablecoin swap cost (e.g., USDC ↔ PHPC)                    | 0.10-0.20%                               |
+| Provider FX margin (when route hits TransFi / Wise / Bitso)                | 0.15-0.25%                               |
+| **Real cost total**                                                        | **~0.20-0.40%**                          |
+| **Ping's user-facing FX spread**                                           | **0.40% (at the high end of real cost)** |
 
 We capture ZERO margin on FX in normal operations. If real cost drops (e.g., better liquidity), we don't reduce the 0.40% — we capture the difference. If real cost rises (e.g., volatile market), we eat the difference (don't pass through to user).
 
@@ -51,6 +52,7 @@ Ping                                      0.40% (cost-covering)
 ```
 
 On a $500 transfer, this delta:
+
 - vs Western Union (3% FX): saves $13
 - vs Wise (0.7% FX): saves $1.50
 
@@ -104,11 +106,11 @@ The 0.10-0.20% margin is razor-thin but non-negative. We never lose money on the
 
 Per BUSINESS-STRATEGY.md, FX was projected at 30% of total revenue (0.5% spread baseline). At 0.4% spread:
 
-| Year | Volume | FX revenue (0.5% baseline) | FX revenue (0.4% actual) | Delta |
-|---|---|---|---|---|
-| Year 1 | $2M | $10,000 | $8,000 | -$2,000 |
-| Year 2 | $30M | $150,000 | $120,000 | -$30,000 |
-| Year 3 | $150M | $750,000 | $600,000 | -$150,000 |
+| Year   | Volume | FX revenue (0.5% baseline) | FX revenue (0.4% actual) | Delta     |
+| ------ | ------ | -------------------------- | ------------------------ | --------- |
+| Year 1 | $2M    | $10,000                    | $8,000                   | -$2,000   |
+| Year 2 | $30M   | $150,000                   | $120,000                 | -$30,000  |
+| Year 3 | $150M  | $750,000                   | $600,000                 | -$150,000 |
 
 We give up ~$180K over 3 years in FX revenue. We make this up via:
 
@@ -121,6 +123,7 @@ We give up ~$180K over 3 years in FX revenue. We make this up via:
 ## Hard Floor
 
 We never settle below cost. If real FX cost spikes above 0.40% (unusual market conditions), we either:
+
 1. Eat the loss for low-volume transfers (acceptable absorption)
 2. Pause the route and route via alternative (TransFi instead of direct Jupiter swap, or vice-versa)
 
@@ -136,6 +139,7 @@ In no case do we increase the 0.40% spread to compensate. The 0.40% commitment i
 ## Consequences
 
 **Good:**
+
 - Brand-defining transparency — single biggest competitive moat
 - Builds trust with migrant-worker target users (they feel respected, not milked)
 - Viral story: word-of-mouth conversion of skeptics
@@ -143,6 +147,7 @@ In no case do we increase the 0.40% spread to compensate. The 0.40% commitment i
 - Drives users to send larger amounts more frequently (lower per-transfer FX cost = more volume)
 
 **Bad / trade-offs:**
+
 - Foregoes ~$180K cumulative FX revenue over 3 years (above)
 - Razor-thin margin on FX leg (0.10-0.20%) — vulnerable to market shocks
 - Operational complexity in maintaining sub-cost routing in volatile markets

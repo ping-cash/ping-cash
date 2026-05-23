@@ -5,7 +5,7 @@ export class AppError extends Error {
     public code: string,
     message: string,
     public status: number = 400,
-    public details?: Record<string, unknown>,
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -14,9 +14,18 @@ export class AppError extends Error {
 
 export const NotifyErrors = {
   ChannelFailed: (channel: string, details?: Record<string, unknown>) =>
-    new AppError('CHANNEL_FAILED', `Notification failed on ${channel}.`, 502, details),
+    new AppError(
+      'CHANNEL_FAILED',
+      `Notification failed on ${channel}.`,
+      502,
+      details
+    ),
   AllChannelsFailed: () =>
-    new AppError('ALL_CHANNELS_FAILED', 'All notification channels failed.', 502),
+    new AppError(
+      'ALL_CHANNELS_FAILED',
+      'All notification channels failed.',
+      502
+    ),
   UnknownTemplate: (template: string) =>
     new AppError('UNKNOWN_TEMPLATE', `Unknown template: ${template}`, 400),
 };
@@ -24,7 +33,7 @@ export const NotifyErrors = {
 export function errorHandler(
   error: Error | FastifyError | AppError,
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ) {
   request.log.error({ err: error, url: request.url }, 'Request error');
   if (error instanceof AppError) {
@@ -48,6 +57,10 @@ export function errorHandler(
     });
   }
   return reply.status(500).send({
-    error: { code: 'INTERNAL_ERROR', message: 'Unknown error', requestId: request.id },
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'Unknown error',
+      requestId: request.id,
+    },
   });
 }

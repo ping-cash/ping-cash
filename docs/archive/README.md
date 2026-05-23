@@ -14,10 +14,10 @@ Files named `<YYYY-MM-DD>-<short-slug>.<ext>`.
 
 ## Index
 
-| File | Date | Origin | Why Archived |
-|---|---|---|---|
-| [`2026-05-21-domain-search-results.csv`](2026-05-21-domain-search-results.csv) | 2026-05-21 | Domain brainstorm session | Research artifact — 1,315 brand-safe `.com/.app/.money/.io/.cash` candidates with TLD availability |
-| [`2026-05-21-domain-ranking-full.txt`](2026-05-21-domain-ranking-full.txt) | 2026-05-21 | Domain brainstorm session | Research artifact — 549 candidates with full scoring breakdown (length, decomposition, TLD bonus, penalties) |
+| File                                                                           | Date       | Origin                    | Why Archived                                                                                                 |
+| ------------------------------------------------------------------------------ | ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [`2026-05-21-domain-search-results.csv`](2026-05-21-domain-search-results.csv) | 2026-05-21 | Domain brainstorm session | Research artifact — 1,315 brand-safe `.com/.app/.money/.io/.cash` candidates with TLD availability           |
+| [`2026-05-21-domain-ranking-full.txt`](2026-05-21-domain-ranking-full.txt)     | 2026-05-21 | Domain brainstorm session | Research artifact — 549 candidates with full scoring breakdown (length, decomposition, TLD bonus, penalties) |
 
 ---
 

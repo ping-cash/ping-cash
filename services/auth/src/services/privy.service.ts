@@ -36,12 +36,17 @@ export interface PrivyUserBindResult {
  *
  * In stub mode, returns a fake wallet address.
  */
-export async function bindPhoneToWallet(phone: string): Promise<PrivyUserBindResult> {
+export async function bindPhoneToWallet(
+  phone: string
+): Promise<PrivyUserBindResult> {
   const client = getClient();
 
   if (!client) {
     const stubAddr = `Stub${Buffer.from(phone).toString('hex').slice(0, 40)}`;
-    logger.info({ phone, stubAddr }, '[STUB MODE] Would create/fetch Privy wallet');
+    logger.info(
+      { phone, stubAddr },
+      '[STUB MODE] Would create/fetch Privy wallet'
+    );
     return {
       privyUserId: `did:privy:stub:${phone}`,
       walletAddress: stubAddr,
@@ -65,21 +70,28 @@ export async function bindPhoneToWallet(phone: string): Promise<PrivyUserBindRes
     }
 
     if (!user) {
-      throw AuthErrors.PrivyFailure({ message: 'Privy user lookup returned null' });
+      throw AuthErrors.PrivyFailure({
+        message: 'Privy user lookup returned null',
+      });
     }
 
     // Find the Solana wallet
     const solanaWallet = user.linkedAccounts.find(
-      (a: { type: string }) => a.type === 'wallet' && 'chainType' in a && (a as { chainType: string }).chainType === 'solana',
+      (a: { type: string }) =>
+        a.type === 'wallet' &&
+        'chainType' in a &&
+        (a as { chainType: string }).chainType === 'solana'
     ) as { address: string } | undefined;
 
     if (!solanaWallet) {
-      throw AuthErrors.PrivyFailure({ message: 'No Solana wallet found on user' });
+      throw AuthErrors.PrivyFailure({
+        message: 'No Solana wallet found on user',
+      });
     }
 
     logger.info(
       { privyUserId: user.id, walletAddress: solanaWallet.address, isNewUser },
-      'Privy wallet bound',
+      'Privy wallet bound'
     );
 
     return {

@@ -29,8 +29,8 @@ export type ScreeningResult = 'clean' | 'hit' | 'inconclusive';
 
 export interface ScreeningOutcome {
   result: ScreeningResult;
-  listsHit: string[];          // ['OFAC_SDN', 'UN_CONSOLIDATED', 'EU_RESTRICTIVE']
-  riskScore: number;            // 0-100
+  listsHit: string[]; // ['OFAC_SDN', 'UN_CONSOLIDATED', 'EU_RESTRICTIVE']
+  riskScore: number; // 0-100
   details?: Record<string, unknown>;
   source: 'chainalysis' | 'ofac-direct' | 'stub';
   checkedAt: number;
@@ -42,14 +42,19 @@ export interface ScreeningOutcome {
  *
  * Stub mode when CHAINALYSIS_API_KEY missing.
  */
-export async function screenWallet(input: ScreenWalletInput): Promise<ScreeningOutcome> {
+export async function screenWallet(
+  input: ScreenWalletInput
+): Promise<ScreeningOutcome> {
   const apiKey = config.CHAINALYSIS_API_KEY;
   const now = Math.floor(Date.now() / 1000);
 
   if (!apiKey) {
     // Stub mode: simulate clean for most addresses; flag if matches known test sanction prefix
     const testSanctioned = input.walletAddress.startsWith('Sanctioned');
-    logger.info({ walletAddress: input.walletAddress }, '[STUB MODE] Sanctions screen');
+    logger.info(
+      { walletAddress: input.walletAddress },
+      '[STUB MODE] Sanctions screen'
+    );
     return {
       result: testSanctioned ? 'hit' : 'clean',
       listsHit: testSanctioned ? ['OFAC_SDN_STUB'] : [],
@@ -64,14 +69,17 @@ export async function screenWallet(input: ScreenWalletInput): Promise<ScreeningO
       `https://api.chainalysis.com/api/risk/v2/entities/${input.walletAddress}`,
       {
         headers: {
-          'Token': apiKey,
-          'Accept': 'application/json',
+          Token: apiKey,
+          Accept: 'application/json',
         },
-      },
+      }
     );
 
     if (!response.ok) {
-      logger.warn({ status: response.status }, 'Chainalysis API failed — defaulting to inconclusive');
+      logger.warn(
+        { status: response.status },
+        'Chainalysis API failed — defaulting to inconclusive'
+      );
       return {
         result: 'inconclusive',
         listsHit: [],
@@ -88,7 +96,8 @@ export async function screenWallet(input: ScreenWalletInput): Promise<ScreeningO
     };
 
     const result: ScreeningResult = body.risk === 'Severe' ? 'hit' : 'clean';
-    const riskScore = { Severe: 100, High: 80, Medium: 40, Low: 10 }[body.risk] ?? 0;
+    const riskScore =
+      { Severe: 100, High: 80, Medium: 40, Low: 10 }[body.risk] ?? 0;
 
     return {
       result,
@@ -117,7 +126,9 @@ export async function screenWallet(input: ScreenWalletInput): Promise<ScreeningO
  * Phase 1 stub. Phase 2: integrate with a name-screening provider
  * (Refinitiv World-Check, Dow Jones Risk & Compliance, etc.)
  */
-export async function screenName(input: ScreenNameInput): Promise<ScreeningOutcome> {
+export async function screenName(
+  input: ScreenNameInput
+): Promise<ScreeningOutcome> {
   const now = Math.floor(Date.now() / 1000);
 
   logger.info({ fullName: input.fullName }, '[STUB] Sanctions screen by name');
@@ -155,7 +166,10 @@ export async function checkTransferAllowance(input: {
   let maxRisk = 0;
 
   // Screen sender wallet
-  const senderScreen = await screenWallet({ walletAddress: input.senderWallet, chain: 'solana' });
+  const senderScreen = await screenWallet({
+    walletAddress: input.senderWallet,
+    chain: 'solana',
+  });
   walletScreenings.push(senderScreen);
   maxRisk = Math.max(maxRisk, senderScreen.riskScore);
 
@@ -170,7 +184,10 @@ export async function checkTransferAllowance(input: {
 
   // Screen recipient wallet if provided (for in-network transfers)
   if (input.recipientWallet) {
-    const recipientScreen = await screenWallet({ walletAddress: input.recipientWallet, chain: 'solana' });
+    const recipientScreen = await screenWallet({
+      walletAddress: input.recipientWallet,
+      chain: 'solana',
+    });
     walletScreenings.push(recipientScreen);
     maxRisk = Math.max(maxRisk, recipientScreen.riskScore);
 

@@ -3,7 +3,7 @@ import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 export function errorHandler(
   error: Error | FastifyError,
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ) {
   request.log.error({ err: error }, 'Request error');
   if ('validation' in error && error.validation) {
@@ -17,6 +17,10 @@ export function errorHandler(
     });
   }
   return reply.status(500).send({
-    error: { code: 'INTERNAL_ERROR', message: error.message ?? 'Unknown', requestId: request.id },
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: error.message ?? 'Unknown',
+      requestId: request.id,
+    },
   });
 }

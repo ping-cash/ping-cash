@@ -11,7 +11,11 @@
 import { logger } from '../utils/logger';
 import { prisma } from '../utils/prisma';
 
-import { validateBalanced, type EntryType, type LedgerEntryInput } from './validation';
+import {
+  validateBalanced,
+  type EntryType,
+  type LedgerEntryInput,
+} from './validation';
 
 // eslint-disable-next-line import/order
 import { Decimal } from '.prisma/ledger-client/runtime/library';
@@ -21,7 +25,13 @@ export { validateBalanced };
 
 export interface CommitInput {
   transactionId: string;
-  transactionType: 'transfer' | 'fee' | 'yield' | 'offramp' | 'refund' | 'welcome_grant';
+  transactionType:
+    | 'transfer'
+    | 'fee'
+    | 'yield'
+    | 'offramp'
+    | 'refund'
+    | 'welcome_grant';
   entries: LedgerEntryInput[];
   metadata?: Record<string, unknown>;
   outboxEvent?: {
@@ -39,11 +49,13 @@ export interface CommitInput {
  * All in a single PostgreSQL transaction. If any step fails (including the
  * balance check or running-balance update), the whole transaction rolls back.
  */
-export async function commit(input: CommitInput): Promise<{ entryIds: string[]; outboxId?: string }> {
+export async function commit(
+  input: CommitInput
+): Promise<{ entryIds: string[]; outboxId?: string }> {
   // Validate balance invariant at the boundary
   validateBalanced(input.entries);
 
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async tx => {
     const entryIds: string[] = [];
 
     for (const e of input.entries) {
@@ -58,9 +70,10 @@ export async function commit(input: CommitInput): Promise<{ entryIds: string[]; 
       });
 
       const balanceBefore = last?.balanceAfter ?? new Decimal(0);
-      const delta = e.entryType === 'DEBIT'
-        ? new Decimal(e.amount).neg() // DEBIT reduces user wallet (or it's an outflow from the account)
-        : new Decimal(e.amount);       // CREDIT increases
+      const delta =
+        e.entryType === 'DEBIT'
+          ? new Decimal(e.amount).neg() // DEBIT reduces user wallet (or it's an outflow from the account)
+          : new Decimal(e.amount); // CREDIT increases
 
       // For accounting clarity: a "user_wallet" DEBIT means the user is sending money out.
       // This convention is configurable per accountType if needed.
@@ -106,7 +119,7 @@ export async function commit(input: CommitInput): Promise<{ entryIds: string[]; 
         entryCount: input.entries.length,
         outboxId,
       },
-      'Ledger entries committed',
+      'Ledger entries committed'
     );
 
     return { entryIds, outboxId };
@@ -116,7 +129,10 @@ export async function commit(input: CommitInput): Promise<{ entryIds: string[]; 
 /**
  * Read current balance for an account+currency.
  */
-export async function getBalance(accountId: string, currency = 'USDC'): Promise<string> {
+export async function getBalance(
+  accountId: string,
+  currency = 'USDC'
+): Promise<string> {
   const last = await prisma.ledgerEntry.findFirst({
     where: { accountId, currency },
     orderBy: { createdAt: 'desc' },
@@ -130,7 +146,7 @@ export async function getBalance(accountId: string, currency = 'USDC'): Promise<
  */
 export async function getTransactions(
   accountId: string,
-  options: { currency?: string; limit?: number; cursor?: string } = {},
+  options: { currency?: string; limit?: number; cursor?: string } = {}
 ): Promise<{
   entries: Array<{
     id: string;
@@ -160,7 +176,7 @@ export async function getTransactions(
   const slice = items.slice(0, limit);
 
   return {
-    entries: slice.map((e) => ({
+    entries: slice.map(e => ({
       id: e.id,
       transactionId: e.transactionId,
       transactionType: e.transactionType,

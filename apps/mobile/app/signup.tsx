@@ -25,7 +25,10 @@ export default function SignupScreen() {
 
   const handleSubmit = async () => {
     if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
-      Alert.alert('Invalid phone', 'Please enter your phone number in international format (e.g. +971501234567)');
+      Alert.alert(
+        'Invalid phone',
+        'Please enter your phone number in international format (e.g. +971501234567)'
+      );
       return;
     }
     setLoading(true);
@@ -50,7 +53,9 @@ export default function SignupScreen() {
       >
         <View style={styles.content}>
           <Text style={styles.title}>Welcome to Ping</Text>
-          <Text style={styles.subtitle}>Enter your phone number to get started</Text>
+          <Text style={styles.subtitle}>
+            Enter your phone number to get started
+          </Text>
 
           <Text style={styles.label}>Phone number</Text>
           <TextInput

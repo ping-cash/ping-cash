@@ -96,7 +96,10 @@ export async function init(phone: string, ip: string): Promise<InitResult> {
     createdAt: Date.now(),
   });
 
-  logger.info({ sessionId, phoneMasked: maskPhone(phone) }, 'OTP session created');
+  logger.info(
+    { sessionId, phoneMasked: maskPhone(phone) },
+    'OTP session created'
+  );
 
   return {
     sessionId,
@@ -111,7 +114,14 @@ export async function init(phone: string, ip: string): Promise<InitResult> {
 export async function verify(
   sessionId: string,
   code: string,
-  app: { jwt: { sign: (payload: Record<string, unknown>, opts?: Record<string, unknown>) => string } },
+  app: {
+    jwt: {
+      sign: (
+        payload: Record<string, unknown>,
+        opts?: Record<string, unknown>
+      ) => string;
+    };
+  }
 ): Promise<VerifyResult> {
   // Look up session
   const session = await readOtpSession(sessionId);
@@ -161,7 +171,7 @@ export async function verify(
       jti,
       type: 'refresh',
     },
-    { expiresIn: config.JWT_REFRESH_TOKEN_TTL ?? '7d' },
+    { expiresIn: config.JWT_REFRESH_TOKEN_TTL ?? '7d' }
   );
 
   // Store refresh token jti in Redis (for revocation tracking)
@@ -175,8 +185,12 @@ export async function verify(
   await deleteOtpSession(sessionId);
 
   logger.info(
-    { userId, walletAddress: privyResult.walletAddress, isNewUser: privyResult.isNewUser },
-    'User authenticated',
+    {
+      userId,
+      walletAddress: privyResult.walletAddress,
+      isNewUser: privyResult.isNewUser,
+    },
+    'User authenticated'
   );
 
   return {
@@ -202,7 +216,14 @@ export async function verify(
  */
 export async function refresh(
   refreshTokenPayload: { sub: string; jti: string },
-  app: { jwt: { sign: (payload: Record<string, unknown>, opts?: Record<string, unknown>) => string } },
+  app: {
+    jwt: {
+      sign: (
+        payload: Record<string, unknown>,
+        opts?: Record<string, unknown>
+      ) => string;
+    };
+  }
 ): Promise<RefreshResult & { refreshToken: string }> {
   // Check the refresh token jti is still valid (not revoked)
   const record = await readRefreshToken(refreshTokenPayload.jti);
@@ -226,7 +247,7 @@ export async function refresh(
       jti: newJti,
       type: 'refresh',
     },
-    { expiresIn: config.JWT_REFRESH_TOKEN_TTL ?? '7d' },
+    { expiresIn: config.JWT_REFRESH_TOKEN_TTL ?? '7d' }
   );
 
   await storeRefreshToken(newJti, {

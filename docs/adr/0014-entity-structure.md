@@ -61,15 +61,15 @@ Three-entity structure:
 
 **Purpose:** Token issuer + governance + long-term treasury custodian
 
-| Responsibility | Detail |
-|---|---|
-| Token issuance | $PING SPL mint authority (later transferred to immutable contract) |
-| Treasury custody | 10% supply Treasury (Squads multisig) + 5% Foundation reserve (10y Streamflow lock) |
-| Governance | Parameter changes to POMM, Earn Vault, tier thresholds (with timelock) |
-| Tech IP license | Holds the source code / trademark for Ping; licenses to operating entities |
-| Bug bounty + audit funding | Pays OtterSec / Halborn / Immunefi |
-| Compliance posture | Geo-block US persons; Reg D/S compliance for any token sale |
-| Banking | Single Cayman bank account for Foundation operating expenses |
+| Responsibility             | Detail                                                                              |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| Token issuance             | $PING SPL mint authority (later transferred to immutable contract)                  |
+| Treasury custody           | 10% supply Treasury (Squads multisig) + 5% Foundation reserve (10y Streamflow lock) |
+| Governance                 | Parameter changes to POMM, Earn Vault, tier thresholds (with timelock)              |
+| Tech IP license            | Holds the source code / trademark for Ping; licenses to operating entities          |
+| Bug bounty + audit funding | Pays OtterSec / Halborn / Immunefi                                                  |
+| Compliance posture         | Geo-block US persons; Reg D/S compliance for any token sale                         |
+| Banking                    | Single Cayman bank account for Foundation operating expenses                        |
 
 **Setup:** ~$5-10K incorporation + $3-5K/year, 2-6 weeks. Counsel: Cayman-specialized firm (Walkers, Maples, Ogier).
 
@@ -79,18 +79,19 @@ Three-entity structure:
 
 **Purpose:** GCC commercial operations + regional banking
 
-| Responsibility | Detail |
-|---|---|
-| KYB with TransFi | Primary off-ramp partner for PH/IN/PK/BD/KE corridors |
+| Responsibility             | Detail                                                        |
+| -------------------------- | ------------------------------------------------------------- |
+| KYB with TransFi           | Primary off-ramp partner for PH/IN/PK/BD/KE corridors         |
 | KYB with Lean Technologies | GCC bank-transfer cash-in (UAE/KSA/Kuwait/Qatar/Bahrain/Oman) |
-| KYB with Tarabut Gateway | Backup/competitor to Lean for same corridors |
-| KYB with Tap Payments | KNET (Kuwait), BenefitPay (Bahrain), Apple Pay (Oman) |
-| KYB with Thawani | Oman-native payments (cards, bank, Thawani Pay) |
-| Banking | OMR + USD accounts at Bank Muscat or NBO |
-| Compliance | CBO (Central Bank of Oman) Tasdeer sandbox application |
-| Customer support staffing | Arabic + English speakers in Muscat |
+| KYB with Tarabut Gateway   | Backup/competitor to Lean for same corridors                  |
+| KYB with Tap Payments      | KNET (Kuwait), BenefitPay (Bahrain), Apple Pay (Oman)         |
+| KYB with Thawani           | Oman-native payments (cards, bank, Thawani Pay)               |
+| Banking                    | OMR + USD accounts at Bank Muscat or NBO                      |
+| Compliance                 | CBO (Central Bank of Oman) Tasdeer sandbox application        |
+| Customer support staffing  | Arabic + English speakers in Muscat                           |
 
 **Why Oman:**
+
 - GCC member → reciprocal access to UAE / KSA / Kuwait / Qatar / Bahrain payment systems
 - Lower setup cost than UAE (~$3-8K vs $10-20K)
 - CBO Tasdeer sandbox is crypto-friendly
@@ -100,18 +101,19 @@ Three-entity structure:
 
 **Purpose:** Turkish corridor + EU/UK card processing + engineering base
 
-| Responsibility | Detail |
-|---|---|
-| KYB with Stripe Turkey | Card processing + Apple Pay + Google Pay for Turkish users |
-| KYB with iyzico / Param / BKM | Domestic Turkish payment rails |
-| KYB with Bitlo / Paribu | TL ↔ USDC ramps for Turkish users |
-| KYB with Wise Business | EU SEPA + UK Faster Payments cash-in |
-| Banking | TL + USD + EUR accounts at Garanti or İş Bankası |
-| Compliance | BKM (Turkish payment network) + BDDK (banking) registration |
-| Engineering base | Lower-cost dev hiring; team based in Istanbul or Ankara |
-| Marketing | Turkish-diaspora outreach (DE / NL / UK → TR corridor) |
+| Responsibility                | Detail                                                      |
+| ----------------------------- | ----------------------------------------------------------- |
+| KYB with Stripe Turkey        | Card processing + Apple Pay + Google Pay for Turkish users  |
+| KYB with iyzico / Param / BKM | Domestic Turkish payment rails                              |
+| KYB with Bitlo / Paribu       | TL ↔ USDC ramps for Turkish users                           |
+| KYB with Wise Business        | EU SEPA + UK Faster Payments cash-in                        |
+| Banking                       | TL + USD + EUR accounts at Garanti or İş Bankası            |
+| Compliance                    | BKM (Turkish payment network) + BDDK (banking) registration |
+| Engineering base              | Lower-cost dev hiring; team based in Istanbul or Ankara     |
+| Marketing                     | Turkish-diaspora outreach (DE / NL / UK → TR corridor)      |
 
 **Why Turkey:**
+
 - Unique competitive advantage: Turkish corridor is huge (DE→TR alone is €5B/year) and underserved by remittance fintech
 - Stripe Turkey launched 2024 — full Apple Pay / Google Pay support
 - Lower engineering cost than EU/Singapore
@@ -127,7 +129,7 @@ REALITY UNDER THE HOOD:
    Card payment from Turkey user           → Ping Turkey Entity (Stripe processes)
    Bank transfer from UAE user             → Ping Oman Entity (Lean processes)
    USDC deposit from any wallet            → Wallet contract (no entity needed)
-   
+
    Cash-out to GCash (Philippines)         → Ping Oman Entity (TransFi processes)
    Cash-out to Turkish bank                → Ping Turkey Entity (iyzico processes)
 
@@ -151,20 +153,20 @@ PHASE 2 (TOKEN LIVE):
 
 ## Provider Mapping (Which Entity for What)
 
-| Provider | Entity | Why |
-|---|---|---|
-| **Stripe / Apple Pay / Google Pay (global)** | Turkey or Oman (whichever first approves) | Both work; Stripe Turkey live so likely Turkey |
-| **TransFi (cash-out)** | Oman | TransFi prefers MENA entities for Middle East routing |
-| **Lean Technologies** | Oman | Oman + GCC reciprocity |
-| **Tarabut Gateway** | Oman | Same |
-| **Tap Payments** | Oman | KNET / BenefitPay native; Oman entity required |
-| **Thawani** | Oman | Native Oman-only |
-| **Wise Business API** | Either (Turkey preferred for EU SEPA, Oman for USD ACH) | Flexible |
-| **iyzico / Param / BKM (Turkish rails)** | Turkey | Turkish entity required |
-| **Bitlo / Paribu (Turkish crypto)** | Turkey | Same |
-| **Privy MPC Wallets** | Either | No entity preference |
-| **Chainalysis / Elliptic (compliance)** | Either | No preference, single contract serves both |
-| **Persona / Onfido (KYC)** | Either, but **dynolabs-io/kyc** shared service handles this — see [ADR 0011](0011-kyc-shared-service.md) |
+| Provider                                     | Entity                                                                                                   | Why                                                   |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| **Stripe / Apple Pay / Google Pay (global)** | Turkey or Oman (whichever first approves)                                                                | Both work; Stripe Turkey live so likely Turkey        |
+| **TransFi (cash-out)**                       | Oman                                                                                                     | TransFi prefers MENA entities for Middle East routing |
+| **Lean Technologies**                        | Oman                                                                                                     | Oman + GCC reciprocity                                |
+| **Tarabut Gateway**                          | Oman                                                                                                     | Same                                                  |
+| **Tap Payments**                             | Oman                                                                                                     | KNET / BenefitPay native; Oman entity required        |
+| **Thawani**                                  | Oman                                                                                                     | Native Oman-only                                      |
+| **Wise Business API**                        | Either (Turkey preferred for EU SEPA, Oman for USD ACH)                                                  | Flexible                                              |
+| **iyzico / Param / BKM (Turkish rails)**     | Turkey                                                                                                   | Turkish entity required                               |
+| **Bitlo / Paribu (Turkish crypto)**          | Turkey                                                                                                   | Same                                                  |
+| **Privy MPC Wallets**                        | Either                                                                                                   | No entity preference                                  |
+| **Chainalysis / Elliptic (compliance)**      | Either                                                                                                   | No preference, single contract serves both            |
+| **Persona / Onfido (KYC)**                   | Either, but **dynolabs-io/kyc** shared service handles this — see [ADR 0011](0011-kyc-shared-service.md) |
 
 ## Banking Setup
 
@@ -217,25 +219,27 @@ YEAR 2+ — Optional Singapore Pte Ltd:
 
 ## Cost Summary
 
-| Entity | Setup cost | Ongoing | Status |
-|---|---|---|---|
-| Ping Oman | Founder's existing | $3-5K/yr maintenance | ✅ Live |
-| Ping Turkey | Founder's existing | $3-5K/yr maintenance | ✅ Live |
-| Ping Foundation (Cayman) | $5-10K | $3-5K/yr | 🟡 Phase 2 |
-| Crypto-fintech counsel (DLA Piper / Cooley) | $50-100K | $20-50K/yr | 🟡 Months 1-3 |
-| AML / KYC / Sanctions policies (legal drafting) | $20-40K | $5-10K/yr update | 🟡 Months 1-3 |
-| **Total Phase 1** | $5-10K (Foundation only) | ~$10-15K/yr | |
-| **Total to launch token (Phase 2)** | +$70-150K (legal) | +$25-60K/yr | |
+| Entity                                          | Setup cost               | Ongoing              | Status        |
+| ----------------------------------------------- | ------------------------ | -------------------- | ------------- |
+| Ping Oman                                       | Founder's existing       | $3-5K/yr maintenance | ✅ Live       |
+| Ping Turkey                                     | Founder's existing       | $3-5K/yr maintenance | ✅ Live       |
+| Ping Foundation (Cayman)                        | $5-10K                   | $3-5K/yr             | 🟡 Phase 2    |
+| Crypto-fintech counsel (DLA Piper / Cooley)     | $50-100K                 | $20-50K/yr           | 🟡 Months 1-3 |
+| AML / KYC / Sanctions policies (legal drafting) | $20-40K                  | $5-10K/yr update     | 🟡 Months 1-3 |
+| **Total Phase 1**                               | $5-10K (Foundation only) | ~$10-15K/yr          |               |
+| **Total to launch token (Phase 2)**             | +$70-150K (legal)        | +$25-60K/yr          |               |
 
 ## Consequences
 
 **Good:**
+
 - Two existing entities cover ~75% of needed jurisdictions and providers (per coverage analysis discussion)
 - No US entity needed initially (skip US corridor for Year 1, avoid SEC complexity)
 - Token issuance properly insulated from operating entities (Foundation = limited liability for token treasury)
 - Lower setup cost than starting from scratch ($5-10K incremental for Foundation only)
 
 **Bad / trade-offs:**
+
 - Inter-entity USDC settlement adds operational complexity (daily reconciliation)
 - Turkey + Oman currencies create FX exposure on local-currency holdings (mitigation: hold USDC primarily, minimize local-currency float)
 - Some providers prefer UAE entity over Oman — may need to add DMCC in Year 2
@@ -243,11 +247,11 @@ YEAR 2+ — Optional Singapore Pte Ltd:
 
 ## Tax Considerations (high-level, NOT tax advice)
 
-| Entity | Corporate income tax | Notes |
-|---|---|---|
-| Oman | 15% (free zone: 0%) | Set up in Madayn or Knowledge Oasis for 0% |
-| Turkey | 25% | Higher; offset by lower operational costs |
-| Cayman Foundation | 0% | Non-profit Foundation form |
+| Entity            | Corporate income tax | Notes                                      |
+| ----------------- | -------------------- | ------------------------------------------ |
+| Oman              | 15% (free zone: 0%)  | Set up in Madayn or Knowledge Oasis for 0% |
+| Turkey            | 25%                  | Higher; offset by lower operational costs  |
+| Cayman Foundation | 0%                   | Non-profit Foundation form                 |
 
 Operating profits flow to operating entities (Oman + Turkey) per services they perform. Foundation receives tech license fees from operating entities and pays counsel/audit. This is the standard "Foundation + OpCo" pattern.
 

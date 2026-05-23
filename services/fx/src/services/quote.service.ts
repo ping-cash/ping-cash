@@ -39,7 +39,7 @@ export interface FxQuote {
 export async function getQuote(
   amount: string,
   fromCurrency: string,
-  toCurrency: string,
+  toCurrency: string
 ): Promise<FxQuote> {
   const amountNum = parseFloat(amount);
   if (Number.isNaN(amountNum) || amountNum <= 0) {
@@ -54,10 +54,15 @@ export async function getQuote(
     const crossCheck = await crossCheckSwitchboard(pythQuote);
     if (!crossCheck.agrees) {
       logger.warn(
-        { pythRate: pythQuote.rate, switchboardRate: crossCheck.switchboardRate },
-        'Oracle disagreement — rejecting quote',
+        {
+          pythRate: pythQuote.rate,
+          switchboardRate: crossCheck.switchboardRate,
+        },
+        'Oracle disagreement — rejecting quote'
       );
-      throw new Error('FX oracle disagreement exceeds 0.3% threshold — quote rejected');
+      throw new Error(
+        'FX oracle disagreement exceeds 0.3% threshold — quote rejected'
+      );
     }
 
     const interbankRate = pythQuote.rate;
@@ -112,7 +117,7 @@ export async function getQuote(
  */
 export async function getRate(
   fromCurrency: string,
-  toCurrency: string,
+  toCurrency: string
 ): Promise<number> {
   if (fromCurrency.toUpperCase() === 'USD') {
     const q = await getPythRate(toCurrency);

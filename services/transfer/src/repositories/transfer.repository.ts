@@ -1,7 +1,11 @@
-import type { Transfer, TransferStatus, TransferSummary, Chain } from '@ping/types';
+import type {
+  Transfer,
+  TransferStatus,
+  TransferSummary,
+  Chain,
+} from '@ping/types';
 
 import { prisma } from '../utils/prisma';
-
 
 interface CreateTransferInput {
   id: string;
@@ -98,10 +102,7 @@ export class TransferRepository {
     } else if (options.type === 'received') {
       where.recipientUserId = userId;
     } else {
-      where.OR = [
-        { senderId: userId },
-        { recipientUserId: userId },
-      ];
+      where.OR = [{ senderId: userId }, { recipientUserId: userId }];
     }
 
     if (options.status) {
@@ -121,7 +122,8 @@ export class TransferRepository {
     return {
       transfers: transfers.map(t => this.mapToSummary(t, userId)),
       hasMore: transfers.length === options.limit,
-      nextCursor: transfers.length > 0 ? transfers[transfers.length - 1].id : undefined,
+      nextCursor:
+        transfers.length > 0 ? transfers[transfers.length - 1].id : undefined,
     };
   }
 
@@ -133,12 +135,16 @@ export class TransferRepository {
         recipientUserId: input.recipientUserId,
         blockchainChain: input.blockchain?.chain,
         blockchainTxHash: input.blockchain?.txHash,
-        blockchainConfirmedAt: input.blockchain?.confirmedAt ? new Date(input.blockchain.confirmedAt) : undefined,
+        blockchainConfirmedAt: input.blockchain?.confirmedAt
+          ? new Date(input.blockchain.confirmedAt)
+          : undefined,
         cashoutMethod: input.cashout?.method,
         cashoutLocalAmount: input.cashout?.localAmount,
         cashoutLocalCurrency: input.cashout?.localCurrency,
         cashoutReference: input.cashout?.reference,
-        cashoutCompletedAt: input.cashout?.completedAt ? new Date(input.cashout.completedAt) : undefined,
+        cashoutCompletedAt: input.cashout?.completedAt
+          ? new Date(input.cashout.completedAt)
+          : undefined,
         updatedAt: new Date(),
         version: { increment: 1 },
       },
@@ -195,18 +201,22 @@ export class TransferRepository {
       claimCode: record.claimCode,
       claimUrl: record.claimUrl,
       claimExpiresAt: record.claimExpiresAt.toISOString(),
-      blockchain: record.blockchainChain ? {
-        chain: record.blockchainChain,
-        txHash: record.blockchainTxHash,
-        confirmedAt: record.blockchainConfirmedAt?.toISOString(),
-      } : undefined,
-      cashout: record.cashoutMethod ? {
-        method: record.cashoutMethod,
-        localAmount: record.cashoutLocalAmount,
-        localCurrency: record.cashoutLocalCurrency,
-        reference: record.cashoutReference,
-        completedAt: record.cashoutCompletedAt?.toISOString(),
-      } : undefined,
+      blockchain: record.blockchainChain
+        ? {
+            chain: record.blockchainChain,
+            txHash: record.blockchainTxHash,
+            confirmedAt: record.blockchainConfirmedAt?.toISOString(),
+          }
+        : undefined,
+      cashout: record.cashoutMethod
+        ? {
+            method: record.cashoutMethod,
+            localAmount: record.cashoutLocalAmount,
+            localCurrency: record.cashoutLocalCurrency,
+            reference: record.cashoutReference,
+            completedAt: record.cashoutCompletedAt?.toISOString(),
+          }
+        : undefined,
       note: record.note || undefined,
       createdAt: record.createdAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
@@ -217,7 +227,8 @@ export class TransferRepository {
     return {
       id: record.id,
       type: record.senderId === userId ? 'sent' : 'received',
-      recipientPhone: record.senderId === userId ? record.recipientPhone : undefined,
+      recipientPhone:
+        record.senderId === userId ? record.recipientPhone : undefined,
       senderPhone: record.senderId !== userId ? record.senderPhone : undefined,
       amount: record.amount,
       currency: record.currency,

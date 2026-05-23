@@ -13,6 +13,7 @@ Multiple Dynolabs / OpenOva products need identity verification:
 - **Future products** — anything consumer or B2B fintech-adjacent
 
 If each product builds its own KYC integration with Persona / Onfido / Veriff:
+
 - Duplicated engineering effort (~3-4 months per product)
 - Duplicated vendor contracts (3+ × ~$50K/year)
 - Inconsistent compliance posture across products
@@ -61,12 +62,12 @@ dynolabs-io/kyc/
 
 ### Tier Definitions (standardized across all consumer products)
 
-| Tier | Requirements | What it unlocks (Ping) | What it unlocks (TalentMesh) | What it unlocks (IO Grid) |
-|---|---|---|---|---|
-| **T0** | None | Browse only | Browse profiles | Browse public catalog |
-| **T1** | Phone OTP (Twilio Verify) | Up to $200/day, $1K/month transfers; welcome stake | View hire jobs | Consume VPN service |
-| **T2** | ID document + selfie (Persona) | Up to $2K/day, $10K/month transfers; B2B API access | Apply to jobs, portfolio publish | Provide compute services |
-| **T3** | Address proof + source of funds | Up to $10K/day, $50K/month; institutional features | Enterprise contracts | High-volume customer contracts |
+| Tier   | Requirements                    | What it unlocks (Ping)                              | What it unlocks (TalentMesh)     | What it unlocks (IO Grid)      |
+| ------ | ------------------------------- | --------------------------------------------------- | -------------------------------- | ------------------------------ |
+| **T0** | None                            | Browse only                                         | Browse profiles                  | Browse public catalog          |
+| **T1** | Phone OTP (Twilio Verify)       | Up to $200/day, $1K/month transfers; welcome stake  | View hire jobs                   | Consume VPN service            |
+| **T2** | ID document + selfie (Persona)  | Up to $2K/day, $10K/month transfers; B2B API access | Apply to jobs, portfolio publish | Provide compute services       |
+| **T3** | Address proof + source of funds | Up to $10K/day, $50K/month; institutional features  | Enterprise contracts             | High-volume customer contracts |
 
 Tier definitions are owned by KYC service. Products specify "Tier ≥ T2 required" — they don't re-implement verification.
 
@@ -75,7 +76,7 @@ Tier definitions are owned by KYC service. Products specify "Tier ≥ T2 require
 ```
 POST /v1/identity/init                # Create new identity, returns inquiry_id
   body: { phone, country, productId }
-  
+
 POST /v1/identity/{id}/verify-phone   # Send + verify phone OTP
   body: { code }                      # for verify step
 
@@ -117,7 +118,7 @@ const session = await kyc.startTier2({
 // Redirect user to session.inquiryUrl
 
 // Later, in Ping's webhook handler:
-kyc.on('identity.verified', async (event) => {
+kyc.on('identity.verified', async event => {
   await userService.upgradeTier(event.identityId, event.tier);
 });
 ```
@@ -152,26 +153,27 @@ Same DDD + Sovereign-deploy pattern as Ping (per [ADR 0006](0006-deployment-via-
 
 ## Vendor Strategy
 
-| Vendor | Use | Why |
-|---|---|---|
-| **Persona** (primary) | Tier 2 / 3 verification | Most flexible flows, good React Native SDK, fintech-friendly |
-| **Onfido** (fallback) | Tier 2 / 3 verification | Backup if Persona quotas exceeded or geographically inferior |
-| **Twilio Verify** | Phone OTP (Tier 1) | Already part of Ping stack, broad SMS reach |
-| **Chainalysis KYT** | Wallet sanctions screening | Industry standard for blockchain compliance |
-| **OFAC SDN List, UN, EU sanctions** | Daily-updated lists | Built into sanctions-svc |
+| Vendor                              | Use                        | Why                                                          |
+| ----------------------------------- | -------------------------- | ------------------------------------------------------------ |
+| **Persona** (primary)               | Tier 2 / 3 verification    | Most flexible flows, good React Native SDK, fintech-friendly |
+| **Onfido** (fallback)               | Tier 2 / 3 verification    | Backup if Persona quotas exceeded or geographically inferior |
+| **Twilio Verify**                   | Phone OTP (Tier 1)         | Already part of Ping stack, broad SMS reach                  |
+| **Chainalysis KYT**                 | Wallet sanctions screening | Industry standard for blockchain compliance                  |
+| **OFAC SDN List, UN, EU sanctions** | Daily-updated lists        | Built into sanctions-svc                                     |
 
 ## Cost Comparison
 
-| Approach | Cost / year | Time |
-|---|---|---|
-| Each product builds its own | $50K vendor × 3 + $300K engineering × 3 = $1.05M | 12 months |
-| **Shared KYC service** | $80K vendor (volume discount) + $300K engineering once = $380K | 6 months |
+| Approach                    | Cost / year                                                    | Time      |
+| --------------------------- | -------------------------------------------------------------- | --------- |
+| Each product builds its own | $50K vendor × 3 + $300K engineering × 3 = $1.05M               | 12 months |
+| **Shared KYC service**      | $80K vendor (volume discount) + $300K engineering once = $380K | 6 months  |
 
 Plus the shared service is operationally easier (one team, one runbook, one audit).
 
 ## Consequences
 
 **Good:**
+
 - Single integration per product (~1 week vs ~3 months for full KYC build)
 - Consistent tier definitions across product ecosystem
 - One audit trail for compliance / regulators
@@ -179,6 +181,7 @@ Plus the shared service is operationally easier (one team, one runbook, one audi
 - Volume discount with vendors (Persona offers tiered pricing)
 
 **Bad / trade-offs:**
+
 - Cross-product dependency: KYC service outage blocks all products. Mitigation: high availability + circuit breaker per consumer; fallback to "degraded mode" with reduced limits
 - Privacy gravitas: KYC service is a high-value target. Mitigation: strongest security posture (see [SECURITY.md](../SECURITY.md))
 - Versioning: tier definitions changing affects all products. Mitigation: semver + 90-day deprecation notices

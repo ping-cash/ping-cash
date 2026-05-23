@@ -25,11 +25,14 @@ const PayoutBody = z.object({
 
 export async function offrampRoutes(fastify: FastifyInstance) {
   // POST /offramp/payout — execute payout with failover
-  fastify.post('/payout', async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = PayoutBody.parse(request.body);
-    const result = await executePayout(body as never);
-    return reply.status(202).send(result);
-  });
+  fastify.post(
+    '/payout',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = PayoutBody.parse(request.body);
+      const result = await executePayout(body as never);
+      return reply.status(202).send(result);
+    }
+  );
 
   // POST /offramp/webhook/:provider — inbound webhook from a provider
   fastify.post(
@@ -39,10 +42,15 @@ export async function offrampRoutes(fastify: FastifyInstance) {
       const adapter = getAdapter(provider as ProviderName);
       if (!adapter) {
         return reply.status(404).send({
-          error: { code: 'PROVIDER_NOT_FOUND', message: `Unknown provider ${provider}` },
+          error: {
+            code: 'PROVIDER_NOT_FOUND',
+            message: `Unknown provider ${provider}`,
+          },
         });
       }
-      const signature = request.headers['x-webhook-signature'] as string | undefined;
+      const signature = request.headers['x-webhook-signature'] as
+        | string
+        | undefined;
       const rawBody = JSON.stringify(request.body);
       if (!signature || !adapter.verifyWebhook(rawBody, signature)) {
         throw OfframpErrors.InvalidWebhookSignature();
@@ -53,6 +61,6 @@ export async function offrampRoutes(fastify: FastifyInstance) {
       // TODO: in production, emit Kafka event so transfer-service can mark transfer completed
       // For now, log + 200
       return reply.status(200).send({ received: true, ...parsed });
-    },
+    }
   );
 }

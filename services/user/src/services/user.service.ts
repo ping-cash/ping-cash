@@ -74,7 +74,10 @@ export async function createOrFetch(input: {
       },
     });
     isNewUser = true;
-    logger.info({ userId: user.id, walletAddress: user.walletAddress }, 'New user created');
+    logger.info(
+      { userId: user.id, walletAddress: user.walletAddress },
+      'New user created'
+    );
   } else {
     logger.info({ userId: user.id }, 'Existing user fetched');
   }
@@ -88,12 +91,16 @@ export async function getById(userId: string): Promise<UserPublic> {
   return toPublic(user);
 }
 
-export async function getByWallet(walletAddress: string): Promise<UserPublic | null> {
+export async function getByWallet(
+  walletAddress: string
+): Promise<UserPublic | null> {
   const user = await prisma.user.findUnique({ where: { walletAddress } });
   return user ? toPublic(user) : null;
 }
 
-export async function getByPhoneHash(phoneHash: string): Promise<UserPublic | null> {
+export async function getByPhoneHash(
+  phoneHash: string
+): Promise<UserPublic | null> {
   const user = await prisma.user.findUnique({ where: { phoneHash } });
   return user ? toPublic(user) : null;
 }
@@ -103,7 +110,13 @@ export async function getByPhoneHash(phoneHash: string): Promise<UserPublic | nu
  */
 export async function updateProfile(
   userId: string,
-  patch: Partial<{ displayName: string; email: string; avatarUrl: string; language: string; country: string }>,
+  patch: Partial<{
+    displayName: string;
+    email: string;
+    avatarUrl: string;
+    language: string;
+    country: string;
+  }>
 ): Promise<UserPublic> {
   const updated = await prisma.user.update({
     where: { id: userId },
@@ -115,7 +128,10 @@ export async function updateProfile(
 /**
  * Sync KYC tier — called by KYC service webhook.
  */
-export async function updateKycTier(userId: string, tier: number): Promise<void> {
+export async function updateKycTier(
+  userId: string,
+  tier: number
+): Promise<void> {
   // Tier-based limits (per BUSINESS-STRATEGY.md § KYC Tiers)
   const limits = {
     1: { daily: 200, monthly: 1000 },
@@ -171,7 +187,7 @@ function toPublic(user: {
   const derivedTier = computeTier(
     user.pingPointsFreeBalance,
     user.pingPointsWelcomeLocked,
-    user.pingPointsWelcomeUnlocked,
+    user.pingPointsWelcomeUnlocked
   );
 
   return {
@@ -197,8 +213,12 @@ function toPublic(user: {
       monthlyLimit: user.monthlyLimitUsdc.toString(),
       dailyUsed: user.dailyUsedUsdc.toString(),
       monthlyUsed: user.monthlyUsedUsdc.toString(),
-      dailyRemaining: (Number(user.dailyLimitUsdc) - Number(user.dailyUsedUsdc)).toString(),
-      monthlyRemaining: (Number(user.monthlyLimitUsdc) - Number(user.monthlyUsedUsdc)).toString(),
+      dailyRemaining: (
+        Number(user.dailyLimitUsdc) - Number(user.dailyUsedUsdc)
+      ).toString(),
+      monthlyRemaining: (
+        Number(user.monthlyLimitUsdc) - Number(user.monthlyUsedUsdc)
+      ).toString(),
     },
     stats: {
       totalSent: user.totalSentUsdc.toString(),

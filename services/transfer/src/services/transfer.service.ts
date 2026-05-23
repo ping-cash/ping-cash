@@ -1,7 +1,19 @@
 import { constants, getConfig } from '@ping/config';
-import type { Transfer, TransferStatus, TransferSummary, Currency, PaginationResult } from '@ping/types';
+import type {
+  Transfer,
+  TransferStatus,
+  TransferSummary,
+  Currency,
+  PaginationResult,
+} from '@ping/types';
 import { EventTypes } from '@ping/types/events';
-import { generateId, generateClaimCode, hashPhone, now, addDuration } from '@ping/utils';
+import {
+  generateId,
+  generateClaimCode,
+  hashPhone,
+  now,
+  addDuration,
+} from '@ping/utils';
 
 import { publishEvent } from '../events/producer';
 import { TransferRepository } from '../repositories/transfer.repository';
@@ -35,16 +47,22 @@ export class TransferService {
     const transferId = generateId.transfer();
     const claimCode = generateClaimCode();
     const recipientPhoneHash = hashPhone(input.recipientPhone);
-    const claimExpiresAt = addDuration(new Date(), `${constants.CLAIM_EXPIRY_DAYS}d`).toISOString();
+    const claimExpiresAt = addDuration(
+      new Date(),
+      `${constants.CLAIM_EXPIRY_DAYS}d`
+    ).toISOString();
     const claimUrl = `${config.CLAIM_URL}/${claimCode}`;
 
-    logger.info({
-      transferId,
-      senderId: input.senderId,
-      recipientPhone: input.recipientPhone.slice(0, 6) + '***',
-      amount: input.amount,
-      currency: input.currency,
-    }, 'Creating transfer');
+    logger.info(
+      {
+        transferId,
+        senderId: input.senderId,
+        recipientPhone: input.recipientPhone.slice(0, 6) + '***',
+        amount: input.amount,
+        currency: input.currency,
+      },
+      'Creating transfer'
+    );
 
     // Create transfer record
     const transfer = await this.repository.create({
@@ -85,7 +103,11 @@ export class TransferService {
 
     // Check authorization
     if (transfer.senderId !== userId && transfer.recipientUserId !== userId) {
-      throw new AppError('FORBIDDEN', 'Not authorized to view this transfer', 403);
+      throw new AppError(
+        'FORBIDDEN',
+        'Not authorized to view this transfer',
+        403
+      );
     }
 
     return transfer;
@@ -97,25 +119,26 @@ export class TransferService {
   ): Promise<{ transfers: TransferSummary[]; pagination: PaginationResult }> {
     const limit = options.limit || constants.DEFAULT_PAGE_SIZE;
 
-    const { transfers } = await this.repository.findByUser(
-      userId,
-      {
-        type: options.type,
-        status: options.status as TransferStatus,
-        limit: limit + 1, // Fetch one extra to determine hasMore
-        cursor: options.cursor,
-      }
-    );
+    const { transfers } = await this.repository.findByUser(userId, {
+      type: options.type,
+      status: options.status as TransferStatus,
+      limit: limit + 1, // Fetch one extra to determine hasMore
+      cursor: options.cursor,
+    });
 
     // Check if there are more results
     const actualHasMore = transfers.length > limit;
-    const actualTransfers = actualHasMore ? transfers.slice(0, limit) : transfers;
+    const actualTransfers = actualHasMore
+      ? transfers.slice(0, limit)
+      : transfers;
 
     return {
       transfers: actualTransfers,
       pagination: {
         hasMore: actualHasMore,
-        nextCursor: actualHasMore ? actualTransfers[actualTransfers.length - 1].id : undefined,
+        nextCursor: actualHasMore
+          ? actualTransfers[actualTransfers.length - 1].id
+          : undefined,
       },
     };
   }
@@ -128,7 +151,11 @@ export class TransferService {
     }
 
     if (transfer.senderId !== userId) {
-      throw new AppError('FORBIDDEN', 'Not authorized to cancel this transfer', 403);
+      throw new AppError(
+        'FORBIDDEN',
+        'Not authorized to cancel this transfer',
+        403
+      );
     }
 
     // Can only cancel pending or confirmed (unclaimed) transfers
@@ -155,7 +182,10 @@ export class TransferService {
     return updatedTransfer;
   }
 
-  async updateTransferStatus(id: string, status: TransferStatus): Promise<Transfer> {
+  async updateTransferStatus(
+    id: string,
+    status: TransferStatus
+  ): Promise<Transfer> {
     return this.repository.updateStatus(id, status);
   }
 
@@ -202,7 +232,10 @@ export class TransferService {
     return transfer;
   }
 
-  async markTransferCompleted(id: string, cashoutId: string): Promise<Transfer> {
+  async markTransferCompleted(
+    id: string,
+    cashoutId: string
+  ): Promise<Transfer> {
     const transfer = await this.repository.updateStatus(id, 'completed');
 
     await publishEvent(EventTypes.TRANSFER_COMPLETED, {

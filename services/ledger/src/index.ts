@@ -1,7 +1,10 @@
 import { loadConfig } from '@ping/config';
 
 import { buildApp } from './app';
-import { startPolling, shutdown as shutdownOutbox } from './services/outbox.service';
+import {
+  startPolling,
+  shutdown as shutdownOutbox,
+} from './services/outbox.service';
 import { logger } from './utils/logger';
 import { prisma } from './utils/prisma';
 
@@ -41,7 +44,7 @@ async function main() {
   process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
-main().catch((err) => {
+main().catch(err => {
   console.error('Fatal error:', err);
   process.exit(1);
 });

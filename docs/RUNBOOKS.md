@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 📐 PERMANENT.
 
-Per-incident playbooks (specific failures, postmortems) live in [`runbooks/`](runbooks/) — this file is for *generic* operator procedures.
+Per-incident playbooks (specific failures, postmortems) live in [`runbooks/`](runbooks/) — this file is for _generic_ operator procedures.
 
 ---
 
@@ -82,6 +82,7 @@ git push                 # CI takes over
 ### Unit-Test Scope
 
 Unit tests in this repo run **without any external service**. They stub:
+
 - HTTP clients (Privy, TransFi, Twilio, WhatsApp, Persona, Stripe, Solana RPC)
 - Database access (per-service Prisma `__mocks__/` or in-memory equivalents)
 - Kafka producers (the outbox is unit-testable; the publisher isn't)
@@ -284,15 +285,15 @@ The workflow deploys the current SHA (if not already deployed) and walks the det
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| `Cannot resolve module @babel/runtime` | Missing peer dependency in mobile app | `pnpm add @babel/runtime` in `apps/mobile`, then `rm -rf node_modules/.cache && npx expo start --clear` |
-| `ngrok tunnel took too long to connect` | Network restrictions / auth required | Use localtunnel with proxychains (see [Network Configuration](#network-configuration-corporate-vpn)) |
-| Metro bundler can't resolve modules | pnpm strict node_modules structure | Add `node-linker=hoisted` to `.npmrc` |
-| CI matrix job failed for one service | Test or lint regression | Check the failing job in GHA; fix locally; push fix; CI re-runs |
-| Blueprint SHA-bump PR never opens | CI workflow file changed but matrix didn't run | Manually trigger `bump-blueprint.yml` or re-run the failed workflow |
-| Flux not reconciling after Sovereign-side merge | Flux controller lag or chart validation error | On the Sovereign: `flux get kustomizations -n ping` (founder action) |
-| Pod CrashLoopBackOff after deploy | Missing ExternalSecret value or wrong env var | Check pod logs via Sovereign Grafana / Loki; verify OpenBao path exists |
+| Symptom                                         | Cause                                          | Fix                                                                                                     |
+| ----------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `Cannot resolve module @babel/runtime`          | Missing peer dependency in mobile app          | `pnpm add @babel/runtime` in `apps/mobile`, then `rm -rf node_modules/.cache && npx expo start --clear` |
+| `ngrok tunnel took too long to connect`         | Network restrictions / auth required           | Use localtunnel with proxychains (see [Network Configuration](#network-configuration-corporate-vpn))    |
+| Metro bundler can't resolve modules             | pnpm strict node_modules structure             | Add `node-linker=hoisted` to `.npmrc`                                                                   |
+| CI matrix job failed for one service            | Test or lint regression                        | Check the failing job in GHA; fix locally; push fix; CI re-runs                                         |
+| Blueprint SHA-bump PR never opens               | CI workflow file changed but matrix didn't run | Manually trigger `bump-blueprint.yml` or re-run the failed workflow                                     |
+| Flux not reconciling after Sovereign-side merge | Flux controller lag or chart validation error  | On the Sovereign: `flux get kustomizations -n ping` (founder action)                                    |
+| Pod CrashLoopBackOff after deploy               | Missing ExternalSecret value or wrong env var  | Check pod logs via Sovereign Grafana / Loki; verify OpenBao path exists                                 |
 
 ---
 

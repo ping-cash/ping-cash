@@ -13,11 +13,7 @@ async function main() {
   logger.info({ env: config.NODE_ENV }, 'Starting transfer-service');
 
   // Connect to external services
-  await Promise.all([
-    connectKafka(),
-    connectRedis(),
-    prisma.$connect(),
-  ]);
+  await Promise.all([connectKafka(), connectRedis(), prisma.$connect()]);
 
   logger.info('Connected to all external services');
 

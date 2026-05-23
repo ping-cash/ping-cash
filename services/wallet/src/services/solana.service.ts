@@ -8,7 +8,12 @@
  * on behalf of users. Signing is delegated to Privy MPC or external wallet.
  */
 import { loadConfig } from '@ping/config';
-import { getAssociatedTokenAddress, getAccount, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  getAssociatedTokenAddress,
+  getAccount,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 import { WalletErrors } from '../utils/errors';
@@ -27,16 +32,18 @@ function getConnection(): Connection {
 
 // Token mints — set via env (sourced from OpenBao in production)
 const MINTS = {
-  USDC: new PublicKey(config.SOLANA_USDC_MINT ?? 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
+  USDC: new PublicKey(
+    config.SOLANA_USDC_MINT ?? 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+  ),
   PING: config.PING_TOKEN_MINT ? new PublicKey(config.PING_TOKEN_MINT) : null, // Phase 2 only
   V_USDC: config.V_USDC_MINT ? new PublicKey(config.V_USDC_MINT) : null, // Phase 1+ once vault deployed
 };
 
 export interface BalanceSnapshot {
   walletAddress: string;
-  USDC: string;     // human-readable decimal string
-  vUSDC: string;    // 1:1 with USDC, represents staked-in-vault amount
-  PING: string;     // Phase 2 only
+  USDC: string; // human-readable decimal string
+  vUSDC: string; // 1:1 with USDC, represents staked-in-vault amount
+  PING: string; // Phase 2 only
   totalUsdValue: string;
 }
 
@@ -44,21 +51,48 @@ export interface BalanceSnapshot {
  * Read SPL token balance for a given wallet + mint.
  * Returns '0' if the associated token account doesn't exist.
  */
-async function getTokenBalance(walletAddress: PublicKey, mint: PublicKey, decimals = 6): Promise<string> {
+async function getTokenBalance(
+  walletAddress: PublicKey,
+  mint: PublicKey,
+  decimals = 6
+): Promise<string> {
   try {
-    const ata = await getAssociatedTokenAddress(mint, walletAddress, false, TOKEN_PROGRAM_ID);
-    const account = await getAccount(getConnection(), ata, 'confirmed', TOKEN_PROGRAM_ID);
+    const ata = await getAssociatedTokenAddress(
+      mint,
+      walletAddress,
+      false,
+      TOKEN_PROGRAM_ID
+    );
+    const account = await getAccount(
+      getConnection(),
+      ata,
+      'confirmed',
+      TOKEN_PROGRAM_ID
+    );
     return formatAmount(account.amount, decimals);
   } catch (err) {
     // Token account doesn't exist yet
     const errStr = (err as Error).message || '';
-    if (errStr.includes('TokenAccountNotFoundError') || errStr.includes('could not find account')) {
+    if (
+      errStr.includes('TokenAccountNotFoundError') ||
+      errStr.includes('could not find account')
+    ) {
       return '0';
     }
     // Try Token-2022 program for $PING
     try {
-      const ata = await getAssociatedTokenAddress(mint, walletAddress, false, TOKEN_2022_PROGRAM_ID);
-      const account = await getAccount(getConnection(), ata, 'confirmed', TOKEN_2022_PROGRAM_ID);
+      const ata = await getAssociatedTokenAddress(
+        mint,
+        walletAddress,
+        false,
+        TOKEN_2022_PROGRAM_ID
+      );
+      const account = await getAccount(
+        getConnection(),
+        ata,
+        'confirmed',
+        TOKEN_2022_PROGRAM_ID
+      );
       return formatAmount(account.amount, decimals);
     } catch (_err2) {
       return '0';
@@ -70,7 +104,10 @@ function formatAmount(raw: bigint, decimals: number): string {
   const divisor = BigInt(10 ** decimals);
   const whole = raw / divisor;
   const fraction = raw % divisor;
-  const fractionStr = fraction.toString().padStart(decimals, '0').replace(/0+$/, '');
+  const fractionStr = fraction
+    .toString()
+    .padStart(decimals, '0')
+    .replace(/0+$/, '');
   return fractionStr ? `${whole}.${fractionStr}` : `${whole}`;
 }
 
@@ -78,9 +115,14 @@ function formatAmount(raw: bigint, decimals: number): string {
  * Get a full balance snapshot for a wallet.
  * Stub mode: returns zeros if RPC isn't configured.
  */
-export async function getBalanceSnapshot(walletAddress: string): Promise<BalanceSnapshot> {
+export async function getBalanceSnapshot(
+  walletAddress: string
+): Promise<BalanceSnapshot> {
   if (!config.SOLANA_RPC_URL) {
-    logger.warn({ walletAddress }, '[STUB MODE] No Solana RPC — returning empty balances');
+    logger.warn(
+      { walletAddress },
+      '[STUB MODE] No Solana RPC — returning empty balances'
+    );
     return {
       walletAddress,
       USDC: '0',
@@ -108,7 +150,9 @@ export async function getBalanceSnapshot(walletAddress: string): Promise<Balance
 
     // Total USD value: USDC + vUSDC (both pegged to USD); PING NOT counted here
     // (it's a separate display element + tier indicator, not "money")
-    const totalUsd = (parseFloat(usdcBalance) + parseFloat(vUsdcBalance)).toFixed(2);
+    const totalUsd = (
+      parseFloat(usdcBalance) + parseFloat(vUsdcBalance)
+    ).toFixed(2);
 
     return {
       walletAddress,

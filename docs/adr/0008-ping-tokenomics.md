@@ -20,15 +20,15 @@ Issue `$PING` as an SPL Token-2022 on Solana with the following parameters.
 
 ### Headline parameters
 
-| Parameter | Value |
-|---|---|
-| Symbol | `$PING` |
-| Network | Solana (SPL Token-2022 with transfer hooks) |
-| Initial supply | 1,000,000,000 (1B) |
-| Decimals | 9 (Solana SPL standard) |
-| Issuer | Ping Foundation (Cayman — see [ADR 0014](0014-entity-structure.md)) |
-| Treasury custody | Squads Protocol 3-of-5 multisig |
-| TGE timing | Phase 2 launch (Month 4-12) — see [ADR 0015](0015-phased-launch-ping-points-to-token.md) |
+| Parameter        | Value                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| Symbol           | `$PING`                                                                                  |
+| Network          | Solana (SPL Token-2022 with transfer hooks)                                              |
+| Initial supply   | 1,000,000,000 (1B)                                                                       |
+| Decimals         | 9 (Solana SPL standard)                                                                  |
+| Issuer           | Ping Foundation (Cayman — see [ADR 0014](0014-entity-structure.md))                      |
+| Treasury custody | Squads Protocol 3-of-5 multisig                                                          |
+| TGE timing       | Phase 2 launch (Month 4-12) — see [ADR 0015](0015-phased-launch-ping-points-to-token.md) |
 
 ### Distribution (locked at TGE)
 
@@ -65,14 +65,14 @@ Issue `$PING` as an SPL Token-2022 on Solana with the following parameters.
 
 ### Emission schedule (halving)
 
-| Year | New emission to community pool | Cumulative supply (of 1B cap) |
-|---|---|---|
-| 1 | 200M (early-adopter activity bonuses) | 200M |
-| 2 | 100M (halving) | 300M |
-| 3 | 50M | 350M |
-| 4 | 25M | 375M |
-| 5 | 12.5M | 387.5M |
-| 5+ | 0 — only burns reduce supply | converging downward |
+| Year | New emission to community pool        | Cumulative supply (of 1B cap) |
+| ---- | ------------------------------------- | ----------------------------- |
+| 1    | 200M (early-adopter activity bonuses) | 200M                          |
+| 2    | 100M (halving)                        | 300M                          |
+| 3    | 50M                                   | 350M                          |
+| 4    | 25M                                   | 375M                          |
+| 5    | 12.5M                                 | 387.5M                        |
+| 5+   | 0 — only burns reduce supply          | converging downward           |
 
 Total community-pool emission cap: 400M (40% of supply).
 
@@ -82,12 +82,12 @@ Hard-coded in the emission program. No governance can override.
 
 ### Tier thresholds (held $PING balance — TWA mechanic per ADR 0013)
 
-| Tier | Min held $PING | Platform-markup discount |
-|---|---|---|
-| **Bronze** | 0 | 0% |
-| **Silver** | ≥ 1,000 | 50% off |
-| **Gold** | ≥ 10,000 | 75% off |
-| **Platinum** | ≥ 100,000 | 90% off (floor at provider cost — never goes below) |
+| Tier         | Min held $PING | Platform-markup discount                            |
+| ------------ | -------------- | --------------------------------------------------- |
+| **Bronze**   | 0              | 0%                                                  |
+| **Silver**   | ≥ 1,000        | 50% off                                             |
+| **Gold**     | ≥ 10,000       | 75% off                                             |
+| **Platinum** | ≥ 100,000      | 90% off (floor at provider cost — never goes below) |
 
 ### Pay-in-PING further discount
 
@@ -101,13 +101,13 @@ When paying fees, user can elect to pay the platform-markup portion in `$PING` (
 
 ## Five-Layer Deflation Stack
 
-| Layer | Mechanism | Burn destination |
-|---|---|---|
-| **1. Revenue buyback-burn** | 5% of ALL platform revenue (fees + FX spread + treasury yield + B2B) → daily Jupiter swap → burn | `1nc1nerator1111...` |
-| **2. Fee-payment burn** | 100% of $PING used to pay platform fees | Immediate burn |
-| **3. Treasury-yield buyback** | 10% of daily Earn Vault yield (40% portion that's Ping's) → Jupiter buy $PING → 50% burned, 50% to Foundation Stability Reserve (10y locked) | Half burned, half reserved |
-| **4. Early-unstake penalty burn** | 50% of any $PING unstaked from purchased Fee Vault before maturity (welcome stake has NO early unlock — see [ADR 0010](0010-welcome-stake.md)) | `1nc1nerator1111...` |
-| **5. Hard supply cap + halving** | 1B max supply, halving every 2 years, zero emissions after Y5 | (prevents inflation; enforces deflation as community pool empties) |
+| Layer                             | Mechanism                                                                                                                                      | Burn destination                                                   |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **1. Revenue buyback-burn**       | 5% of ALL platform revenue (fees + FX spread + treasury yield + B2B) → daily Jupiter swap → burn                                               | `1nc1nerator1111...`                                               |
+| **2. Fee-payment burn**           | 100% of $PING used to pay platform fees                                                                                                        | Immediate burn                                                     |
+| **3. Treasury-yield buyback**     | 10% of daily Earn Vault yield (40% portion that's Ping's) → Jupiter buy $PING → 50% burned, 50% to Foundation Stability Reserve (10y locked)   | Half burned, half reserved                                         |
+| **4. Early-unstake penalty burn** | 50% of any $PING unstaked from purchased Fee Vault before maturity (welcome stake has NO early unlock — see [ADR 0010](0010-welcome-stake.md)) | `1nc1nerator1111...`                                               |
+| **5. Hard supply cap + halving**  | 1B max supply, halving every 2 years, zero emissions after Y5                                                                                  | (prevents inflation; enforces deflation as community pool empties) |
 
 ## Yield Payout in $PING (Unification)
 
@@ -150,12 +150,14 @@ Per the same playbook as $GRID:
 ## Consequences
 
 **Good:**
+
 - One token, one mental model — users see $PING for everything (welcome reward + yield + tier + fee payment)
 - Mechanical buy pressure (Layer 3 treasury-yield buyback) creates predictable price floor
 - 5-layer deflation aligns long-term holders' interests with platform growth
 - Standard SPL Token-2022 = compatible with all Solana wallets + DEXes from day one
 
 **Bad / trade-offs:**
+
 - Launch requires $200-300K legal + audit spend (Foundation + OtterSec + counsel)
 - 4-month TGE timeline post-Foundation incorporation
 - Token-price volatility risk (mitigated by POMM, [ADR 0009](0009-pomm-internal-swap.md))

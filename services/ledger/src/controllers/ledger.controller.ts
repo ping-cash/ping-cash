@@ -21,7 +21,14 @@ const EntrySchema = z.object({
 
 const CommitBody = z.object({
   transactionId: z.string().uuid(),
-  transactionType: z.enum(['transfer', 'fee', 'yield', 'offramp', 'refund', 'welcome_grant']),
+  transactionType: z.enum([
+    'transfer',
+    'fee',
+    'yield',
+    'offramp',
+    'refund',
+    'welcome_grant',
+  ]),
   entries: z.array(EntrySchema).min(2),
   metadata: z.record(z.unknown()).optional(),
   outboxEvent: z
@@ -37,11 +44,14 @@ const CommitBody = z.object({
 
 export async function ledgerRoutes(fastify: FastifyInstance) {
   // POST /ledger/commit — atomic write of N entries summing to zero
-  fastify.post('/commit', async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = CommitBody.parse(request.body);
-    const result = await ledgerService.commit(body);
-    return reply.status(201).send(result);
-  });
+  fastify.post(
+    '/commit',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = CommitBody.parse(request.body);
+      const result = await ledgerService.commit(body);
+      return reply.status(201).send(result);
+    }
+  );
 
   // GET /ledger/balance/:accountId
   fastify.get(
@@ -50,8 +60,10 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
       const { accountId } = request.params as { accountId: string };
       const { currency } = request.query as { currency?: string };
       const balance = await ledgerService.getBalance(accountId, currency);
-      return reply.status(200).send({ accountId, currency: currency ?? 'USDC', balance });
-    },
+      return reply
+        .status(200)
+        .send({ accountId, currency: currency ?? 'USDC', balance });
+    }
   );
 
   // GET /ledger/transactions/:accountId
@@ -70,6 +82,6 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
         cursor,
       });
       return reply.status(200).send(result);
-    },
+    }
   );
 }

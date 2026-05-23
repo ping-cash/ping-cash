@@ -1,7 +1,14 @@
 /**
  * Profile / settings screen.
  */
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authStore } from '../../lib/auth-store';
@@ -24,7 +31,7 @@ export default function ProfileScreen() {
             router.replace('/');
           },
         },
-      ],
+      ]
     );
   };
 
@@ -127,7 +134,14 @@ const styles = StyleSheet.create({
   name: { color: '#FFFFFF', fontSize: 20, fontWeight: '700', marginTop: 12 },
   phone: { color: '#A0A0C0', fontSize: 14, marginTop: 4 },
   section: { marginTop: 24 },
-  sectionTitle: { color: '#A0A0C0', fontSize: 13, fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
+  sectionTitle: {
+    color: '#A0A0C0',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -148,5 +162,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signOutText: { color: '#EF4444', fontSize: 16, fontWeight: '600' },
-  versionText: { color: '#6B6B8C', fontSize: 12, textAlign: 'center', marginTop: 24 },
+  versionText: {
+    color: '#6B6B8C',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 24,
+  },
 });

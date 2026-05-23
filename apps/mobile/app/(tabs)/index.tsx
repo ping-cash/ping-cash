@@ -4,7 +4,14 @@
  * Shows: balance, tier badge, quick actions (send/receive/cash-in/cash-out)
  */
 import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../lib/api';
@@ -65,19 +72,31 @@ export default function HomeScreen() {
 
         {/* Quick actions */}
         <View style={styles.actionsGrid}>
-          <TouchableOpacity style={styles.actionTile} onPress={() => router.push('/send')}>
+          <TouchableOpacity
+            style={styles.actionTile}
+            onPress={() => router.push('/send')}
+          >
             <Text style={styles.actionIcon}>↗</Text>
             <Text style={styles.actionLabel}>Send</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionTile} onPress={() => router.push('/(tabs)/history')}>
+          <TouchableOpacity
+            style={styles.actionTile}
+            onPress={() => router.push('/(tabs)/history')}
+          >
             <Text style={styles.actionIcon}>↙</Text>
             <Text style={styles.actionLabel}>Receive</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionTile} onPress={() => router.push('/(tabs)/vault')}>
+          <TouchableOpacity
+            style={styles.actionTile}
+            onPress={() => router.push('/(tabs)/vault')}
+          >
             <Text style={styles.actionIcon}>🏦</Text>
             <Text style={styles.actionLabel}>Earn</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionTile} onPress={() => router.push('/(tabs)/profile')}>
+          <TouchableOpacity
+            style={styles.actionTile}
+            onPress={() => router.push('/(tabs)/profile')}
+          >
             <Text style={styles.actionIcon}>⚙</Text>
             <Text style={styles.actionLabel}>More</Text>
           </TouchableOpacity>
@@ -95,7 +114,9 @@ export default function HomeScreen() {
         <Text style={styles.sectionLabel}>Recent activity</Text>
         <View style={styles.emptyActivity}>
           <Text style={styles.emptyActivityText}>No transfers yet</Text>
-          <Text style={styles.emptyActivitySub}>Tap Send to make your first transfer</Text>
+          <Text style={styles.emptyActivitySub}>
+            Tap Send to make your first transfer
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -146,7 +167,13 @@ const styles = StyleSheet.create({
   },
   welcomeBannerTitle: { color: '#10B981', fontSize: 16, fontWeight: '700' },
   welcomeBannerBody: { color: '#A0A0C0', fontSize: 13, marginTop: 4 },
-  sectionLabel: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', marginTop: 24, marginBottom: 12 },
+  sectionLabel: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 24,
+    marginBottom: 12,
+  },
   emptyActivity: {
     backgroundColor: '#2A2A4A',
     padding: 24,

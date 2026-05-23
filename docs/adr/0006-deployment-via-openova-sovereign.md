@@ -8,10 +8,12 @@
 Ping needs a Kubernetes cluster with Istio service mesh, managed PostgreSQL / MongoDB / Redis / Redpanda, observability (Prometheus / Grafana / Loki / Tempo), secrets management (OpenBao), and DNS automation.
 
 Options:
+
 - **Operate our own cluster** (Civo / Vultr / DigitalOcean) — own Helm charts, own Istio install, own observability stack, own secrets vault, own DNS
 - **Ship as Blueprints to the existing OpenOva Sovereign** at [openova-io/openova-private](https://github.com/openova-io/openova-private) — reuse the founder's existing platform infrastructure
 
 The OpenOva Sovereign already provides:
+
 - vCluster-isolated K8s tenants
 - Cilium CNI + Istio mesh (mTLS + traffic management + observability)
 - CNPG PostgreSQL with active-hot-standby
@@ -36,6 +38,7 @@ Ping ships as a **product repo** following the OpenOva Sovereign product pattern
 ## Consequences
 
 **Good:**
+
 - Zero infrastructure operational overhead — the Sovereign handles K8s, Istio, observability, secrets, DNS
 - Founder's existing investment in `openova-private` is leveraged directly
 - Single GitOps reconciler (Flux on the Sovereign) — no per-product Flux instances
@@ -43,6 +46,7 @@ Ping ships as a **product repo** following the OpenOva Sovereign product pattern
 - Security baseline (mTLS, OpenBao secrets, Falco runtime, Sigstore signatures) is uniform with other products on the Sovereign
 
 **Bad / trade-offs:**
+
 - Coupled to the Sovereign's release cadence — if openova-private has a freeze, our deploys block too
 - Our Helm charts must conform to Sovereign conventions (no Pod-level networking opinions, no StatefulSets for our own databases, etc.)
 - Vertical limits: we can't scale to a separate provider without first refactoring out of the Blueprint pattern
@@ -65,7 +69,19 @@ jobs:
   matrix-build:
     strategy:
       matrix:
-        service: [auth, user, kyc, transfer, wallet, fx, ledger, claim, offramp, notify]
+        service:
+          [
+            auth,
+            user,
+            kyc,
+            transfer,
+            wallet,
+            fx,
+            ledger,
+            claim,
+            offramp,
+            notify,
+          ]
     steps:
       - uses: actions/checkout@v4
       - uses: docker/build-push-action@v6
@@ -84,8 +100,8 @@ jobs:
         with:
           repository: openova-io/openova-private
           path: clusters/contabo-mkt/apps/ping/
-          commit-message: "bump(ping): SHA ${{ github.sha }}"
-          title: "bump(ping): ${{ github.sha }}"
+          commit-message: 'bump(ping): SHA ${{ github.sha }}'
+          title: 'bump(ping): ${{ github.sha }}'
           base: main
 ```
 

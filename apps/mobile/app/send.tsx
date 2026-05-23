@@ -29,7 +29,10 @@ export default function SendScreen() {
 
   const handleSend = async () => {
     if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
-      Alert.alert('Invalid phone', 'Enter the recipient phone in international format');
+      Alert.alert(
+        'Invalid phone',
+        'Enter the recipient phone in international format'
+      );
       return;
     }
     if (!/^\d+(\.\d{1,2})?$/.test(amount) || parseFloat(amount) <= 0) {
@@ -52,7 +55,7 @@ export default function SendScreen() {
             text: 'OK',
             onPress: () => router.back(),
           },
-        ],
+        ]
       );
     } catch (err) {
       Alert.alert('Send failed', (err as Error).message);
@@ -109,7 +112,9 @@ export default function SendScreen() {
 
           <View style={styles.feePreview}>
             <Text style={styles.feeLabel}>Estimated fee</Text>
-            <Text style={styles.feeValue}>FREE in-network · ~0.5% if cash-out</Text>
+            <Text style={styles.feeValue}>
+              FREE in-network · ~0.5% if cash-out
+            </Text>
           </View>
         </ScrollView>
 

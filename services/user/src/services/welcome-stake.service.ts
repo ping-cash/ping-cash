@@ -46,9 +46,11 @@ export async function grant(userId: string, transferId: string): Promise<void> {
   }
 
   const now = new Date();
-  const backstopAt = new Date(now.getTime() + BACKSTOP_DURATION_DAYS * 24 * 60 * 60 * 1000);
+  const backstopAt = new Date(
+    now.getTime() + BACKSTOP_DURATION_DAYS * 24 * 60 * 60 * 1000
+  );
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async tx => {
     // Update user balances + welcome timestamps
     const updated = await tx.user.update({
       where: { id: userId },
@@ -64,7 +66,7 @@ export async function grant(userId: string, transferId: string): Promise<void> {
     const newTier = computeTier(
       updated.pingPointsFreeBalance,
       updated.pingPointsWelcomeLocked,
-      updated.pingPointsWelcomeUnlocked,
+      updated.pingPointsWelcomeUnlocked
     );
 
     await tx.user.update({
@@ -107,7 +109,7 @@ export async function grant(userId: string, transferId: string): Promise<void> {
 
   logger.info(
     { userId, transferId, total: WELCOME_STAKE_TOTAL, tier: 'silver' },
-    'Welcome stake granted',
+    'Welcome stake granted'
   );
 }
 
@@ -115,7 +117,10 @@ export async function grant(userId: string, transferId: string): Promise<void> {
  * Unlock 200 PP from the locked welcome reserve when a milestone is achieved.
  * Called by gamification-service when it detects milestone trigger.
  */
-export async function unlockMilestone(userId: string, milestone: Milestone): Promise<void> {
+export async function unlockMilestone(
+  userId: string,
+  milestone: Milestone
+): Promise<void> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw UserErrors.NotFound();
 
@@ -136,13 +141,14 @@ export async function unlockMilestone(userId: string, milestone: Milestone): Pro
   if (currentLocked < MILESTONE_UNLOCK_AMOUNT) {
     logger.warn(
       { userId, currentLocked, requested: MILESTONE_UNLOCK_AMOUNT },
-      'Insufficient locked balance for milestone unlock',
+      'Insufficient locked balance for milestone unlock'
     );
     return;
   }
 
-  await prisma.$transaction(async (tx) => {
-    const newFree = Number(user.pingPointsFreeBalance) + MILESTONE_UNLOCK_AMOUNT;
+  await prisma.$transaction(async tx => {
+    const newFree =
+      Number(user.pingPointsFreeBalance) + MILESTONE_UNLOCK_AMOUNT;
     const newLocked = currentLocked - MILESTONE_UNLOCK_AMOUNT;
 
     const updated = await tx.user.update({
@@ -156,7 +162,7 @@ export async function unlockMilestone(userId: string, milestone: Milestone): Pro
     const newTier = computeTier(
       updated.pingPointsFreeBalance,
       updated.pingPointsWelcomeLocked,
-      updated.pingPointsWelcomeUnlocked,
+      updated.pingPointsWelcomeUnlocked
     );
 
     if (newTier !== updated.tier) {
@@ -183,7 +189,7 @@ export async function unlockMilestone(userId: string, milestone: Milestone): Pro
         pingPointsBalanceAtTime: new Decimal(
           Number(updated.pingPointsFreeBalance) +
             Number(updated.pingPointsWelcomeLocked) +
-            Number(updated.pingPointsWelcomeUnlocked),
+            Number(updated.pingPointsWelcomeUnlocked)
         ),
         metadata: { milestone, unlocked_amount: MILESTONE_UNLOCK_AMOUNT },
       },
@@ -192,7 +198,7 @@ export async function unlockMilestone(userId: string, milestone: Milestone): Pro
 
   logger.info(
     { userId, milestone, unlocked: MILESTONE_UNLOCK_AMOUNT },
-    'Milestone unlocked',
+    'Milestone unlocked'
   );
 }
 
@@ -204,7 +210,10 @@ export async function backstopUnlock(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw UserErrors.NotFound();
 
-  if (!user.welcomeStakeBackstopAt || user.welcomeStakeBackstopAt > new Date()) {
+  if (
+    !user.welcomeStakeBackstopAt ||
+    user.welcomeStakeBackstopAt > new Date()
+  ) {
     logger.info({ userId }, 'Backstop time not reached yet — skipping');
     return;
   }
@@ -215,7 +224,7 @@ export async function backstopUnlock(userId: string): Promise<void> {
     return;
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async tx => {
     const newFree = Number(user.pingPointsFreeBalance) + remaining;
 
     await tx.user.update({
@@ -236,7 +245,7 @@ export async function backstopUnlock(userId: string): Promise<void> {
         reasonCode: 'welcome_backstop_unlock',
         tierAtTime: user.tier,
         pingPointsBalanceAtTime: new Decimal(
-          newFree + Number(user.pingPointsWelcomeUnlocked),
+          newFree + Number(user.pingPointsWelcomeUnlocked)
         ),
         metadata: { backstop_at: user.welcomeStakeBackstopAt?.toISOString() },
       },
@@ -245,6 +254,6 @@ export async function backstopUnlock(userId: string): Promise<void> {
 
   logger.info(
     { userId, unlocked: remaining },
-    'Backstop unlock executed (2-year safety net)',
+    'Backstop unlock executed (2-year safety net)'
   );
 }

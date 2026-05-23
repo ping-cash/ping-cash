@@ -40,16 +40,23 @@ export async function dispatch(input: DispatchInput): Promise<DispatchResult> {
   if (channels.includes('whatsapp') && input.recipientPhone) {
     try {
       const rendered = renderTemplate(input.template, 'whatsapp', input.params);
-      const result = await sendWhatsApp({ to: input.recipientPhone, body: rendered.body });
+      const result = await sendWhatsApp({
+        to: input.recipientPhone,
+        body: rendered.body,
+      });
       results.push(result);
       if (result.delivered) {
         logger.info(
           { template: input.template, channel: 'whatsapp' },
-          'Notification dispatched via WhatsApp',
+          'Notification dispatched via WhatsApp'
         );
         // WhatsApp succeeded — don't fall back to SMS, but still send push
         if (channels.includes('push') && input.deviceToken) {
-          const pushRendered = renderTemplate(input.template, 'push', input.params);
+          const pushRendered = renderTemplate(
+            input.template,
+            'push',
+            input.params
+          );
           const pushResult = await sendPush({
             deviceToken: input.deviceToken,
             title: pushRendered.title ?? 'Ping',
@@ -60,7 +67,10 @@ export async function dispatch(input: DispatchInput): Promise<DispatchResult> {
         return { template: input.template, results, anyDelivered: true };
       }
     } catch (err) {
-      logger.warn({ err, template: input.template }, 'WhatsApp dispatch failed — falling back');
+      logger.warn(
+        { err, template: input.template },
+        'WhatsApp dispatch failed — falling back'
+      );
     }
   }
 
@@ -68,7 +78,10 @@ export async function dispatch(input: DispatchInput): Promise<DispatchResult> {
   if (channels.includes('sms') && input.recipientPhone) {
     try {
       const rendered = renderTemplate(input.template, 'sms', input.params);
-      const result = await sendSms({ to: input.recipientPhone, body: rendered.body });
+      const result = await sendSms({
+        to: input.recipientPhone,
+        body: rendered.body,
+      });
       results.push(result);
     } catch (err) {
       logger.warn({ err, template: input.template }, 'SMS dispatch failed');
@@ -90,7 +103,7 @@ export async function dispatch(input: DispatchInput): Promise<DispatchResult> {
     }
   }
 
-  const anyDelivered = results.some((r) => r.delivered);
+  const anyDelivered = results.some(r => r.delivered);
   if (!anyDelivered && results.length > 0) {
     throw NotifyErrors.AllChannelsFailed();
   }
