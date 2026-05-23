@@ -8,18 +8,26 @@
  * Pillar 4 send-side: this is the missing wire between transfer-service
  * (which records the transfer + claim code) and the on-chain USDC move
  * (which the sender's client signs and submits).
+ *
+ * The tx is a real SPL Token transferChecked: sender's USDC associated-token-account
+ * → recipient's USDC associated-token-account, debited by the requested amount
+ * (6 decimals for USDC mainnet mint). Recipient ATA is included as a CreateAtaIfNeeded
+ * idempotent instruction so brand-new wallets can receive on first send.
  */
 import {
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountIdempotentInstruction,
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddressSync,
+} from '@solana/spl-token';
+import { PublicKey, Transaction } from '@solana/web3.js';
 
 import { WalletErrors } from '../utils/errors';
 import { logger } from '../utils/logger';
 
 const USDC_MINT_MAINNET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-const SPL_TOKEN_PROGRAM_ID = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+const USDC_DECIMALS = 6;
 
 export interface SendIntent {
   senderWallet: string;
@@ -30,6 +38,11 @@ export interface SendIntent {
   meta: {
     mint: string;
     program: string;
+    associatedTokenProgram: string;
+    senderAta: string;
+    recipientAta: string;
+    decimals: number;
+    amountAtomic: string;
   };
 }
 
@@ -54,29 +67,37 @@ export async function buildSendIntent(
     'Building USDC send intent (Phase 1 — client signs via Privy MPC)'
   );
 
+  const sender = new PublicKey(senderWallet);
+  const recipient = new PublicKey(recipientWallet);
+  const mint = new PublicKey(USDC_MINT_MAINNET);
+  const senderAta = getAssociatedTokenAddressSync(mint, sender);
+  const recipientAta = getAssociatedTokenAddressSync(mint, recipient);
+  const amountAtomic = BigInt(
+    Math.round(Number(amountUsdc) * 10 ** USDC_DECIMALS)
+  );
+
   const tx = new Transaction({
-    feePayer: new PublicKey(senderWallet),
+    feePayer: sender,
     // Placeholder blockhash — client refreshes via Connection.getLatestBlockhash()
     // before signing. Per ADR 0017 we never fetch on behalf of the user.
     recentBlockhash: '11111111111111111111111111111111',
   });
-  const placeholder = new TransactionInstruction({
-    keys: [
-      {
-        pubkey: new PublicKey(senderWallet),
-        isSigner: true,
-        isWritable: true,
-      },
-      {
-        pubkey: new PublicKey(recipientWallet),
-        isSigner: false,
-        isWritable: true,
-      },
-    ],
-    programId: new PublicKey(SPL_TOKEN_PROGRAM_ID),
-    data: Buffer.from([]),
-  });
-  tx.add(placeholder);
+  tx.add(
+    createAssociatedTokenAccountIdempotentInstruction(
+      sender,
+      recipientAta,
+      recipient,
+      mint
+    ),
+    createTransferCheckedInstruction(
+      senderAta,
+      mint,
+      recipientAta,
+      sender,
+      amountAtomic,
+      USDC_DECIMALS
+    )
+  );
 
   return {
     senderWallet,
@@ -86,7 +107,12 @@ export async function buildSendIntent(
     expiresInSeconds: 60,
     meta: {
       mint: USDC_MINT_MAINNET,
-      program: SPL_TOKEN_PROGRAM_ID,
+      program: TOKEN_PROGRAM_ID.toBase58(),
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID.toBase58(),
+      senderAta: senderAta.toBase58(),
+      recipientAta: recipientAta.toBase58(),
+      decimals: USDC_DECIMALS,
+      amountAtomic: amountAtomic.toString(),
     },
   };
 }
