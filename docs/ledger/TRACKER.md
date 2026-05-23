@@ -23,7 +23,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | 🟦 Backlog (no label)   | 4     | #1 EPIC, #22-#24 (Phase 2)                   |
 | 🟧 `status/in-progress` | 0     | —                                            |
 | 🟪 `status/uat`         | 0     | —                                            |
-| 🟩 `status/completed`   | 25    | #2-#6, #8-#14, #17-#21, #25-#32              |
+| 🟩 `status/completed`   | 26    | #2-#6, #8-#14, #17-#21, #25-#33              |
 | 🟥 `status/blocked-ext` | 3     | #7 (KYC repo), #15, #16 (Earn Vault Phase 2) |
 | ⏸️ `status/parked`      | 0     | —                                            |
 
