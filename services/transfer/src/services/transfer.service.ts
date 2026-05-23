@@ -20,6 +20,7 @@ import { TransferRepository } from '../repositories/transfer.repository';
 import { AppError } from '../utils/errors';
 import { logger } from '../utils/logger';
 
+import { createClaimForTransfer } from './claim-bridge.service';
 import {
   ensureKycForTransfer,
   KycTierInsufficientError,
@@ -101,6 +102,17 @@ export class TransferService {
       claimUrl,
       claimExpiresAt,
       note: input.note,
+    });
+
+    // Bridge to claim-service so the recipient can actually open the claim_code.
+    // Best-effort: a transient claim-service failure does not roll back the transfer.
+    await createClaimForTransfer({
+      transferId: transfer.id,
+      senderId: input.senderId,
+      recipientPhone: input.recipientPhone,
+      claimCode,
+      amountValue: input.amount,
+      amountCurrency: input.currency,
     });
 
     // Publish event for saga orchestration
