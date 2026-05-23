@@ -1,0 +1,340 @@
+use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{
+    self, Mint, TokenAccount, TokenInterface, TransferChecked,
+};
+
+declare_id!("InternalSwapProgr4mPubKeyP1ace0001111111111");
+
+const MAX_SPREAD_BPS: u16 = 100;
+const HEDGE_THRESHOLD_BPS: u16 = 2_000;
+
+#[program]
+pub mod internal_swap {
+    use super::*;
+
+    pub fn initialize_pool(ctx: Context<InitializePool>, spread_bps: u16) -> Result<()> {
+        require!(spread_bps <= MAX_SPREAD_BPS, SwapError::SpreadTooHigh);
+        let pool = &mut ctx.accounts.pool;
+        pool.authority = ctx.accounts.authority.key();
+        pool.usdc_mint = ctx.accounts.usdc_mint.key();
+        pool.ping_mint = ctx.accounts.ping_mint.key();
+        pool.usdc_vault = ctx.accounts.usdc_vault.key();
+        pool.ping_vault = ctx.accounts.ping_vault.key();
+        pool.spread_bps = spread_bps;
+        pool.usdc_balance = 0;
+        pool.ping_balance = 0;
+        pool.is_paused = false;
+        pool.bump = ctx.bumps.pool;
+        Ok(())
+    }
+
+    pub fn swap_usdc_for_ping(ctx: Context<SwapUsdcForPing>, amount_in: u64) -> Result<()> {
+        require!(!ctx.accounts.pool.is_paused, SwapError::Paused);
+        require!(amount_in > 0, SwapError::ZeroAmount);
+
+        let pool = &ctx.accounts.pool;
+        require!(pool.ping_balance > 0, SwapError::InsufficientLiquidity);
+
+        let amount_out = quote_usdc_to_ping(
+            amount_in,
+            pool.usdc_balance,
+            pool.ping_balance,
+            pool.spread_bps,
+        )?;
+        require!(amount_out > 0, SwapError::OutputTooSmall);
+        require!(amount_out <= pool.ping_balance, SwapError::InsufficientLiquidity);
+
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_in_ctx(),
+            amount_in,
+            ctx.accounts.usdc_mint.decimals,
+        )?;
+
+        let seeds = &[b"pool".as_ref(), &[ctx.accounts.pool.bump]];
+        let signer = &[&seeds[..]];
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_out_ctx().with_signer(signer),
+            amount_out,
+            ctx.accounts.ping_mint.decimals,
+        )?;
+
+        let pool = &mut ctx.accounts.pool;
+        pool.usdc_balance = pool.usdc_balance.checked_add(amount_in).ok_or(SwapError::MathOverflow)?;
+        pool.ping_balance = pool.ping_balance.checked_sub(amount_out).ok_or(SwapError::MathOverflow)?;
+
+        emit!(SwapEvent {
+            pool: pool.key(),
+            user: ctx.accounts.user.key(),
+            direction: SwapDirection::UsdcForPing,
+            amount_in,
+            amount_out,
+        });
+        Ok(())
+    }
+
+    pub fn swap_ping_for_usdc(ctx: Context<SwapPingForUsdc>, amount_in: u64) -> Result<()> {
+        require!(!ctx.accounts.pool.is_paused, SwapError::Paused);
+        require!(amount_in > 0, SwapError::ZeroAmount);
+
+        let pool = &ctx.accounts.pool;
+        require!(pool.usdc_balance > 0, SwapError::InsufficientLiquidity);
+
+        let amount_out = quote_ping_to_usdc(
+            amount_in,
+            pool.ping_balance,
+            pool.usdc_balance,
+            pool.spread_bps,
+        )?;
+        require!(amount_out > 0, SwapError::OutputTooSmall);
+        require!(amount_out <= pool.usdc_balance, SwapError::InsufficientLiquidity);
+
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_in_ctx(),
+            amount_in,
+            ctx.accounts.ping_mint.decimals,
+        )?;
+
+        let seeds = &[b"pool".as_ref(), &[ctx.accounts.pool.bump]];
+        let signer = &[&seeds[..]];
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_out_ctx().with_signer(signer),
+            amount_out,
+            ctx.accounts.usdc_mint.decimals,
+        )?;
+
+        let pool = &mut ctx.accounts.pool;
+        pool.ping_balance = pool.ping_balance.checked_add(amount_in).ok_or(SwapError::MathOverflow)?;
+        pool.usdc_balance = pool.usdc_balance.checked_sub(amount_out).ok_or(SwapError::MathOverflow)?;
+
+        emit!(SwapEvent {
+            pool: pool.key(),
+            user: ctx.accounts.user.key(),
+            direction: SwapDirection::PingForUsdc,
+            amount_in,
+            amount_out,
+        });
+        Ok(())
+    }
+
+    pub fn set_spread_bps(ctx: Context<AdminPool>, spread_bps: u16) -> Result<()> {
+        require!(spread_bps <= MAX_SPREAD_BPS, SwapError::SpreadTooHigh);
+        ctx.accounts.pool.spread_bps = spread_bps;
+        emit!(SpreadChanged { pool: ctx.accounts.pool.key(), spread_bps });
+        Ok(())
+    }
+
+    pub fn set_paused(ctx: Context<AdminPool>, paused: bool) -> Result<()> {
+        ctx.accounts.pool.is_paused = paused;
+        emit!(PausedEvent { pool: ctx.accounts.pool.key(), paused });
+        Ok(())
+    }
+}
+
+fn quote_usdc_to_ping(
+    amount_in_usdc: u64,
+    pool_usdc: u64,
+    pool_ping: u64,
+    spread_bps: u16,
+) -> Result<u64> {
+    let _ = pool_usdc;
+    let gross = (amount_in_usdc as u128)
+        .checked_mul(pool_ping as u128)
+        .ok_or(SwapError::MathOverflow)?
+        .checked_div((amount_in_usdc as u128).checked_add(pool_usdc as u128).ok_or(SwapError::MathOverflow)?)
+        .ok_or(SwapError::MathOverflow)?;
+    apply_spread(gross, spread_bps)
+}
+
+fn quote_ping_to_usdc(
+    amount_in_ping: u64,
+    pool_ping: u64,
+    pool_usdc: u64,
+    spread_bps: u16,
+) -> Result<u64> {
+    let _ = pool_ping;
+    let gross = (amount_in_ping as u128)
+        .checked_mul(pool_usdc as u128)
+        .ok_or(SwapError::MathOverflow)?
+        .checked_div((amount_in_ping as u128).checked_add(pool_ping as u128).ok_or(SwapError::MathOverflow)?)
+        .ok_or(SwapError::MathOverflow)?;
+    apply_spread(gross, spread_bps)
+}
+
+fn apply_spread(gross: u128, spread_bps: u16) -> Result<u64> {
+    let net = gross
+        .checked_mul((10_000 - spread_bps) as u128)
+        .ok_or(SwapError::MathOverflow)?
+        .checked_div(10_000)
+        .ok_or(SwapError::MathOverflow)?;
+    if net > u64::MAX as u128 { return err!(SwapError::MathOverflow); }
+    Ok(net as u64)
+}
+
+pub fn needs_hedge(pool_usdc: u64, pool_ping_usdc_value: u64) -> bool {
+    if pool_usdc == 0 || pool_ping_usdc_value == 0 { return false; }
+    let larger = pool_usdc.max(pool_ping_usdc_value) as u128;
+    let smaller = pool_usdc.min(pool_ping_usdc_value) as u128;
+    let drift_bps = (larger.checked_sub(smaller).unwrap_or(0))
+        .checked_mul(10_000)
+        .and_then(|x| x.checked_div(larger))
+        .unwrap_or(0) as u16;
+    drift_bps > HEDGE_THRESHOLD_BPS
+}
+
+#[account]
+pub struct Pool {
+    pub authority: Pubkey,
+    pub usdc_mint: Pubkey,
+    pub ping_mint: Pubkey,
+    pub usdc_vault: Pubkey,
+    pub ping_vault: Pubkey,
+    pub usdc_balance: u64,
+    pub ping_balance: u64,
+    pub spread_bps: u16,
+    pub is_paused: bool,
+    pub bump: u8,
+}
+
+impl Pool {
+    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 + 1 + 1;
+}
+
+#[derive(Accounts)]
+pub struct InitializePool<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    #[account(init, payer = authority, space = Pool::LEN, seeds = [b"pool"], bump)]
+    pub pool: Account<'info, Pool>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    pub ping_mint: InterfaceAccount<'info, Mint>,
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub ping_vault: InterfaceAccount<'info, TokenAccount>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct SwapUsdcForPing<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(mut, seeds = [b"pool"], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    pub ping_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub user_ping_ata: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut, address = pool.usdc_vault)]
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut, address = pool.ping_vault)]
+    pub ping_vault: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+impl<'info> SwapUsdcForPing<'info> {
+    fn transfer_in_ctx(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), TransferChecked {
+            from: self.user_usdc_ata.to_account_info(),
+            mint: self.usdc_mint.to_account_info(),
+            to: self.usdc_vault.to_account_info(),
+            authority: self.user.to_account_info(),
+        })
+    }
+    fn transfer_out_ctx(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), TransferChecked {
+            from: self.ping_vault.to_account_info(),
+            mint: self.ping_mint.to_account_info(),
+            to: self.user_ping_ata.to_account_info(),
+            authority: self.pool.to_account_info(),
+        })
+    }
+}
+
+#[derive(Accounts)]
+pub struct SwapPingForUsdc<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(mut, seeds = [b"pool"], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    pub ping_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub user_ping_ata: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut, address = pool.ping_vault)]
+    pub ping_vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut, address = pool.usdc_vault)]
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+impl<'info> SwapPingForUsdc<'info> {
+    fn transfer_in_ctx(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), TransferChecked {
+            from: self.user_ping_ata.to_account_info(),
+            mint: self.ping_mint.to_account_info(),
+            to: self.ping_vault.to_account_info(),
+            authority: self.user.to_account_info(),
+        })
+    }
+    fn transfer_out_ctx(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), TransferChecked {
+            from: self.usdc_vault.to_account_info(),
+            mint: self.usdc_mint.to_account_info(),
+            to: self.user_usdc_ata.to_account_info(),
+            authority: self.pool.to_account_info(),
+        })
+    }
+}
+
+#[derive(Accounts)]
+pub struct AdminPool<'info> {
+    #[account(address = pool.authority)]
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [b"pool"], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
+pub enum SwapDirection {
+    UsdcForPing,
+    PingForUsdc,
+}
+
+#[event]
+pub struct SwapEvent {
+    pub pool: Pubkey,
+    pub user: Pubkey,
+    pub direction: SwapDirection,
+    pub amount_in: u64,
+    pub amount_out: u64,
+}
+
+#[event]
+pub struct SpreadChanged {
+    pub pool: Pubkey,
+    pub spread_bps: u16,
+}
+
+#[event]
+pub struct PausedEvent {
+    pub pool: Pubkey,
+    pub paused: bool,
+}
+
+#[error_code]
+pub enum SwapError {
+    #[msg("Pool is paused")]
+    Paused,
+    #[msg("Amount must be > 0")]
+    ZeroAmount,
+    #[msg("Output too small (below dust)")]
+    OutputTooSmall,
+    #[msg("Insufficient pool liquidity")]
+    InsufficientLiquidity,
+    #[msg("Spread BPS exceeds MAX_SPREAD_BPS")]
+    SpreadTooHigh,
+    #[msg("Arithmetic overflow")]
+    MathOverflow,
+}

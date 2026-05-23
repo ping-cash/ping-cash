@@ -8,6 +8,7 @@ skip-lint = false
 
 [programs.localnet]
 earn_vault = "EarnVau1tProgr4mPubKeyP1ace0001111111111111"
+internal_swap = "InternalSwapProgr4mPubKeyP1ace0001111111111"
 
 [registry]
 url = "https://api.apr.dev"
@@ -17,7 +18,7 @@ cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [workspace]
-members = ["programs/earn-vault"]
+members = ["programs/earn-vault", "programs/internal-swap"]
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
