@@ -19,6 +19,11 @@ function getClient(): KycClient | null {
   return kycClient;
 }
 
+/** Test-only: clear the cached client so a fresh one picks up the latest stubbed fetch. */
+export function __resetKycClientForTests(): void {
+  kycClient = null;
+}
+
 export function requireKycTier(
   minTier: 1 | 2,
   options: { userIdFrom?: 'context' | 'body' } = { userIdFrom: 'context' }
