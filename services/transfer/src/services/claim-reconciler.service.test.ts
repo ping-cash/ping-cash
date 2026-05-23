@@ -28,7 +28,9 @@ const baseTransfer = (id: string, claimCode: string) => ({
 });
 
 describe('claim-reconciler tickReconciler', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('returns zeros when no pending rows', async () => {
     findMany.mockResolvedValueOnce([]);
