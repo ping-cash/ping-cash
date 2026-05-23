@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every walk; cron-refreshed alongside [TRACKER.md](TRACKER.md).
 
-**Last refreshed:** 2026-05-21 (initial seed)
+**Last refreshed:** 2026-05-23 (first end-user walk passed: Pillars 5 + 9)
 
 ---
 
@@ -34,14 +34,16 @@ Every new PR against a surface flips it back to 🔴 UNVERIFIED.
 | 3. Transfer  | USDC transfer confirmed on Solana                      | 🔴 UNVERIFIED | —         | Wallet service not built                   |
 | 4. Wallet    | `GET /wallet/balance` returns USDC                     | 🔴 UNVERIFIED | —         | Wallet service not built                   |
 | 4. Wallet    | Privy MPC signs transactions                           | 🔴 UNVERIFIED | —         | Privy account not provisioned              |
-| 5. Claim     | Claim page renders with amount + sender                | 🔴 UNVERIFIED | —         | Claim service not built                    |
-| 5. Claim     | OTP verification flow works                            | 🔴 UNVERIFIED | —         | Claim service not built                    |
-| 5. Claim     | Cash-out to GCash completes                            | 🔴 UNVERIFIED | —         | TransFi not provisioned                    |
+| 5. Claim     | Claim page renders with amount + sender                | 🟢 VERIFIED-PASS | 2026-05-23 | [issue #1 comment + docs/walks/2026-05-23-walk-stage1-view.png](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4525035929) |
+| 5. Claim     | OTP verification flow works                            | 🟢 VERIFIED-PASS | 2026-05-23 | [docs/walks/2026-05-23-walk-stage2-otp.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-23-walk-stage2-otp.png) (stub-mode OTP `123456`) |
+| 5. Claim     | Cash-out method selection (GCash/Maya/Bank/Cebuana)    | 🟢 VERIFIED-PASS | 2026-05-23 | [docs/walks/2026-05-23-walk-stage3-methods.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-23-walk-stage3-methods.png) |
+| 5. Claim     | Cash-out reference issued (stub-mode TransFi)          | 🟢 VERIFIED-PASS | 2026-05-23 | [docs/walks/2026-05-23-walk-stage5-success.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-23-walk-stage5-success.png) — `PING-DF7049AD` |
+| 5. Claim     | Real TransFi sandbox payout completes                  | 🔴 UNVERIFIED | —         | TransFi KYB pending (Phase 2 prerequisite) |
 | 6. Off-ramp  | TransFi webhook signature verifies                     | 🔴 UNVERIFIED | —         | TransFi not provisioned                    |
 | 7. Notify    | WhatsApp claim notification delivers                   | 🔴 UNVERIFIED | —         | WhatsApp Business API not provisioned      |
 | 7. Notify    | SMS OTP delivers                                       | 🔴 UNVERIFIED | —         | Twilio not provisioned                     |
 | 8. Mobile    | App cold-launch in < 3s                                | 🔴 UNVERIFIED | —         | Scaffold only                              |
-| 9. Web Claim | Claim page mobile-responsive                           | 🔴 UNVERIFIED | —         | Not built                                  |
+| 9. Web Claim | Claim page mobile-responsive at ping.openova.io        | 🟢 VERIFIED-PASS | 2026-05-23 | [issue #1 walk evidence](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4525035929) — all 5 stages on real browser |
 
 ---
 
