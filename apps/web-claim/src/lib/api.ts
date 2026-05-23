@@ -8,7 +8,10 @@
  *   POST /claims/:code/cashout
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ping.cash';
+// Use same-origin by default — ingress routes /claims/* to claim-service.
+// In production this means the browser hits ping.openova.io/claims/* directly,
+// no CORS, no api.* subdomain needed.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 export interface ClaimPublic {
   code: string;

@@ -1,0 +1,16 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "Ping" [ref=e3] [cursor=pointer]:
+      - /url: https://ping.cash
+  - main [ref=e4]:
+    - paragraph [ref=e6]: Loading...
+  - contentinfo [ref=e7]:
+    - paragraph [ref=e8]: Non-custodial · Solana · USDC
+    - paragraph [ref=e9]:
+      - link "Privacy" [ref=e10] [cursor=pointer]:
+        - /url: https://ping.cash/privacy
+      - link "Terms" [ref=e11] [cursor=pointer]:
+        - /url: https://ping.cash/terms
+      - link "Help" [ref=e12] [cursor=pointer]:
+        - /url: https://ping.cash/help
+  - alert [ref=e13]
