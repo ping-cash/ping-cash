@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { lookupRecipientUserId } from './recipient-lookup.service';
 
 const ORIGINAL_URL = process.env.USER_SERVICE_URL;

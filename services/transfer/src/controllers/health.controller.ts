@@ -1,6 +1,5 @@
-import { FastifyInstance } from 'fastify';
-
 import { getConfig } from '@ping/config';
+import { FastifyInstance } from 'fastify';
 
 import { kafka } from '../events/kafka';
 import { prisma } from '../utils/prisma';
