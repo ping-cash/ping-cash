@@ -1,10 +1,6 @@
-# auth-service container (per ADR 0006)
-# Per CLAUDE.md: CI is the only build path. Locally don't 'docker build' — use CI.
+# auth-service — tsup bundles ALL deps into dist/index.js (self-contained).
+# Per ADR 0006 + CLAUDE.md: CI is the only build path.
 
-# ──────────────────────────────────────────────────────────────────────
-# Build stage — full workspace install, type-build packages + service,
-# then pnpm deploy assembles a hoisted production node_modules.
-# ──────────────────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
@@ -27,20 +23,13 @@ RUN pnpm --filter @ping/utils build
 
 RUN pnpm --filter @ping/auth-service build
 
-# Use pnpm deploy to produce a runtime-ready directory at /app/deploy
-# with all production deps (hoisted) under deploy/node_modules and the
-# tsup bundle at deploy/dist.
-RUN pnpm --filter @ping/auth-service deploy --prod /app/deploy
-
-# ──────────────────────────────────────────────────────────────────────
-# Runtime stage
-# ──────────────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 ping
 USER ping
 
-COPY --from=builder --chown=ping:nodejs /app/deploy ./
+COPY --from=builder --chown=ping:nodejs /app/services/auth/dist ./dist
+
 
 ENV NODE_ENV=production
 ENV PORT=3001

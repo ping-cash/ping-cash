@@ -9,5 +9,6 @@ export default defineConfig({
   minify: false,
   splitting: false,
   bundle: true,
-  noExternal: [/^@ping\//],
+  noExternal: [/.*/],
+  external: ['@prisma/client', '.prisma'],
 });

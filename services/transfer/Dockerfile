@@ -20,14 +20,13 @@ RUN pnpm --filter @ping/utils build
 RUN pnpm --filter @ping/transfer-service db:generate
 RUN pnpm --filter @ping/transfer-service build
 
-RUN pnpm --filter @ping/transfer-service deploy --prod /app/deploy
-
 FROM node:20-alpine AS runner
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 ping
 USER ping
 
-COPY --from=builder --chown=ping:nodejs /app/deploy ./
+COPY --from=builder --chown=ping:nodejs /app/services/transfer/dist ./dist
+COPY --from=builder --chown=ping:nodejs /app/services/transfer/node_modules/.prisma ./node_modules/.prisma
 
 ENV NODE_ENV=production
 ENV PORT=3000

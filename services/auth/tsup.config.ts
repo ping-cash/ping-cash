@@ -7,5 +7,7 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   bundle: true,
-  noExternal: [/^@ping\//],
+  noExternal: [/.*/], // bundle ALL deps including node_modules for runtime self-containment
+  // Skip rare deps that need native bindings or runtime resolution
+  external: ['@prisma/client', '.prisma'],
 });
