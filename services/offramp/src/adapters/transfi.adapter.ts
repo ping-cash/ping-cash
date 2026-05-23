@@ -29,6 +29,7 @@ const TRANSFI_METHOD_MAP: Partial<
   maya: { service: 'mobile-wallet', subservice: 'MAYA_PH' },
   'bdo-bank': { service: 'bank-transfer', subservice: 'PH_BDO' },
   'bpi-bank': { service: 'bank-transfer', subservice: 'PH_BPI' },
+  'cebuana-cash-pickup': { service: 'cash-pickup', subservice: 'CEBUANA_PH' },
   upi: { service: 'mobile-wallet', subservice: 'UPI_IN' },
   'neft-bank': { service: 'bank-transfer', subservice: 'NEFT_IN' },
   paytm: { service: 'mobile-wallet', subservice: 'PAYTM_IN' },
