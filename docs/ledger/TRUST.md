@@ -21,6 +21,24 @@ Every new PR against a surface flips it back to 🔴 UNVERIFIED.
 
 ---
 
+## 2026-05-24 mech-4 stack — end-user DoD walk evidence
+
+All 10 ping services rebuilt locally via bastion podman + classic PAT push (P23 mechanism-4 bypassing #54 GHA billing). Full 5-screen end-user walk captured on the live Sovereign at https://ping.openova.io:
+
+| Screen | Evidence | Issue |
+|---|---|---|
+| Splash | [docs/walks/2026-05-24-claim-mech4-7ydZ2PRQfpL4.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-24-claim-mech4-7ydZ2PRQfpL4.png) | [#1 c.4526477255](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4526477255) |
+| OTP entry | [docs/walks/2026-05-24-claim-otp-Y3tfDBbfTVbg.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-24-claim-otp-Y3tfDBbfTVbg.png) | [#1 c.4526529377](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4526529377) |
+| Cashout picker | [docs/walks/2026-05-24-claim-cashout-picker-Y3tfDBbfTVbg.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-24-claim-cashout-picker-Y3tfDBbfTVbg.png) | Same comment |
+| GCash account form | [docs/walks/2026-05-24-claim-cashout-form-NSPdjdkxAcQB.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-24-claim-cashout-form-NSPdjdkxAcQB.png) | [#1 c.4526544089](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4526544089) |
+| Money sent success | [docs/walks/2026-05-24-claim-success-NSPdjdkxAcQB.png](https://raw.githubusercontent.com/ping-cash/ping-cash/main/docs/walks/2026-05-24-claim-success-NSPdjdkxAcQB.png) | Same comment |
+
+Plus the API-level 5-stage corridor (curl): claimCode g5xPbCaCc4C3 → PING-A368B1BB ([#1 c.4526472691](https://github.com/ping-cash/ping-cash/issues/1#issuecomment-4526472691)).
+
+Image SHAs serving these screens: auth/wallet/fx/compliance/gamification/notify/offramp/token/web-claim → 55189e6; ledger/user/transfer/claim → 5793640. Cluster deployment record: openova-private@dcb962bd.
+
+---
+
 ## Phase 1 MVP Pillars
 
 | Pillar           | Surface                                                                     | State               | Last Walk  | Evidence                                                                                                                                                                                                                              |
