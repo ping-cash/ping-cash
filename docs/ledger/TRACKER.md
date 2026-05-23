@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-23 — 16 services live; ALL 14 Phase-1 pillars VERIFIED-PASS; 17 issues closed; 3 blocked-ext (KYC + Phase 2)
+**Last refreshed:** 2026-05-23 — 16 services live; ALL 14 Phase-1 pillars VERIFIED-PASS; 4 issues closed + 13 labeled `status/completed` (awaiting founder close); 3 blocked-ext (KYC + Phase 2)
 
 ---
 
