@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every walk; cron-refreshed alongside [TRACKER.md](TRACKER.md).
 
-**Last refreshed:** 2026-05-24 — 3 end-user walks PASS (PING-BE48EAE9 GCash, PING-6F7AA69D Maya, PING-90A9812C BDO Bank via natural-flow); bridge+reconciler suite live on prov; gamification + fx + tier re-verified post solana-validator outage
+**Last refreshed:** 2026-05-24 — Full corridor walks PASS on fresh mech-4 image stack (5793640 across ledger/user/transfer/claim) without CMD-override hotfixes; latest: claimCode GrpGyVx3NNUK → PING-8D1C9D6E. P23 mechanism-4 (bastion podman + classic PAT push) operational as primary image-build path while #54 GHA billing parked
 
 ---
 
