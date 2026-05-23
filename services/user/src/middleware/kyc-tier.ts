@@ -1,7 +1,7 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
-import { KycClient } from '@ping/kyc-client';
-
 import { getConfig } from '@ping/config';
+import { KycClient } from '@ping/kyc-client';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+
 import { logger } from '../utils/logger';
 
 const config = getConfig();
