@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every walk; cron-refreshed alongside [TRACKER.md](TRACKER.md).
 
-**Last refreshed:** 2026-05-23 (first end-user walk passed: Pillars 5 + 9)
+**Last refreshed:** 2026-05-24 — 3 end-user walks PASS (PING-BE48EAE9 GCash, PING-6F7AA69D Maya, PING-90A9812C BDO Bank via natural-flow); bridge+reconciler suite live on prov; gamification + fx + tier re-verified post solana-validator outage
 
 ---
 
