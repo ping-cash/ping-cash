@@ -68,7 +68,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 ## Real-cred plug-in (not blockers — stub-mode live)
 
-The platform is fully walkable TODAY on stub-mode adapters. None of the rows below block the end-user DoD: walks #1 (GCash) + #2 (Maya) both passed end-to-end without these. Real creds are hot-swap via OpenBao env injection — code unchanged.
+The platform is fully walkable TODAY on stub-mode adapters. None of the rows below block the end-user DoD: walks #1 (GCash) + #2 (Maya) both passed end-to-end without these. Real creds are hot-swap via `ping-config` ConfigMap in the openova-private repo — code unchanged. (Note: target-state platform pattern is OpenBao + external-secrets; this Sovereign on Contabo predates that stack — direct ConfigMap is the current op path. See #50 audit comment 4526414922.)
 
 | Real cred              | Current state                     | Hot-swap path                                      |
 | ---------------------- | --------------------------------- | -------------------------------------------------- |
