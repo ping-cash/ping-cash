@@ -254,6 +254,9 @@ pub mod earn_vault {
 
 #[derive(Accounts)]
 pub struct RotateAuthority<'info> {
+    /// Per-mint Vault PDA. has_one = authority + the Signer<'info> below
+    /// belt-and-braces enforce that the signer matches vault.authority.
+    /// mut because vault.authority field is rewritten in-place.
     #[account(
         mut,
         seeds = [b"vault", usdc_mint.key().as_ref()],
@@ -382,13 +385,22 @@ impl<'info> Stake<'info> {
 
 #[derive(Accounts)]
 pub struct Harvest<'info> {
+    /// Vault authority — must match recorded vault.authority (production:
+    /// Squads multisig). NB: harvest() instruction itself is hard-disabled
+    /// per C-02 61407a3 — this context is preserved for the #61 rebuild.
     #[account(mut, address = vault.authority)]
     pub authority: Signer<'info>,
+    /// Per-mint Vault PDA. Even though harvest() reverts, the seeds /
+    /// constraints must remain valid so the call reaches the err! shorthand.
     #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
+    /// USDC mint — read-only.
     pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// Vault's USDC reserve (would source the yield-distribution transfer
+    /// post-rebuild; currently unused since harvest reverts).
     #[account(mut, address = vault.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    /// Treasury (would receive treasury_split_bps × yield post-rebuild).
     #[account(mut, address = vault.treasury)]
     pub treasury: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
