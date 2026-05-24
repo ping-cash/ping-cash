@@ -61,17 +61,25 @@ pub mod internal_swap {
         require!(!ctx.accounts.pool.is_paused, SwapError::Paused);
         require!(amount_in > 0, SwapError::ZeroAmount);
 
+        // C3 fix (per #22 c.4527278904): read REAL vault balances from the
+        // SPL token accounts, not the trusted pool.{usdc,ping}_balance
+        // counters. Original code let any out-of-band vault movement
+        // de-sync pricing and enable arbitrage drain. By reading
+        // *_vault.amount directly, the price is always derived from
+        // ground truth.
         let pool = &ctx.accounts.pool;
-        require!(pool.ping_balance > 0, SwapError::InsufficientLiquidity);
+        let real_usdc = ctx.accounts.usdc_vault.amount;
+        let real_ping = ctx.accounts.ping_vault.amount;
+        require!(real_ping > 0, SwapError::InsufficientLiquidity);
 
         let amount_out = quote_usdc_to_ping(
             amount_in,
-            pool.usdc_balance,
-            pool.ping_balance,
+            real_usdc,
+            real_ping,
             pool.spread_bps,
         )?;
         require!(amount_out > 0, SwapError::OutputTooSmall);
-        require!(amount_out <= pool.ping_balance, SwapError::InsufficientLiquidity);
+        require!(amount_out <= real_ping, SwapError::InsufficientLiquidity);
         // H-03 fix (per #22 c.4527278904): standard DEX slippage protection.
         // Client computes expected_output off-chain, applies their tolerance
         // (typically 0.5-1.0%), passes the floor. If on-chain quote is worse
@@ -125,17 +133,20 @@ pub mod internal_swap {
         require!(!ctx.accounts.pool.is_paused, SwapError::Paused);
         require!(amount_in > 0, SwapError::ZeroAmount);
 
+        // C3 fix: read REAL vault balances (see swap_usdc_for_ping above).
         let pool = &ctx.accounts.pool;
-        require!(pool.usdc_balance > 0, SwapError::InsufficientLiquidity);
+        let real_usdc = ctx.accounts.usdc_vault.amount;
+        let real_ping = ctx.accounts.ping_vault.amount;
+        require!(real_usdc > 0, SwapError::InsufficientLiquidity);
 
         let amount_out = quote_ping_to_usdc(
             amount_in,
-            pool.ping_balance,
-            pool.usdc_balance,
+            real_ping,
+            real_usdc,
             pool.spread_bps,
         )?;
         require!(amount_out > 0, SwapError::OutputTooSmall);
-        require!(amount_out <= pool.usdc_balance, SwapError::InsufficientLiquidity);
+        require!(amount_out <= real_usdc, SwapError::InsufficientLiquidity);
         // H-03 slippage protection — see swap_usdc_for_ping above.
         require!(amount_out >= minimum_amount_out, SwapError::SlippageExceeded);
 
