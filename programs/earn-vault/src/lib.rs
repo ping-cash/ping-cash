@@ -116,7 +116,10 @@ pub mod earn_vault {
     }
 
     pub fn unstake(ctx: Context<Unstake>, vusdc_amount: u64) -> Result<()> {
-        require!(!ctx.accounts.vault.is_paused, VaultError::Paused);
+        // Pre-audit H-03 (#22 c.4527111355) — unstake MUST NEVER be blocked
+        // by pause. Financial-safety invariant: users always retain the right
+        // to exit the vault, even (especially) during emergencies. Pause
+        // blocks new stakes + harvest, not withdrawals.
         require!(vusdc_amount > 0, VaultError::ZeroAmount);
 
         let usdc_amount = (vusdc_amount as u128)
