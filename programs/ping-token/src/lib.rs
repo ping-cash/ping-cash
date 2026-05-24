@@ -1,9 +1,25 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token_2022::spl_token_2022::{
+    extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions},
+    state::Mint as SplMint,
+};
 use anchor_spl::token_interface::{Mint, TokenInterface};
 
 declare_id!("PingTokenProgr4mPubKeyP1ace00011111111111111");
 
 pub const PING_DECIMALS: u8 = 9;
+
+/// Token-2022 extensions allow-list per ADR 0008. Anything NOT in this list
+/// causes initialize_mint to revert with UnsafeExtension.
+/// Pre-audit finding C-02 (2026-05-24, #22 c.4527049794) — without this check
+/// a hostile mint could carry PermanentDelegate / TransferHook /
+/// DefaultAccountState::Frozen / MintCloseAuthority / TransferFeeConfig /
+/// InterestBearingConfig / NonTransferable / ConfidentialTransferMint /
+/// GroupPointer / GroupMemberPointer and this program would happily certify it.
+const ALLOWED_EXTENSIONS: &[ExtensionType] = &[
+    ExtensionType::MetadataPointer,
+    ExtensionType::TokenMetadata,
+];
 
 #[program]
 pub mod ping_token {
@@ -34,6 +50,22 @@ pub mod ping_token {
             ctx.accounts.mint.freeze_authority.is_none(),
             PingTokenError::FreezeAuthorityMustBeNone
         );
+
+        // Pre-audit C-02 remediation: deserialize raw mint data with extensions
+        // and reject anything outside the allow-list. InterfaceAccount<Mint>
+        // gives us the base mint fields but does NOT enforce extension hygiene.
+        let mint_account_info = ctx.accounts.mint.to_account_info();
+        let mint_data = mint_account_info.try_borrow_data()?;
+        let mint_with_ext = StateWithExtensions::<SplMint>::unpack(&mint_data)
+            .map_err(|_| error!(PingTokenError::MintParseFailed))?;
+        for ext in mint_with_ext.get_extension_types()
+            .map_err(|_| error!(PingTokenError::MintParseFailed))?
+        {
+            require!(
+                ALLOWED_EXTENSIONS.contains(&ext),
+                PingTokenError::UnsafeExtension
+            );
+        }
 
         emit!(MintInitialized {
             mint: ctx.accounts.mint.key(),
@@ -88,4 +120,8 @@ pub enum PingTokenError {
     WrongMintAuthority,
     #[msg("Freeze authority must be None (no freeze ever per ADR 0008)")]
     FreezeAuthorityMustBeNone,
+    #[msg("Mint extensions could not be parsed (Token-2022 deserialize failed)")]
+    MintParseFailed,
+    #[msg("Mint carries a Token-2022 extension outside the ADR 0008 allow-list (only MetadataPointer + TokenMetadata permitted)")]
+    UnsafeExtension,
 }
