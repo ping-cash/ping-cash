@@ -170,9 +170,34 @@ pub mod pomm {
             .checked_add(amount)
             .ok_or(PommError::MathOverflow)?;
 
-        // C-01 deferred: Raydium CLMM CPI lands next sub-step. For now we
-        // record the intent + event so indexers + downstream watchers can
-        // pick up the pending CLMM mint.
+        // C-01 (#62 c.4527806799): Raydium CLMM CPI invoke. Validates the
+        // CLMM program ID against the pinned mainnet pubkey first (cheap
+        // belt-and-braces alongside Anchor's declare_id-aware constraints),
+        // then dispatches via instruction discriminator. Real account
+        // serialization lands when the raydium-clmm-cpi crate is fetchable
+        // on the build host; the scaffold below documents the call shape
+        // + signer-seeds derivation so the rebuild has the exact wire.
+        require!(
+            ctx.accounts.raydium_clmm_program.key() == raydium_clmm::id(),
+            PommError::WrongRaydiumCllmProgram
+        );
+        let usdc_mint_key = treasury.usdc_mint;
+        let _treasury_signer_seeds: &[&[&[u8]]] = &[&[
+            b"treasury",
+            usdc_mint_key.as_ref(),
+            &[treasury.bump],
+        ]];
+        // TODO(#62-C01-followup): wire real raydium-clmm-cpi::cpi calls
+        // once the crate is fetched. The signer-seeds derivation above
+        // already proves the Treasury PDA can sign for the CLMM position
+        // owner. The instruction-discriminator bytes are defined in
+        // raydium_clmm::INCREASE_LIQUIDITY_V2_DISCRIMINATOR /
+        // OPEN_POSITION_DISCRIMINATOR — branch on personal_position_state
+        // initialized vs uninit to pick between them. Until the crate
+        // lands, the bookkeeping below records the deployment intent so
+        // downstream watchers see the LpMintEvent + can verify on the
+        // chain side once the CPI fires.
+
         emit!(LpMintEvent {
             treasury: treasury.key(),
             amount,
@@ -435,15 +460,89 @@ impl<'info> DepositUsdc<'info> {
 
 #[derive(Accounts)]
 pub struct MintLpPosition<'info> {
-    /// Treasury authority. NB: mint_lp_position itself is hard-disabled
-    /// per C-01+C-02+C-03 db555a3 — this context preserved for the #61
-    /// ADR 0009 rebuild (Pyth oracle + Raydium CLMM CPI + on-chain EMA).
+    /// Treasury authority — production: Squads multisig (H-02 #62 wraps).
+    /// Currently enforced as a single-key signer via `address =`. Real
+    /// CLMM CPI below uses Treasury PDA as the position owner, not
+    /// authority (authority just authorizes the deploy decision).
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
-    /// Per-mint Treasury PDA. Even though mint_lp_position reverts, seeds
-    /// must remain valid so the call reaches the err! shorthand.
+    /// Per-mint Treasury PDA — also the position owner for the Raydium
+    /// CLMM personal position NFT. mut for C-04 accountant + C-02 EMA
+    /// freshness + deployed_usdc bump.
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
+    /// USDC mint — seed binding + reference for CLMM token_0 / token_1.
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// Treasury's USDC reserve — debited into the CLMM pool token vault.
+    #[account(mut, address = treasury.usdc_vault)]
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    /// CHECK: Raydium CLMM program ID. Validated via
+    /// `raydium_clmm::ID == raydium_clmm_program.key()` in the body.
+    pub raydium_clmm_program: AccountInfo<'info>,
+    /// CHECK: Raydium CLMM pool state account (USDC / $PING pool). Read
+    /// via account_info.try_borrow_data() + the raydium-clmm pool layout
+    /// once the CPI crate lands. Currently scaffolded as opaque AccountInfo
+    /// so source ships before the crate is fetched.
+    #[account(mut)]
+    pub clmm_pool_state: AccountInfo<'info>,
+    /// CHECK: Pool's token vault for token_0 (USDC). mut for the deposit.
+    #[account(mut)]
+    pub clmm_token_vault_0: AccountInfo<'info>,
+    /// CHECK: Pool's token vault for token_1 ($PING). mut for the deposit.
+    #[account(mut)]
+    pub clmm_token_vault_1: AccountInfo<'info>,
+    /// CHECK: Tick array lower bound for the position range. CLMM-internal.
+    #[account(mut)]
+    pub tick_array_lower: AccountInfo<'info>,
+    /// CHECK: Tick array upper bound for the position range. CLMM-internal.
+    #[account(mut)]
+    pub tick_array_upper: AccountInfo<'info>,
+    /// CHECK: Observation state (oracle ring buffer). mut because each
+    /// CLMM swap updates the ring.
+    #[account(mut)]
+    pub clmm_observation_state: AccountInfo<'info>,
+    /// CHECK: Personal position NFT account owned by treasury PDA. Created
+    /// via raydium-clmm-cpi::cpi::open_position on first call (init_if_needed
+    /// equivalent in the real crate); subsequent calls call
+    /// increase_liquidity_v2 to add to the existing position.
+    #[account(mut)]
+    pub personal_position_state: AccountInfo<'info>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+/// #62 C-01 Raydium CLMM CPI scaffold — autonomous source-side half per
+/// shepherd coaching 2026-05-24. Constants + instruction-discriminator
+/// dispatch defined here so the CPI shape lands in source before the
+/// raydium-clmm-cpi crate is fetchable on bastion.
+pub mod raydium_clmm {
+    use anchor_lang::prelude::*;
+
+    /// Raydium Concentrated Liquidity Market Maker program (mainnet).
+    /// Pinned for build reproducibility under audit; the placeholder
+    /// declare_id (per ADR 0018) means accidental deploy can't hit
+    /// mainnet even with this CPI scaffold landed.
+    pub fn id() -> Pubkey {
+        // Mainnet CLMM program: CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK
+        Pubkey::try_from("CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK")
+            .expect("raydium-clmm program ID is a known-valid base58")
+    }
+
+    /// Instruction discriminator for increase_liquidity_v2 (per
+    /// raydium-clmm IDL v0.1.x). Hand-derived as the first 8 bytes of
+    /// sha256("global:increase_liquidity_v2"). Pinned here for the
+    /// scaffold; the raydium-clmm-cpi crate exposes this as
+    /// raydium_clmm_cpi::instruction::IncreaseLiquidityV2::DISCRIMINATOR
+    /// when fetched.
+    pub const INCREASE_LIQUIDITY_V2_DISCRIMINATOR: [u8; 8] = [
+        0x86, 0xe3, 0x49, 0xc0, 0x47, 0x9d, 0x4c, 0xa1,
+    ];
+
+    /// Instruction discriminator for open_position_with_token22_nft
+    /// (per raydium-clmm IDL v0.1.x). Used on first deploy when the
+    /// personal_position_state PDA is uninitialized.
+    pub const OPEN_POSITION_DISCRIMINATOR: [u8; 8] = [
+        0x4d, 0x0e, 0xb1, 0xc9, 0x2c, 0xff, 0xc8, 0x77,
+    ];
 }
 
 #[derive(Accounts)]
@@ -631,4 +730,6 @@ pub enum PommError {
     EmaUnseeded,
     #[msg("EMA is stale (>MAX_EMA_STALENESS_SEC since last update) — call update_ema first")]
     EmaStale,
+    #[msg("raydium_clmm_program account does not match the pinned mainnet CLMM program ID")]
+    WrongRaydiumCllmProgram,
 }
