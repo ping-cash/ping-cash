@@ -63,6 +63,20 @@ pub mod earn_vault {
         vault.total_vusdc_supply = 0;
         vault.is_paused = false;
         vault.bump = ctx.bumps.vault;
+
+        // M-class cross-applied from internal-swap M-04 (eace98f):
+        // indexers subscribe to creation event instead of crawling.
+        emit!(VaultInitialized {
+            vault: vault.key(),
+            authority: vault.authority,
+            usdc_mint: vault.usdc_mint,
+            vusdc_mint: vault.vusdc_mint,
+            usdc_vault: vault.usdc_vault,
+            treasury: vault.treasury,
+            treasury_split_bps: vault.treasury_split_bps,
+            holder_split_bps: vault.holder_split_bps,
+            bump: vault.bump,
+        });
         Ok(())
     }
 
@@ -467,6 +481,19 @@ pub struct AuthorityRotated {
     pub vault: Pubkey,
     pub old_authority: Pubkey,
     pub new_authority: Pubkey,
+}
+
+#[event]
+pub struct VaultInitialized {
+    pub vault: Pubkey,
+    pub authority: Pubkey,
+    pub usdc_mint: Pubkey,
+    pub vusdc_mint: Pubkey,
+    pub usdc_vault: Pubkey,
+    pub treasury: Pubkey,
+    pub treasury_split_bps: u16,
+    pub holder_split_bps: u16,
+    pub bump: u8,
 }
 
 #[error_code]
