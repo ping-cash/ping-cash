@@ -90,7 +90,15 @@ pub mod earn_vault {
         };
 
         let vault_key = ctx.accounts.vault.key();
-        let seeds = &[b"vault".as_ref(), &[ctx.accounts.vault.bump]];
+        // C-04 fix: signer seeds must include usdc_mint to match the per-mint
+        // PDA bound at initialize_vault. Read from vault.usdc_mint (recorded
+        // at init) — that pubkey IS the binding identity of this vault.
+        let usdc_mint_key = ctx.accounts.vault.usdc_mint;
+        let seeds = &[
+            b"vault".as_ref(),
+            usdc_mint_key.as_ref(),
+            &[ctx.accounts.vault.bump],
+        ];
         let signer = &[&seeds[..]];
         token_interface::mint_to(
             ctx.accounts.mint_vusdc_ctx().with_signer(signer),
@@ -145,7 +153,15 @@ pub mod earn_vault {
             .checked_div(ctx.accounts.vault.total_vusdc_supply as u128)
             .ok_or(VaultError::MathOverflow)? as u64;
 
-        let seeds = &[b"vault".as_ref(), &[ctx.accounts.vault.bump]];
+        // C-04 fix: signer seeds must include usdc_mint to match the per-mint
+        // PDA bound at initialize_vault. Read from vault.usdc_mint (recorded
+        // at init) — that pubkey IS the binding identity of this vault.
+        let usdc_mint_key = ctx.accounts.vault.usdc_mint;
+        let seeds = &[
+            b"vault".as_ref(),
+            usdc_mint_key.as_ref(),
+            &[ctx.accounts.vault.bump],
+        ];
         let signer = &[&seeds[..]];
         token_interface::transfer_checked(
             ctx.accounts.transfer_to_user_ctx().with_signer(signer),
@@ -213,7 +229,7 @@ pub struct InitializeVault<'info> {
         init,
         payer = authority,
         space = Vault::LEN,
-        seeds = [b"vault"],
+        seeds = [b"vault", usdc_mint.key().as_ref()],
         bump
     )]
     pub vault: Account<'info, Vault>,
@@ -228,7 +244,7 @@ pub struct InitializeVault<'info> {
 pub struct Stake<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    #[account(mut, seeds = [b"vault"], bump = vault.bump)]
+    #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     #[account(mut)]
@@ -270,7 +286,7 @@ impl<'info> Stake<'info> {
 pub struct Harvest<'info> {
     #[account(mut, address = vault.authority)]
     pub authority: Signer<'info>,
-    #[account(mut, seeds = [b"vault"], bump = vault.bump)]
+    #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     #[account(mut, address = vault.usdc_vault)]
@@ -298,7 +314,7 @@ impl<'info> Harvest<'info> {
 pub struct Unstake<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    #[account(mut, seeds = [b"vault"], bump = vault.bump)]
+    #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     #[account(mut)]
@@ -340,7 +356,7 @@ impl<'info> Unstake<'info> {
 pub struct SetPaused<'info> {
     #[account(address = vault.authority)]
     pub authority: Signer<'info>,
-    #[account(mut, seeds = [b"vault"], bump = vault.bump)]
+    #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
 }
 
