@@ -56,6 +56,18 @@ pub mod pomm {
         // C-04: initialize 24h cap-window accountant
         treasury.window_start_ts = Clock::get()?.unix_timestamp;
         treasury.deployed_in_window = 0;
+
+        // M-class fix cross-applied from internal-swap M-04 (eace98f):
+        // emit creation event so indexers don't need to crawl program
+        // accounts to detect a new Treasury.
+        emit!(TreasuryInitialized {
+            treasury: treasury.key(),
+            authority: treasury.authority,
+            usdc_mint: treasury.usdc_mint,
+            usdc_vault: treasury.usdc_vault,
+            window_start_ts: treasury.window_start_ts,
+            bump: treasury.bump,
+        });
         Ok(())
     }
 
@@ -344,6 +356,16 @@ pub struct AuthorityRotated {
     pub treasury: Pubkey,
     pub old_authority: Pubkey,
     pub new_authority: Pubkey,
+}
+
+#[event]
+pub struct TreasuryInitialized {
+    pub treasury: Pubkey,
+    pub authority: Pubkey,
+    pub usdc_mint: Pubkey,
+    pub usdc_vault: Pubkey,
+    pub window_start_ts: i64,
+    pub bump: u8,
 }
 
 #[error_code]
