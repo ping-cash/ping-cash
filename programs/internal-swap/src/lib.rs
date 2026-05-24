@@ -53,7 +53,11 @@ pub mod internal_swap {
         Ok(())
     }
 
-    pub fn swap_usdc_for_ping(ctx: Context<SwapUsdcForPing>, amount_in: u64) -> Result<()> {
+    pub fn swap_usdc_for_ping(
+        ctx: Context<SwapUsdcForPing>,
+        amount_in: u64,
+        minimum_amount_out: u64,
+    ) -> Result<()> {
         require!(!ctx.accounts.pool.is_paused, SwapError::Paused);
         require!(amount_in > 0, SwapError::ZeroAmount);
 
@@ -68,6 +72,12 @@ pub mod internal_swap {
         )?;
         require!(amount_out > 0, SwapError::OutputTooSmall);
         require!(amount_out <= pool.ping_balance, SwapError::InsufficientLiquidity);
+        // H-03 fix (per #22 c.4527278904): standard DEX slippage protection.
+        // Client computes expected_output off-chain, applies their tolerance
+        // (typically 0.5-1.0%), passes the floor. If on-chain quote is worse
+        // (sandwich attack, stale price, etc), revert. Without this, MEV bots
+        // can profitably sandwich every user trade.
+        require!(amount_out >= minimum_amount_out, SwapError::SlippageExceeded);
 
         token_interface::transfer_checked(
             ctx.accounts.transfer_in_ctx(),
@@ -107,7 +117,11 @@ pub mod internal_swap {
         Ok(())
     }
 
-    pub fn swap_ping_for_usdc(ctx: Context<SwapPingForUsdc>, amount_in: u64) -> Result<()> {
+    pub fn swap_ping_for_usdc(
+        ctx: Context<SwapPingForUsdc>,
+        amount_in: u64,
+        minimum_amount_out: u64,
+    ) -> Result<()> {
         require!(!ctx.accounts.pool.is_paused, SwapError::Paused);
         require!(amount_in > 0, SwapError::ZeroAmount);
 
@@ -122,6 +136,8 @@ pub mod internal_swap {
         )?;
         require!(amount_out > 0, SwapError::OutputTooSmall);
         require!(amount_out <= pool.usdc_balance, SwapError::InsufficientLiquidity);
+        // H-03 slippage protection — see swap_usdc_for_ping above.
+        require!(amount_out >= minimum_amount_out, SwapError::SlippageExceeded);
 
         token_interface::transfer_checked(
             ctx.accounts.transfer_in_ctx(),
@@ -400,4 +416,6 @@ pub enum SwapError {
     WrongVaultMint,
     #[msg("vault.close_authority must be None (vault must not be closeable)")]
     VaultMustNotBeCloseable,
+    #[msg("Slippage exceeded — actual output below minimum_amount_out (sandwich-attack defense)")]
+    SlippageExceeded,
 }
