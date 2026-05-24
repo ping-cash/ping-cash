@@ -54,8 +54,15 @@ pub mod pomm {
         treasury.is_paused = false;
         treasury.bump = ctx.bumps.treasury;
         // C-04: initialize 24h cap-window accountant
-        treasury.window_start_ts = Clock::get()?.unix_timestamp;
+        let now = Clock::get()?.unix_timestamp;
+        treasury.window_start_ts = now;
         treasury.deployed_in_window = 0;
+        // C-03 (#62): initialize EMA accumulator. ema_price_x64 = 0 means
+        // "no samples yet"; first update_ema call seeds it from the Pyth
+        // reading rather than blending. ema_update_ts = 0 marks unseeded
+        // so consumers can branch on "first sample vs decay".
+        treasury.ema_price_x64 = 0;
+        treasury.ema_update_ts = 0;
 
         // M-class fix cross-applied from internal-swap M-04 (eace98f):
         // emit creation event so indexers don't need to crawl program
@@ -209,11 +216,28 @@ pub struct Treasury {
     // cap was bypassable by repeated calls.
     pub window_start_ts: i64,
     pub deployed_in_window: u64,
+    // C-03 fix (#62 c.4527806799): on-chain EMA accumulator. update_ema()
+    // instruction feeds Pyth-read prices; mint_lp_position (when rebuilt)
+    // reads ema_price_x64 instead of accepting a caller-supplied value.
+    // staleness guard via ema_update_ts. EMA decay weight EMA_ALPHA_BPS
+    // (typically 200 = 2% new sample weight, 98% retained = ~50-tick
+    // half-life ≈ 7 days at hourly ticks).
+    pub ema_price_x64: u128,
+    pub ema_update_ts: i64,
 }
 
+/// C-03 fix: EMA decay constant. 200 bps = 2% new-sample weight, 98%
+/// retained per update. With hourly updates that's a ~50-tick half-life
+/// ≈ 7 days (matches ADR 0009's "7-day EMA" mandate).
+pub const EMA_ALPHA_BPS: u16 = 200;
+
+/// C-03 fix: EMA staleness threshold. update_ema must run within this
+/// window before mint_lp_position can consume ema_price_x64 (when rebuilt).
+pub const MAX_EMA_STALENESS_SEC: i64 = 7_200; // 2 hours
+
 impl Treasury {
-    // 8 disc + 3*32 keys + 3*8 u64 + 1 bool + 1 bump + 8 i64 + 8 u64 = 162
-    pub const LEN: usize = 8 + 32 * 3 + 8 * 3 + 1 + 1 + 8 + 8;
+    // 8 disc + 3*32 keys + 3*8 u64 + 1 bool + 1 bump + 8 i64 + 8 u64 + 16 u128 + 8 i64 = 186
+    pub const LEN: usize = 8 + 32 * 3 + 8 * 3 + 1 + 1 + 8 + 8 + 16 + 8;
 }
 
 #[derive(Accounts)]
