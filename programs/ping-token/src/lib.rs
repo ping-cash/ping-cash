@@ -44,17 +44,21 @@ pub mod ping_token {
     /// Freeze authority = None (no freeze ever, per ADR 0008).
     /// No transfer-fee extension at mint init.
     pub fn initialize_mint(ctx: Context<InitializeMint>, squads_multisig: Pubkey) -> Result<()> {
-        let registry = &mut ctx.accounts.registry;
-        registry.version = Registry::CURRENT_VERSION;
-        registry.mint = ctx.accounts.mint.key();
-        registry.mint_authority = squads_multisig;
-        registry.decimals = ctx.accounts.mint.decimals;
-        registry.bump = ctx.bumps.registry;
-
+        // M-01 fix (#22 c.4527049794): assert decimals BEFORE storing to the
+        // Registry so we never persist a wrong value (defense-in-depth even
+        // though `require!` reverts the whole transaction — keeps the
+        // invariant ordering audit-clear).
         require!(
             ctx.accounts.mint.decimals == PING_DECIMALS,
             PingTokenError::WrongDecimals
         );
+
+        let registry = &mut ctx.accounts.registry;
+        registry.version = Registry::CURRENT_VERSION;
+        registry.mint = ctx.accounts.mint.key();
+        registry.mint_authority = squads_multisig;
+        registry.decimals = PING_DECIMALS; // constant, not mint-derived — proves invariant
+        registry.bump = ctx.bumps.registry;
         require!(
             ctx.accounts.mint.mint_authority.is_some()
                 && ctx.accounts.mint.mint_authority.unwrap() == squads_multisig,
