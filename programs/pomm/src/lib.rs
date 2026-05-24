@@ -194,6 +194,7 @@ fn price_within_band(price_x64: u128, ema_x64: u128) -> bool {
 }
 
 #[account]
+#[derive(Debug)]
 pub struct Treasury {
     pub authority: Pubkey,
     pub usdc_mint: Pubkey,
@@ -320,6 +321,7 @@ impl<'info> EmergencyWithdraw<'info> {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct DepositEvent {
     pub treasury: Pubkey,
     pub depositor: Pubkey,
@@ -327,6 +329,7 @@ pub struct DepositEvent {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct LpMintEvent {
     pub treasury: Pubkey,
     pub amount: u64,
@@ -334,24 +337,28 @@ pub struct LpMintEvent {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct FeesCollected {
     pub treasury: Pubkey,
     pub amount: u64,
 }
 
 #[event]
+#[derive(Debug)]
 pub struct PausedEvent {
     pub treasury: Pubkey,
     pub paused: bool,
 }
 
 #[event]
+#[derive(Debug)]
 pub struct EmergencyWithdrawEvent {
     pub treasury: Pubkey,
     pub amount: u64,
 }
 
 #[event]
+#[derive(Debug)]
 pub struct AuthorityRotated {
     pub treasury: Pubkey,
     pub old_authority: Pubkey,
@@ -359,6 +366,7 @@ pub struct AuthorityRotated {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct TreasuryInitialized {
     pub treasury: Pubkey,
     pub authority: Pubkey,

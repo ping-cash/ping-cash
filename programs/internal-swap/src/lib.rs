@@ -295,6 +295,7 @@ pub fn needs_hedge(pool_usdc: u64, pool_ping_usdc_value: u64) -> bool {
 }
 
 #[account]
+#[derive(Debug)]
 pub struct Pool {
     pub authority: Pubkey,
     pub usdc_mint: Pubkey,
@@ -428,6 +429,7 @@ pub enum SwapDirection {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct SwapEvent {
     pub pool: Pubkey,
     pub user: Pubkey,
@@ -437,18 +439,21 @@ pub struct SwapEvent {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct SpreadChanged {
     pub pool: Pubkey,
     pub spread_bps: u16,
 }
 
 #[event]
+#[derive(Debug)]
 pub struct PausedEvent {
     pub pool: Pubkey,
     pub paused: bool,
 }
 
 #[event]
+#[derive(Debug)]
 pub struct PoolInitialized {
     pub pool: Pubkey,
     pub authority: Pubkey,
@@ -461,6 +466,7 @@ pub struct PoolInitialized {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct AuthorityRotated {
     pub pool: Pubkey,
     pub old_authority: Pubkey,

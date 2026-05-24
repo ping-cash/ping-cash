@@ -268,6 +268,7 @@ pub struct RotateAuthority<'info> {
 }
 
 #[account]
+#[derive(Debug)]
 pub struct Vault {
     pub authority: Pubkey,
     pub usdc_mint: Pubkey,
@@ -447,6 +448,7 @@ pub struct SetPaused<'info> {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct StakeEvent {
     pub user: Pubkey,
     pub vault: Pubkey,
@@ -455,6 +457,7 @@ pub struct StakeEvent {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct UnstakeEvent {
     pub user: Pubkey,
     pub vault: Pubkey,
@@ -463,6 +466,7 @@ pub struct UnstakeEvent {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct HarvestEvent {
     pub vault: Pubkey,
     pub yield_amount: u64,
@@ -471,12 +475,14 @@ pub struct HarvestEvent {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct PausedEvent {
     pub vault: Pubkey,
     pub paused: bool,
 }
 
 #[event]
+#[derive(Debug)]
 pub struct AuthorityRotated {
     pub vault: Pubkey,
     pub old_authority: Pubkey,
@@ -484,6 +490,7 @@ pub struct AuthorityRotated {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct VaultInitialized {
     pub vault: Pubkey,
     pub authority: Pubkey,
