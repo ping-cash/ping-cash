@@ -109,6 +109,21 @@ pub mod internal_swap {
         // can profitably sandwich every user trade.
         require!(amount_out >= minimum_amount_out, SwapError::SlippageExceeded);
 
+        // H-04 fix (#62 c.4527806799): cross-check AMM-derived price against
+        // Pyth oracle. AMM implied price = amount_in / amount_out (USDC per
+        // PING). Scale to Q64.64 to match read_pyth_ping_per_usdc_x64's
+        // output format, then assert within MAX_ORACLE_DEVIATION_BPS (3%).
+        let amm_usdc_per_ping_x64 = (amount_in as u128)
+            .checked_shl(64)
+            .ok_or(SwapError::MathOverflow)?
+            .checked_div(amount_out as u128)
+            .ok_or(SwapError::MathOverflow)?;
+        let oracle_usdc_per_ping_x64 = read_pyth_ping_per_usdc_x64(
+            &ctx.accounts.pyth_price_account,
+            &Clock::get()?,
+        )?;
+        assert_amm_within_oracle_band(amm_usdc_per_ping_x64, oracle_usdc_per_ping_x64)?;
+
         token_interface::transfer_checked(
             ctx.accounts.transfer_in_ctx(),
             amount_in,
@@ -273,10 +288,10 @@ fn quote_usdc_to_ping(
 /// Returns the AMM quote unchanged if oracle band check passes; reverts
 /// with PriceDeviatesFromOracle otherwise. Pure validation — does not
 /// override the AMM quote.
-#[allow(dead_code)]
+
 pub const MAX_ORACLE_DEVIATION_BPS: u16 = 300;
 
-#[allow(dead_code)]
+
 fn assert_amm_within_oracle_band(
     amm_usdc_per_ping_x64: u128,
     oracle_usdc_per_ping_x64: u128,
@@ -307,10 +322,10 @@ fn assert_amm_within_oracle_band(
 /// Staleness threshold MAX_PYTH_STALENESS_SEC = 60 — if last price update
 /// is older than 60s the swap reverts. Pyth typically updates every ~400ms
 /// on mainnet so this is a generous tolerance.
-#[allow(dead_code)]
+
 pub const MAX_PYTH_STALENESS_SEC: i64 = 60;
 
-#[allow(dead_code)]
+
 fn read_pyth_ping_per_usdc_x64(
     price_account: &AccountInfo,
     clock: &Clock,
@@ -447,6 +462,15 @@ pub struct SwapUsdcForPing<'info> {
     /// Pool's $PING reserve. Source of swap output.
     #[account(mut, address = pool.ping_vault)]
     pub ping_vault: InterfaceAccount<'info, TokenAccount>,
+    /// H-04 fix (#62 c.4527806799): Pyth price account for $PING/USDC.
+    /// Read via read_pyth_ping_per_usdc_x64 + checked against AMM-derived
+    /// price via assert_amm_within_oracle_band (MAX_ORACLE_DEVIATION_BPS=300).
+    /// CHECK: validated inside the helper via SolanaPriceAccount::account_info_to_feed
+    /// (which verifies owner == pyth-oracle program + magic bytes).
+    /// Note: read-only AccountInfo (no #[account] constraints) so devnet
+    /// can swap in a Pyth mock fixture.
+    /// CHECK: see read_pyth_ping_per_usdc_x64 implementation
+    pub pyth_price_account: AccountInfo<'info>,
     pub token_program: Interface<'info, TokenInterface>,
 }
 
