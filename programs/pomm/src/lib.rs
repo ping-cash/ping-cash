@@ -162,6 +162,14 @@ pub struct InitializeTreasury<'info> {
     #[account(init, payer = payer, space = Treasury::LEN, seeds = [b"treasury"], bump)]
     pub treasury: Account<'info, Treasury>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
+    // H-05 fix (per #22 c.4527297108): bind usdc_vault to (treasury PDA owner,
+    // expected mint, no close authority). Same shape as earn-vault C-03
+    // (2c35aee) + internal-swap C4 (564e6af).
+    #[account(
+        constraint = usdc_vault.owner == treasury.key() @ PommError::WrongVaultOwner,
+        constraint = usdc_vault.mint == usdc_mint.key() @ PommError::WrongVaultMint,
+        constraint = usdc_vault.close_authority.is_none() @ PommError::VaultMustNotBeCloseable,
+    )]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
 }
@@ -286,4 +294,10 @@ pub enum PommError {
     EmergencyRequiresPause,
     #[msg("Arithmetic overflow")]
     MathOverflow,
+    #[msg("usdc_vault.owner must equal the treasury PDA")]
+    WrongVaultOwner,
+    #[msg("usdc_vault.mint must equal the usdc_mint passed to initialize_treasury")]
+    WrongVaultMint,
+    #[msg("usdc_vault.close_authority must be None (vault must not be closeable)")]
+    VaultMustNotBeCloseable,
 }
