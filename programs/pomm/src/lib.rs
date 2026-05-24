@@ -113,6 +113,25 @@ pub mod pomm {
         Ok(())
     }
 
+    /// Rotate the treasury authority to a new pubkey. H-03 fix
+    /// (per #22 c.4527297108). Mirrors earn-vault 2d89968 +
+    /// ping-token f1cfab4 + internal-swap 23d62cc. Same migration-to-
+    /// multisig pattern across all 4 Phase-2 Anchor programs.
+    pub fn rotate_authority(
+        ctx: Context<AdminTreasury>,
+        new_authority: Pubkey,
+    ) -> Result<()> {
+        require!(new_authority != Pubkey::default(), PommError::ZeroPubkey);
+        let old_authority = ctx.accounts.treasury.authority;
+        ctx.accounts.treasury.authority = new_authority;
+        emit!(AuthorityRotated {
+            treasury: ctx.accounts.treasury.key(),
+            old_authority,
+            new_authority,
+        });
+        Ok(())
+    }
+
     pub fn emergency_withdraw(ctx: Context<EmergencyWithdraw>, amount: u64) -> Result<()> {
         require!(ctx.accounts.treasury.is_paused, PommError::EmergencyRequiresPause);
 
@@ -291,6 +310,13 @@ pub struct EmergencyWithdrawEvent {
     pub amount: u64,
 }
 
+#[event]
+pub struct AuthorityRotated {
+    pub treasury: Pubkey,
+    pub old_authority: Pubkey,
+    pub new_authority: Pubkey,
+}
+
 #[error_code]
 pub enum PommError {
     #[msg("Treasury is paused")]
@@ -313,4 +339,6 @@ pub enum PommError {
     VaultMustNotBeCloseable,
     #[msg("emergency_withdraw destination must be owned by treasury.authority (multisig)")]
     WrongEmergencyDestination,
+    #[msg("New authority cannot be the zero pubkey")]
+    ZeroPubkey,
 }
