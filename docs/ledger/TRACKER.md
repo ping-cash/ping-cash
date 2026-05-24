@@ -39,7 +39,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | 🟪 `status/uat`         | 0     | —                                                                                     |
 | 🟩 `status/completed`   | 37    | #1 EPIC CLOSED + #2-#14, #17-#21, #25-#39, #59 + #60                                  |
 | 🟥 `status/blocked-ext` | 0     | — (all 6 prior blocked-ext exhausted via P23 + reclassified to parked 2026-05-24)     |
-| ⏸️ `status/parked`      | 7     | #54 GHA billing, #50 vendor keys, #15/#16/#23/#24 Phase-2 mainnet, #58 Wise           |
+| ⏸️ `status/parked`      | 8     | #54 GHA billing, #50 vendor keys, #15/#16/#23/#24 Phase-2 mainnet, #58 Wise, **#61 earn-vault rebuild (founder gates)** |
 
 ---
 
@@ -48,7 +48,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | ID                      | Title                                   | Status      | Owner  | DoD Gate                                                                                      |
 | ----------------------- | --------------------------------------- | ----------- | ------ | --------------------------------------------------------------------------------------------- |
 | #1                      | EPIC: End-to-End Phase 1 Delivery       | ✅ CLOSED   | claude | 5-step §6 cycle complete 2026-05-24: Playwright walk + 8 DoD screenshots + sub-agent SHIP verdict (c.4526977280) + status/uat→completed + gh issue close. Founder may reopen async per §6. |
-| #22                     | EPIC: Phase 2 — $PING TGE + Foundation + audit + Raydium | IN PROGRESS | claude | Pre-audit review #1 ping-token: 14 findings filed (c.4527049794); 3 audit-killer fixes shipped same-session — C-02 extension allow-list (360b7ee), H-01 per-mint Registry PDA (2deaace), H-03 renounce_mint_authority (f1cfab4). Next: review #2 earn-vault. Cayman + OtterSec are founder gates. |
+| #22                     | EPIC: Phase 2 — $PING TGE + Foundation + audit + Raydium | IN PROGRESS | claude | Pre-audit review #1 ping-token: 14 findings, 3 audit-killers shipped (C-02 360b7ee, H-01 2deaace, H-03 f1cfab4). **Review #2 earn-vault: 22 findings filed (c.4527111355), 2 scaffold fixes shipped — H-01 DO-NOT-DEPLOY banner (29d8b33) + C-02 harvest hard-disable (61407a3). #61 per-Wave issue filed for full ADR 0012 rebuild (remaining 3 Criticals + 4 Highs + M/L/I).** Cayman + OtterSec are founder gates. |
 | corridor-smoke CI       | .github/workflows/corridor-smoke.yml    | ✅ shipped  | claude | Runs walk-full-corridor.mjs against ping.openova.io on every push + every 6h; all 4 PH cashout methods + send-intent sign verify |
 | #5                      | auth-service (phone OTP → JWT → wallet) | ✅ closed   | claude | Walked at /auth/\* (stub mode)                                                                |
 | #10                     | fx-service (Pyth + 0.4% spread)         | ✅ closed   | claude | Walked at /fx/\* (stub-rate oracle)                                                           |
