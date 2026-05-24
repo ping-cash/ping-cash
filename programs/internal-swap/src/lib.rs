@@ -187,6 +187,20 @@ pub mod internal_swap {
         // H-03 slippage protection — see swap_usdc_for_ping above.
         require!(amount_out >= minimum_amount_out, SwapError::SlippageExceeded);
 
+        // H-04 Pyth band-check (mirror of swap_usdc_for_ping). Note: this
+        // direction's AMM-implied USDC-per-PING is amount_out / amount_in
+        // (inverse of the other side because we're paying PING here).
+        let amm_usdc_per_ping_x64 = (amount_out as u128)
+            .checked_shl(64)
+            .ok_or(SwapError::MathOverflow)?
+            .checked_div(amount_in as u128)
+            .ok_or(SwapError::MathOverflow)?;
+        let oracle_usdc_per_ping_x64 = read_pyth_ping_per_usdc_x64(
+            &ctx.accounts.pyth_price_account,
+            &Clock::get()?,
+        )?;
+        assert_amm_within_oracle_band(amm_usdc_per_ping_x64, oracle_usdc_per_ping_x64)?;
+
         token_interface::transfer_checked(
             ctx.accounts.transfer_in_ctx(),
             amount_in,
@@ -518,6 +532,9 @@ pub struct SwapPingForUsdc<'info> {
     /// Pool's USDC reserve (source of swap output).
     #[account(mut, address = pool.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    /// H-04 Pyth price account — same shape as SwapUsdcForPing.
+    /// CHECK: validated inside read_pyth_ping_per_usdc_x64 helper.
+    pub pyth_price_account: AccountInfo<'info>,
     pub token_program: Interface<'info, TokenInterface>,
 }
 
