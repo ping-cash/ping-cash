@@ -144,7 +144,15 @@ pub mod pomm {
 
     pub fn set_paused(ctx: Context<AdminTreasury>, paused: bool) -> Result<()> {
         ctx.accounts.treasury.is_paused = paused;
-        emit!(PausedEvent { treasury: ctx.accounts.treasury.key(), paused });
+        // H-06 fix (#62 c.4527806799): mirror of internal-swap fix in same
+        // commit. Caller pubkey + timestamp on the event so pause / unpause
+        // is traceable on-chain.
+        emit!(PausedEvent {
+            treasury: ctx.accounts.treasury.key(),
+            paused,
+            caller: ctx.accounts.authority.key(),
+            ts: Clock::get()?.unix_timestamp,
+        });
         Ok(())
     }
 
@@ -491,6 +499,11 @@ pub struct FeesCollected {
 pub struct PausedEvent {
     pub treasury: Pubkey,
     pub paused: bool,
+    /// H-06 fix (#62): which authority key triggered the pause toggle.
+    /// Mirror of internal-swap PausedEvent.caller — auditor + incident
+    /// response indexer needs both who + when.
+    pub caller: Pubkey,
+    pub ts: i64,
 }
 
 #[event]

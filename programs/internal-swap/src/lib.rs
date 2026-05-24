@@ -248,7 +248,16 @@ pub mod internal_swap {
 
     pub fn set_paused(ctx: Context<AdminPool>, paused: bool) -> Result<()> {
         ctx.accounts.pool.is_paused = paused;
-        emit!(PausedEvent { pool: ctx.accounts.pool.key(), paused });
+        // H-06 fix (#62 c.4527806799): emit caller + timestamp for on-chain
+        // accountability. Pre-fix PausedEvent omitted them, so an unpause
+        // couldn't be traced to a specific authority key + when. Auditor +
+        // incident-response indexer needs both.
+        emit!(PausedEvent {
+            pool: ctx.accounts.pool.key(),
+            paused,
+            caller: ctx.accounts.authority.key(),
+            ts: Clock::get()?.unix_timestamp,
+        });
         Ok(())
     }
 
@@ -599,6 +608,13 @@ pub struct SpreadChanged {
 pub struct PausedEvent {
     pub pool: Pubkey,
     pub paused: bool,
+    /// H-06 fix (#62 c.4527806799): which authority key triggered the
+    /// state change. Pre-fix this event was unaccountable — auditor
+    /// couldn't trace a specific multisig signer back to a pause action.
+    pub caller: Pubkey,
+    /// On-chain timestamp at the pause toggle. Pairs with caller for
+    /// incident-response timeline reconstruction.
+    pub ts: i64,
 }
 
 #[event]
