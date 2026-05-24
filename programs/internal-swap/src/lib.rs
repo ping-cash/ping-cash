@@ -75,7 +75,17 @@ pub mod internal_swap {
             ctx.accounts.usdc_mint.decimals,
         )?;
 
-        let seeds = &[b"pool".as_ref(), &[ctx.accounts.pool.bump]];
+        // C5 fix (per #22 c.4527278904): signer seeds bind to pool's
+        // (usdc_mint, ping_mint) pair. Same per-asset PDA pattern as
+        // earn-vault C-04 (f7ea54f) + ping-token H-01 (2deaace).
+        let usdc_mint_key = ctx.accounts.pool.usdc_mint;
+        let ping_mint_key = ctx.accounts.pool.ping_mint;
+        let seeds = &[
+            b"pool".as_ref(),
+            usdc_mint_key.as_ref(),
+            ping_mint_key.as_ref(),
+            &[ctx.accounts.pool.bump],
+        ];
         let signer = &[&seeds[..]];
         token_interface::transfer_checked(
             ctx.accounts.transfer_out_ctx().with_signer(signer),
@@ -119,7 +129,17 @@ pub mod internal_swap {
             ctx.accounts.ping_mint.decimals,
         )?;
 
-        let seeds = &[b"pool".as_ref(), &[ctx.accounts.pool.bump]];
+        // C5 fix (per #22 c.4527278904): signer seeds bind to pool's
+        // (usdc_mint, ping_mint) pair. Same per-asset PDA pattern as
+        // earn-vault C-04 (f7ea54f) + ping-token H-01 (2deaace).
+        let usdc_mint_key = ctx.accounts.pool.usdc_mint;
+        let ping_mint_key = ctx.accounts.pool.ping_mint;
+        let seeds = &[
+            b"pool".as_ref(),
+            usdc_mint_key.as_ref(),
+            ping_mint_key.as_ref(),
+            &[ctx.accounts.pool.bump],
+        ];
         let signer = &[&seeds[..]];
         token_interface::transfer_checked(
             ctx.accounts.transfer_out_ctx().with_signer(signer),
@@ -228,7 +248,7 @@ impl Pool {
 pub struct InitializePool<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
-    #[account(init, payer = authority, space = Pool::LEN, seeds = [b"pool"], bump)]
+    #[account(init, payer = authority, space = Pool::LEN, seeds = [b"pool", usdc_mint.key().as_ref(), ping_mint.key().as_ref()], bump)]
     pub pool: Account<'info, Pool>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     pub ping_mint: InterfaceAccount<'info, Mint>,
@@ -241,7 +261,7 @@ pub struct InitializePool<'info> {
 pub struct SwapUsdcForPing<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    #[account(mut, seeds = [b"pool"], bump = pool.bump)]
+    #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
     pub pool: Account<'info, Pool>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     pub ping_mint: InterfaceAccount<'info, Mint>,
@@ -279,7 +299,7 @@ impl<'info> SwapUsdcForPing<'info> {
 pub struct SwapPingForUsdc<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    #[account(mut, seeds = [b"pool"], bump = pool.bump)]
+    #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
     pub pool: Account<'info, Pool>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     pub ping_mint: InterfaceAccount<'info, Mint>,
@@ -317,7 +337,7 @@ impl<'info> SwapPingForUsdc<'info> {
 pub struct AdminPool<'info> {
     #[account(address = pool.authority)]
     pub authority: Signer<'info>,
-    #[account(mut, seeds = [b"pool"], bump = pool.bump)]
+    #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
     pub pool: Account<'info, Pool>,
 }
 
