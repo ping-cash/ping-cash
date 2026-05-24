@@ -99,40 +99,20 @@ pub mod earn_vault {
         Ok(())
     }
 
-    pub fn harvest(ctx: Context<Harvest>, yield_amount: u64) -> Result<()> {
-        require!(!ctx.accounts.vault.is_paused, VaultError::Paused);
-        require!(yield_amount > 0, VaultError::ZeroAmount);
-
-        let treasury_share = (yield_amount as u128)
-            .checked_mul(ctx.accounts.vault.treasury_split_bps as u128)
-            .ok_or(VaultError::MathOverflow)?
-            .checked_div(10_000)
-            .ok_or(VaultError::MathOverflow)? as u64;
-        let holder_share = yield_amount
-            .checked_sub(treasury_share)
-            .ok_or(VaultError::MathOverflow)?;
-
-        let seeds = &[b"vault".as_ref(), &[ctx.accounts.vault.bump]];
-        let signer = &[&seeds[..]];
-        token_interface::transfer_checked(
-            ctx.accounts.transfer_to_treasury_ctx().with_signer(signer),
-            treasury_share,
-            ctx.accounts.usdc_mint.decimals,
-        )?;
-
-        let vault = &mut ctx.accounts.vault;
-        vault.total_staked = vault
-            .total_staked
-            .checked_add(holder_share)
-            .ok_or(VaultError::MathOverflow)?;
-
-        emit!(HarvestEvent {
-            vault: vault.key(),
-            yield_amount,
-            treasury_share,
-            holder_share,
-        });
-        Ok(())
+    /// SCAFFOLD-LIFETIME DEFENSIVE NO-OP. Pre-audit finding C-02
+    /// (#22 c.4527111355) — original harvest() accepted caller-supplied
+    /// yield_amount with zero verification AND performed no adapter CPI,
+    /// so an operator could call harvest(yield_amount = anything) and the
+    /// vault would credit the treasury share + inflate total_staked
+    /// without any actual yield being earned. Direct ADR 0017 violation
+    /// (operator-only authority path to user funds).
+    ///
+    /// Until the ADR 0012 rebuild lands real adapter CPIs (#61), harvest()
+    /// is hard-disabled — every call reverts with HarvestDisabledUntilRebuild.
+    /// This makes the C-02 attack PHYSICALLY IMPOSSIBLE for the
+    /// scaffold-lifetime regardless of who calls it.
+    pub fn harvest(_ctx: Context<Harvest>, _yield_amount: u64) -> Result<()> {
+        err!(VaultError::HarvestDisabledUntilRebuild)
     }
 
     pub fn unstake(ctx: Context<Unstake>, vusdc_amount: u64) -> Result<()> {
@@ -384,4 +364,6 @@ pub enum VaultError {
     InvalidBps,
     #[msg("Arithmetic overflow")]
     MathOverflow,
+    #[msg("harvest() disabled in scaffold; full rebuild per ADR 0012 (#61) required first")]
+    HarvestDisabledUntilRebuild,
 }
