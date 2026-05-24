@@ -234,7 +234,28 @@ pub struct InitializeVault<'info> {
     )]
     pub vault: Account<'info, Vault>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
+    // Pre-audit C-03 (#22 c.4527111355): without these constraints the
+    // deployer could pass a vusdc_mint whose mint_authority points at
+    // themselves (back-door: mint unlimited vUSDC for themselves later,
+    // burn to drain the vault). Same risk on usdc_vault ownership: if
+    // owner isn't the vault PDA, vault can't actually transfer those
+    // tokens, OR worse, someone else can.
+    #[account(
+        constraint = vusdc_mint.mint_authority.is_some()
+            && vusdc_mint.mint_authority.unwrap() == vault.key()
+            @ VaultError::WrongVusdcMintAuthority,
+        constraint = vusdc_mint.freeze_authority.is_none()
+            @ VaultError::VusdcFreezeAuthorityMustBeNone,
+        constraint = vusdc_mint.supply == 0
+            @ VaultError::VusdcMustBeEmptyAtInit,
+    )]
     pub vusdc_mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        constraint = usdc_vault.owner == vault.key()
+            @ VaultError::WrongUsdcVaultOwner,
+        constraint = usdc_vault.mint == usdc_mint.key()
+            @ VaultError::WrongUsdcVaultMint,
+    )]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
     pub treasury: InterfaceAccount<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
@@ -404,4 +425,14 @@ pub enum VaultError {
     HarvestDisabledUntilRebuild,
     #[msg("First stake must be >= 1000 USDC to prevent share-price inflation attack")]
     FirstStakeTooSmall,
+    #[msg("vusdc_mint.mint_authority must equal the vault PDA")]
+    WrongVusdcMintAuthority,
+    #[msg("vusdc_mint.freeze_authority must be None")]
+    VusdcFreezeAuthorityMustBeNone,
+    #[msg("vusdc_mint must have zero supply at initialize_vault (clean mint)")]
+    VusdcMustBeEmptyAtInit,
+    #[msg("usdc_vault.owner must equal the vault PDA")]
+    WrongUsdcVaultOwner,
+    #[msg("usdc_vault.mint must equal the usdc_mint passed to initialize_vault")]
+    WrongUsdcVaultMint,
 }
