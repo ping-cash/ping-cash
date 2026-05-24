@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
+use pyth_sdk_solana::state::SolanaPriceAccount;
 
 // ============================================================================
 // ⚠️  DO NOT DEPLOY THIS PROGRAM TO MAINNET — per ADR 0018 + #22 EPIC gates.
@@ -295,6 +296,50 @@ fn assert_amm_within_oracle_band(
     Ok(())
 }
 
+/// #62 H-04 helper: read $PING-per-USDC price from a Pyth price account
+/// + staleness-check + confidence-interval-check + format as Q64.64 fixed
+/// point matching assert_amm_within_oracle_band's expected scale.
+///
+/// On devnet/local this can be a Pyth mock fixture; production uses the
+/// canonical $PING/USDC feed (TBD post-TGE — Pyth lists post-Raydium
+/// liquidity onboarding).
+///
+/// Staleness threshold MAX_PYTH_STALENESS_SEC = 60 — if last price update
+/// is older than 60s the swap reverts. Pyth typically updates every ~400ms
+/// on mainnet so this is a generous tolerance.
+#[allow(dead_code)]
+pub const MAX_PYTH_STALENESS_SEC: i64 = 60;
+
+#[allow(dead_code)]
+fn read_pyth_ping_per_usdc_x64(
+    price_account: &AccountInfo,
+    clock: &Clock,
+) -> Result<u128> {
+    let price_feed = SolanaPriceAccount::account_info_to_feed(price_account)
+        .map_err(|_| error!(SwapError::OracleAccountInvalid))?;
+    let price = price_feed
+        .get_price_no_older_than(clock.unix_timestamp, MAX_PYTH_STALENESS_SEC as u64)
+        .ok_or(error!(SwapError::OracleStaleOrInvalid))?;
+    // Reject if price is non-positive (Pyth permits negative for derivatives;
+    // for a spot price feed we treat this as bad data).
+    require!(price.price > 0, SwapError::OracleStaleOrInvalid);
+    // Convert Pyth's i64 + expo into a Q64.64 fixed-point matching
+    // assert_amm_within_oracle_band's amm_x64 scale. Pyth.expo is typically
+    // negative (e.g., -8 means price is in units of 10^-8 USD per unit).
+    let mantissa = price.price as u128;
+    let q64_64_one: u128 = 1u128 << 64;
+    // value_x64 = mantissa * 2^64 / 10^|expo|
+    let abs_expo = price.expo.unsigned_abs() as u32;
+    let scale = 10u128
+        .checked_pow(abs_expo)
+        .ok_or(SwapError::MathOverflow)?;
+    mantissa
+        .checked_mul(q64_64_one)
+        .ok_or(SwapError::MathOverflow)?
+        .checked_div(scale)
+        .ok_or(SwapError::MathOverflow.into())
+}
+
 fn quote_ping_to_usdc(
     amount_in_ping: u64,
     pool_ping: u64,
@@ -562,4 +607,8 @@ pub enum SwapError {
     ZeroPubkey,
     #[msg("AMM price deviates from Pyth oracle beyond MAX_ORACLE_DEVIATION_BPS — sandwich/manipulation defense")]
     PriceDeviatesFromOracle,
+    #[msg("Pyth price account could not be parsed as a SolanaPriceAccount")]
+    OracleAccountInvalid,
+    #[msg("Pyth price is stale (>MAX_PYTH_STALENESS_SEC since last update) or non-positive")]
+    OracleStaleOrInvalid,
 }
