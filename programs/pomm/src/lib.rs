@@ -47,6 +47,9 @@ pub mod pomm {
         treasury.collected_fees_lifetime = 0;
         treasury.is_paused = false;
         treasury.bump = ctx.bumps.treasury;
+        // C-04: initialize 24h cap-window accountant
+        treasury.window_start_ts = Clock::get()?.unix_timestamp;
+        treasury.deployed_in_window = 0;
         Ok(())
     }
 
@@ -85,9 +88,25 @@ pub mod pomm {
         let max_per_day = (ctx.accounts.treasury.total_usdc as u128)
             .checked_mul(MAX_PER_DAY_DEPLOYED_BPS as u128).ok_or(PommError::MathOverflow)?
             .checked_div(10_000).ok_or(PommError::MathOverflow)? as u64;
-        require!(amount <= max_per_day, PommError::DailyCapExceeded);
 
+        // C-04 fix (per #22 c.4527297108): the original check
+        //   require!(amount <= max_per_day, ...)
+        // was per-call only; attacker calls mint_lp_position(max_per_day) N
+        // times to bypass. Proper window-based accumulator:
+        //   - reset deployed_in_window when ≥86400s since window_start_ts
+        //   - check accumulated (deployed_in_window + amount) <= max_per_day
+        let now = Clock::get()?.unix_timestamp;
         let treasury = &mut ctx.accounts.treasury;
+        if now.saturating_sub(treasury.window_start_ts) >= 86_400 {
+            treasury.window_start_ts = now;
+            treasury.deployed_in_window = 0;
+        }
+        let new_total_in_window = treasury
+            .deployed_in_window
+            .checked_add(amount)
+            .ok_or(PommError::MathOverflow)?;
+        require!(new_total_in_window <= max_per_day, PommError::DailyCapExceeded);
+        treasury.deployed_in_window = new_total_in_window;
         treasury.deployed_usdc = treasury.deployed_usdc.checked_add(amount).ok_or(PommError::MathOverflow)?;
 
         emit!(LpMintEvent {
@@ -176,10 +195,16 @@ pub struct Treasury {
     pub collected_fees_lifetime: u64,
     pub is_paused: bool,
     pub bump: u8,
+    // C-04 fix: 24h rolling deploy-cap accountant. Reset when 86_400 sec
+    // since window_start_ts elapses. Without this the original "0.5%/day"
+    // cap was bypassable by repeated calls.
+    pub window_start_ts: i64,
+    pub deployed_in_window: u64,
 }
 
 impl Treasury {
-    pub const LEN: usize = 8 + 32 * 3 + 8 * 3 + 1 + 1;
+    // 8 disc + 3*32 keys + 3*8 u64 + 1 bool + 1 bump + 8 i64 + 8 u64 = 162
+    pub const LEN: usize = 8 + 32 * 3 + 8 * 3 + 1 + 1 + 8 + 8;
 }
 
 #[derive(Accounts)]
