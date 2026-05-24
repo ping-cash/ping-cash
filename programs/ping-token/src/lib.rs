@@ -33,6 +33,7 @@ pub mod ping_token {
     /// No transfer-fee extension at mint init.
     pub fn initialize_mint(ctx: Context<InitializeMint>, squads_multisig: Pubkey) -> Result<()> {
         let registry = &mut ctx.accounts.registry;
+        registry.version = Registry::CURRENT_VERSION;
         registry.mint = ctx.accounts.mint.key();
         registry.mint_authority = squads_multisig;
         registry.decimals = ctx.accounts.mint.decimals;
@@ -136,6 +137,13 @@ pub struct RenounceMintAuthority<'info> {
 
 #[account]
 pub struct Registry {
+    /// Storage layout version. Bump on incompatible field changes; future
+    /// migration instructions branch on this value. Pre-audit C-01 fix
+    /// (#22 c.4527049794) — original struct had no version discriminant
+    /// so any future schema change would require a fresh PDA + data copy
+    /// + lookup-table swap. With a version byte, migrations can read
+    /// existing accounts in-place.
+    pub version: u8,
     pub mint: Pubkey,
     pub mint_authority: Pubkey,
     pub decimals: u8,
@@ -143,7 +151,9 @@ pub struct Registry {
 }
 
 impl Registry {
-    pub const LEN: usize = 8 + 32 * 2 + 1 + 1;
+    pub const CURRENT_VERSION: u8 = 1;
+    // 8 disc + 1 version + 32 mint + 32 mint_authority + 1 decimals + 1 bump = 75
+    pub const LEN: usize = 8 + 1 + 32 * 2 + 1 + 1;
 }
 
 #[derive(Accounts)]
