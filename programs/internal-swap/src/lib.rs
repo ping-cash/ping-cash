@@ -56,6 +56,21 @@ pub mod internal_swap {
         pool.ping_balance = 0;
         pool.is_paused = false;
         pool.bump = ctx.bumps.pool;
+
+        // M-04 fix (#22 c.4527278904): dashboards/indexers need a creation
+        // event to know when a pool exists + its config. Without this, the
+        // only way to detect a new pool is to crawl every program account
+        // by type, which is operationally expensive for indexers.
+        emit!(PoolInitialized {
+            pool: pool.key(),
+            authority: pool.authority,
+            usdc_mint: pool.usdc_mint,
+            ping_mint: pool.ping_mint,
+            usdc_vault: pool.usdc_vault,
+            ping_vault: pool.ping_vault,
+            spread_bps: pool.spread_bps,
+            bump: pool.bump,
+        });
         Ok(())
     }
 
@@ -431,6 +446,18 @@ pub struct SpreadChanged {
 pub struct PausedEvent {
     pub pool: Pubkey,
     pub paused: bool,
+}
+
+#[event]
+pub struct PoolInitialized {
+    pub pool: Pubkey,
+    pub authority: Pubkey,
+    pub usdc_mint: Pubkey,
+    pub ping_mint: Pubkey,
+    pub usdc_vault: Pubkey,
+    pub ping_vault: Pubkey,
+    pub spread_bps: u16,
+    pub bump: u8,
 }
 
 #[event]
