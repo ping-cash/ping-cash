@@ -161,6 +161,23 @@ class ApiClient {
     });
   }
 
+  // Convenience for the mobile "Send to wallet" flow. Calls buildSendIntent,
+  // hands the serializedTransaction off to the Privy MPC SDK for signing,
+  // then submits to Solana RPC. The signer + rpc params are injected so the
+  // mobile screen passes the Privy MPC sign(tx) function + a Connection
+  // configured for the Sovereign's Solana RPC endpoint. Per ADR 0020.
+  async signAndSubmitUsdcSend(
+    recipientWallet: string,
+    amountUsdc: string,
+    privySign: (base64UnsignedTx: string) => Promise<string>,
+    submitRaw: (base64SignedTx: string) => Promise<string>
+  ): Promise<{ intent: SendIntent; txSignature: string }> {
+    const intent = await this.buildSendIntent(recipientWallet, amountUsdc);
+    const signedB64 = await privySign(intent.serializedTransaction);
+    const txSignature = await submitRaw(signedB64);
+    return { intent, txSignature };
+  }
+
   // ==========================================
   // Transfers
   // ==========================================
