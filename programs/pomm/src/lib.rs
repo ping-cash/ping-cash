@@ -111,20 +111,74 @@ pub mod pomm {
     ///   - C-03: no on-chain EMA state, no per-tick accumulator, no
     ///     staleness guard — the "7-day EMA" exists only in the ADR
     ///
-    /// All three are rebuild-scope (ADR 0009 requires Pyth integration,
-    /// real Raydium CLMM CPI, and an on-chain EMA accumulator PDA). Until
-    /// that rebuild lands, mint_lp_position is hard-disabled — every call
-    /// reverts. C-04 (daily cap accountant in 1f995d7) + window state
-    /// stay in the struct so the rebuild can layer on them without further
-    /// data migration. NB: total_usdc / deployed_in_window / window_start_ts
-    /// remain on the Treasury struct.
+    /// #62 C-02 + C-03 rebuild step: mint_lp_position now consumes the
+    /// on-chain EMA (Treasury.ema_price_x64) instead of caller-supplied
+    /// oracle/EMA prices. EMA is fed by permissionless update_ema() reads
+    /// from Pyth (417189e). MAX_EMA_STALENESS_SEC guards against stale EMA.
+    ///
+    /// C-04 daily-cap accountant (1f995d7) still active — caps deployed
+    /// per 24h to MAX_PER_DAY_DEPLOYED_BPS of total_usdc.
+    ///
+    /// C-01 (real Raydium CLMM CPI) remains deferred — this step bumps
+    /// deployed_usdc + emits LpMintEvent for indexer pickup but does NOT
+    /// yet execute the CLMM mint instruction. The CPI lands as the next
+    /// #62 sub-step (raydium-clmm-cpi crate or hand-rolled CpiContext).
+    ///
+    /// Authority gate (treasury.authority) enforced via MintLpPosition
+    /// Accounts struct. Multisig wrap is H-02 architectural (separate).
     pub fn mint_lp_position(
-        _ctx: Context<MintLpPosition>,
-        _amount: u64,
-        _oracle_price_x64: u128,
-        _ema_price_x64: u128,
+        ctx: Context<MintLpPosition>,
+        amount: u64,
     ) -> Result<()> {
-        err!(PommError::DeployToClmmDisabledUntilRebuild)
+        require!(!ctx.accounts.treasury.is_paused, PommError::Paused);
+        require!(amount > 0, PommError::ZeroAmount);
+
+        // C-02 fix: read EMA from on-chain state, assert staleness
+        let now = Clock::get()?.unix_timestamp;
+        require!(
+            ctx.accounts.treasury.ema_update_ts > 0,
+            PommError::EmaUnseeded
+        );
+        require!(
+            now.saturating_sub(ctx.accounts.treasury.ema_update_ts) <= MAX_EMA_STALENESS_SEC,
+            PommError::EmaStale
+        );
+        // EMA exists + fresh — record it on the event so indexers can
+        // verify the price snapshot used at deployment time.
+        let ema_used_x64 = ctx.accounts.treasury.ema_price_x64;
+
+        // C-04 daily-cap window accountant
+        let max_per_day = (ctx.accounts.treasury.total_usdc as u128)
+            .checked_mul(MAX_PER_DAY_DEPLOYED_BPS as u128)
+            .ok_or(PommError::MathOverflow)?
+            .checked_div(10_000)
+            .ok_or(PommError::MathOverflow)? as u64;
+
+        let treasury = &mut ctx.accounts.treasury;
+        if now.saturating_sub(treasury.window_start_ts) >= 86_400 {
+            treasury.window_start_ts = now;
+            treasury.deployed_in_window = 0;
+        }
+        let new_total_in_window = treasury
+            .deployed_in_window
+            .checked_add(amount)
+            .ok_or(PommError::MathOverflow)?;
+        require!(new_total_in_window <= max_per_day, PommError::DailyCapExceeded);
+        treasury.deployed_in_window = new_total_in_window;
+        treasury.deployed_usdc = treasury
+            .deployed_usdc
+            .checked_add(amount)
+            .ok_or(PommError::MathOverflow)?;
+
+        // C-01 deferred: Raydium CLMM CPI lands next sub-step. For now we
+        // record the intent + event so indexers + downstream watchers can
+        // pick up the pending CLMM mint.
+        emit!(LpMintEvent {
+            treasury: treasury.key(),
+            amount,
+            oracle_price_x64: ema_used_x64,
+        });
+        Ok(())
     }
 
     /// SCAFFOLD-LIFETIME DEFENSIVE NO-OP. H-01 fix (#22 c.4527297108) —
@@ -573,4 +627,8 @@ pub enum PommError {
     OracleAccountInvalid,
     #[msg("Pyth price is stale (>MAX_PYTH_STALENESS_SEC since last update) or non-positive")]
     OracleStaleOrInvalid,
+    #[msg("EMA accumulator has never been updated — call update_ema first")]
+    EmaUnseeded,
+    #[msg("EMA is stale (>MAX_EMA_STALENESS_SEC since last update) — call update_ema first")]
+    EmaStale,
 }
