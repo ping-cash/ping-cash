@@ -73,6 +73,8 @@ pub mod ping_token {
             mint: ctx.accounts.mint.key(),
             mint_authority: squads_multisig,
             decimals: ctx.accounts.mint.decimals,
+            payer: ctx.accounts.payer.key(),
+            version: Registry::CURRENT_VERSION,
         });
         Ok(())
     }
@@ -182,6 +184,13 @@ pub struct MintInitialized {
     pub mint: Pubkey,
     pub mint_authority: Pubkey,
     pub decimals: u8,
+    /// Pre-audit M-02 (#22 c.4527049794) — indexers need to track who
+    /// funded the initialization for treasury accounting + governance trail.
+    pub payer: Pubkey,
+    /// Pre-audit M-02 — schema version of the Registry account written
+    /// in this same transaction; lets indexers pin a layout-version per
+    /// record so migration consumers know which decoder to use.
+    pub version: u8,
 }
 
 #[event]
