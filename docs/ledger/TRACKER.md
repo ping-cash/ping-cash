@@ -39,7 +39,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | 🟪 `status/uat`         | 0     | —                                                                                     |
 | 🟩 `status/completed`   | 37    | #1 EPIC CLOSED + #2-#14, #17-#21, #25-#39, #59 + #60                                  |
 | 🟥 `status/blocked-ext` | 0     | — (all 6 prior blocked-ext exhausted via P23 + reclassified to parked 2026-05-24)     |
-| ⏸️ `status/parked`      | 8     | #54 GHA billing, #50 vendor keys, #15/#16/#23/#24 Phase-2 mainnet, #58 Wise, **#61 earn-vault rebuild (founder gates)** |
+| ⏸️ `status/parked`      | 9     | #54 GHA billing, #50 vendor keys, #15/#16/#23/#24 Phase-2 mainnet, #58 Wise, #61 earn-vault rebuild, **#62 internal-swap+pomm rebuild (ADR 0009 — founder gates)** |
 
 ---
 
@@ -48,7 +48,7 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 | ID                      | Title                                   | Status      | Owner  | DoD Gate                                                                                      |
 | ----------------------- | --------------------------------------- | ----------- | ------ | --------------------------------------------------------------------------------------------- |
 | #1                      | EPIC: End-to-End Phase 1 Delivery       | ✅ CLOSED   | claude | 5-step §6 cycle complete 2026-05-24: Playwright walk + 8 DoD screenshots + sub-agent SHIP verdict (c.4526977280) + status/uat→completed + gh issue close. Founder may reopen async per §6. |
-| #22                     | EPIC: Phase 2 — $PING TGE + Foundation + audit + Raydium | IN PROGRESS | claude | All 4 scaffolds reviewed + ADR 0021 catalog + init-event + L-02 Debug + **L-03 docstrings 100% complete across all 4 programs** + verifier ZERO DRIFT × 2: ping-token 9, earn-vault 11, internal-swap 11, pomm 13 (added L-03 deposit+mint+fees+admin 12e52bd) — **45 scaffold fixes shipped of 77 findings**. Remaining items all architectural — need #61 rebuild + ADR 0009 rebuild + Cayman + OtterSec founder gates. |
+| #22                     | EPIC: Phase 2 — $PING TGE + Foundation + audit + Raydium | IN PROGRESS | claude | All 4 scaffolds reviewed + ADR 0021 catalog + init-event + L-02 + **L-03 100% cross-program** + verifier ZERO DRIFT × 2: ping-token 9, earn-vault 11, internal-swap 11, pomm 13 = **45 scaffold fixes / 77 findings**. **Architectural remainder now per-Wave-ticketed: #61 (earn-vault rebuild) + #62 (internal-swap+pomm ADR 0009 rebuild)**. Cayman + OtterSec are founder gates. |
 | corridor-smoke CI       | .github/workflows/corridor-smoke.yml    | ✅ shipped  | claude | Runs walk-full-corridor.mjs against ping.openova.io on every push + every 6h; all 4 PH cashout methods + send-intent sign verify |
 | #5                      | auth-service (phone OTP → JWT → wallet) | ✅ closed   | claude | Walked at /auth/\* (stub mode)                                                                |
 | #10                     | fx-service (Pyth + 0.4% spread)         | ✅ closed   | claude | Walked at /fx/\* (stub-rate oracle)                                                           |
