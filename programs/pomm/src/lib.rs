@@ -218,10 +218,19 @@ impl Treasury {
 
 #[derive(Accounts)]
 pub struct InitializeTreasury<'info> {
+    /// Fee payer for Treasury rent. NOT necessarily the same as the
+    /// `squads_multisig` argument (which becomes treasury.authority).
+    /// Foundation may sponsor rent for community-deployed treasury instances.
     #[account(mut)]
     pub payer: Signer<'info>,
+    /// Per-mint Treasury PDA (H-02 c530322 — bound to usdc_mint). LEN=162
+    /// includes the C-04 1f995d7 window-accountant fields. Schema is v1
+    /// (CURRENT_VERSION pattern from ping-token C-01 b4d606a would apply
+    /// here in a future migration).
     #[account(init, payer = payer, space = Treasury::LEN, seeds = [b"treasury", usdc_mint.key().as_ref()], bump)]
     pub treasury: Account<'info, Treasury>,
+    /// USDC mint — the principal currency this Treasury accountants.
+    /// Foundation-controlled mainnet pubkey EPjFWdd5...
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     // H-05 fix (per #22 c.4527297108): bind usdc_vault to (treasury PDA owner,
     // expected mint, no close authority). Same shape as earn-vault C-03
@@ -286,11 +295,18 @@ pub struct AdminTreasury<'info> {
 
 #[derive(Accounts)]
 pub struct EmergencyWithdraw<'info> {
+    /// Treasury authority (Squads multisig in prod). `address =` enforces
+    /// signer matches the recorded authority; combined with the
+    /// `is_paused` runtime check, this means only the multisig can
+    /// drain — AND only after pausing first.
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
+    /// Per-mint Treasury PDA (H-02 c530322). mut for total_usdc decrement.
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
+    /// USDC mint (read-only — decimals enforcement in transfer_checked).
     pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// Treasury's USDC reserve. address-pinned to the registered vault.
     #[account(mut, address = treasury.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
     /// H-04 fix (per #22 c.4527297108): emergency_withdraw destination
