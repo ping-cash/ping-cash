@@ -117,13 +117,19 @@ pub mod pomm {
         Ok(())
     }
 
-    pub fn collect_fees(ctx: Context<CollectFees>, fees: u64) -> Result<()> {
-        require!(!ctx.accounts.treasury.is_paused, PommError::Paused);
-        let treasury = &mut ctx.accounts.treasury;
-        treasury.collected_fees_lifetime = treasury.collected_fees_lifetime
-            .checked_add(fees).ok_or(PommError::MathOverflow)?;
-        emit!(FeesCollected { treasury: treasury.key(), amount: fees });
-        Ok(())
+    /// SCAFFOLD-LIFETIME DEFENSIVE NO-OP. H-01 fix (#22 c.4527297108) —
+    /// original collect_fees accepted caller-supplied `fees: u64` with zero
+    /// verification, so the authority could call collect_fees(any) and
+    /// inflate collected_fees_lifetime arbitrarily for downstream accounting
+    /// abuse. Same operator-trust hole class as earn-vault C-02 (closed by
+    /// hard-disable in 61407a3).
+    ///
+    /// Until the ADR 0009 rebuild lands real CLMM CPI that READS fees from
+    /// the Raydium pool's actual collected amounts, collect_fees is hard-
+    /// disabled. The attack is now PHYSICALLY IMPOSSIBLE — no caller can
+    /// advance the collected_fees_lifetime counter via this path.
+    pub fn collect_fees(_ctx: Context<CollectFees>, _fees: u64) -> Result<()> {
+        err!(PommError::CollectFeesDisabledUntilRebuild)
     }
 
     pub fn set_paused(ctx: Context<AdminTreasury>, paused: bool) -> Result<()> {
@@ -374,4 +380,6 @@ pub enum PommError {
     WrongEmergencyDestination,
     #[msg("New authority cannot be the zero pubkey")]
     ZeroPubkey,
+    #[msg("collect_fees disabled in scaffold; full rebuild per ADR 0009 (real CLMM fee-read CPI) required first")]
+    CollectFeesDisabledUntilRebuild,
 }
