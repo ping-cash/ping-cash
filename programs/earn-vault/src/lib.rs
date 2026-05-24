@@ -31,6 +31,11 @@ use anchor_spl::token_interface::{
 // for that pubkey exists).
 declare_id!("EarnVau1tProgr4mPubKeyP1ace0001111111111111");
 
+/// USDC has 6 decimals on Solana mainnet. 1000 USDC = 1_000_000_000 atomic
+/// units. Pre-audit C-01 mitigation: first stake must be ≥ this to prevent
+/// share-price inflation attack against the empty vault.
+pub const MIN_FIRST_STAKE: u64 = 1_000_000_000;
+
 #[program]
 pub mod earn_vault {
     use super::*;
@@ -55,6 +60,18 @@ pub mod earn_vault {
     pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
         require!(!ctx.accounts.vault.is_paused, VaultError::Paused);
         require!(amount > 0, VaultError::ZeroAmount);
+
+        // Pre-audit C-01 (#22 c.4527111355) — first-depositor inflation
+        // mitigation. Standard ERC-4626-style band-aid: require the first
+        // deposit (when total_vusdc_supply == 0) to be ≥ MIN_FIRST_STAKE so
+        // that an attacker can't seed 1 USDC + donate USDC directly to the
+        // vault to inflate the share price, then have the next victim's
+        // deposit round to 0 vUSDC. 1000 USDC at 6 decimals raises the
+        // attack cost prohibitively even before the per-user share PDA
+        // rebuild lands (#61). Survives into the rebuild as belt-and-braces.
+        if ctx.accounts.vault.total_vusdc_supply == 0 {
+            require!(amount >= MIN_FIRST_STAKE, VaultError::FirstStakeTooSmall);
+        }
 
         token_interface::transfer_checked(
             ctx.accounts.transfer_to_vault_ctx(),
@@ -369,4 +386,6 @@ pub enum VaultError {
     MathOverflow,
     #[msg("harvest() disabled in scaffold; full rebuild per ADR 0012 (#61) required first")]
     HarvestDisabledUntilRebuild,
+    #[msg("First stake must be >= 1000 USDC to prevent share-price inflation attack")]
+    FirstStakeTooSmall,
 }
