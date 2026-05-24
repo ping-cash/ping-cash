@@ -258,6 +258,43 @@ fn quote_usdc_to_ping(
     apply_spread(gross, spread_bps)
 }
 
+/// #62 H-04 rebuild start (ADR 0009 Pyth integration). Cross-checks the
+/// AMM-derived price against a Pyth oracle reference and reverts if the
+/// deviation exceeds MAX_ORACLE_DEVIATION_BPS. Caller wires in the Pyth
+/// price account; on devnet this can be a Pyth mock (pyth-sdk-solana ships
+/// fixture helpers). Production reads the canonical SOL/$PING/USDC feeds.
+///
+/// MAX_ORACLE_DEVIATION_BPS = 300 (3%) is intentionally wide for an AMM
+/// pool that may also serve $PING-specific liquidity discontinuities.
+/// Tighten to 100 (1%) post-launch once Raydium CLMM CPI lands and the
+/// AMM curve more reliably tracks oracle.
+///
+/// Returns the AMM quote unchanged if oracle band check passes; reverts
+/// with PriceDeviatesFromOracle otherwise. Pure validation — does not
+/// override the AMM quote.
+#[allow(dead_code)]
+pub const MAX_ORACLE_DEVIATION_BPS: u16 = 300;
+
+#[allow(dead_code)]
+fn assert_amm_within_oracle_band(
+    amm_usdc_per_ping_x64: u128,
+    oracle_usdc_per_ping_x64: u128,
+) -> Result<()> {
+    // Compute |amm - oracle| / oracle in bps. Saturating math — at scaffold
+    // start we accept clamping to u128::MAX rather than overflow-revert; the
+    // band check below catches that case (any saturated diff > band → revert).
+    let diff = if amm_usdc_per_ping_x64 > oracle_usdc_per_ping_x64 {
+        amm_usdc_per_ping_x64 - oracle_usdc_per_ping_x64
+    } else {
+        oracle_usdc_per_ping_x64 - amm_usdc_per_ping_x64
+    };
+    let band = oracle_usdc_per_ping_x64
+        .saturating_mul(MAX_ORACLE_DEVIATION_BPS as u128)
+        .saturating_div(10_000);
+    require!(diff <= band, SwapError::PriceDeviatesFromOracle);
+    Ok(())
+}
+
 fn quote_ping_to_usdc(
     amount_in_ping: u64,
     pool_ping: u64,
@@ -523,4 +560,6 @@ pub enum SwapError {
     SlippageExceeded,
     #[msg("New authority cannot be the zero pubkey")]
     ZeroPubkey,
+    #[msg("AMM price deviates from Pyth oracle beyond MAX_ORACLE_DEVIATION_BPS — sandwich/manipulation defense")]
+    PriceDeviatesFromOracle,
 }

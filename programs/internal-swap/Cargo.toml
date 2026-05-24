@@ -22,3 +22,8 @@ audit-passed = []
 [dependencies]
 anchor-lang = "0.30.1"
 anchor-spl = { version = "0.30.1", features = ["token_2022"] }
+# Per #62 rebuild scope (ADR 0009 H-04): Pyth price-feed verification.
+# Reads SOL/USDC + $PING/USD price accounts on swap-time. The pinned
+# major.minor (0.10) tracks the Solana 1.18-compatible release; pinning
+# patch via `=0.10.5` keeps reproducible builds deterministic for audit.
+pyth-sdk-solana = "=0.10.5"
