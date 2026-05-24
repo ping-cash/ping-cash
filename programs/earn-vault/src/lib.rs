@@ -329,17 +329,28 @@ pub struct InitializeVault<'info> {
 
 #[derive(Accounts)]
 pub struct Stake<'info> {
+    /// Depositor — pays the USDC + receives the vUSDC. Signs the transfer.
     #[account(mut)]
     pub user: Signer<'info>,
+    /// Per-mint Vault PDA (C-04 f7ea54f). mut because total_staked +
+    /// total_vusdc_supply increment in this instruction.
     #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
+    /// USDC mint (mainnet pubkey EPjFWdd5...). Read-only — used for the
+    /// transfer_checked decimals enforcement.
     pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// vUSDC mint, authority = vault PDA (enforced at init per C-03 2c35aee).
+    /// mut because mint_to CPI increments supply.
     #[account(mut)]
     pub vusdc_mint: InterfaceAccount<'info, Mint>,
+    /// Sender of the USDC. Owned by `user` (signer).
     #[account(mut)]
     pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    /// Vault's USDC reserve (owner == vault PDA per C-03 2c35aee).
+    /// address = vault.usdc_vault pins to the registered account.
     #[account(mut, address = vault.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    /// Recipient of the vUSDC mint_to.
     #[account(mut)]
     pub user_vusdc_ata: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -399,17 +410,24 @@ impl<'info> Harvest<'info> {
 
 #[derive(Accounts)]
 pub struct Unstake<'info> {
+    /// Withdrawer — burns vUSDC + receives USDC. Pause doesn't block this
+    /// per H-03 (2ebfba9) — financial-safety invariant.
     #[account(mut)]
     pub user: Signer<'info>,
+    /// Per-mint Vault PDA; mut for total_staked/total_vusdc_supply decrement.
     #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// vUSDC mint; mut because burn decrements supply.
     #[account(mut)]
     pub vusdc_mint: InterfaceAccount<'info, Mint>,
+    /// Vault's USDC reserve (source of withdrawal).
     #[account(mut, address = vault.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    /// Recipient of the USDC payout.
     #[account(mut)]
     pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    /// User's vUSDC source (burned in this instruction).
     #[account(mut)]
     pub user_vusdc_ata: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
