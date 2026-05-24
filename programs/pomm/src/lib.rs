@@ -246,13 +246,20 @@ pub struct InitializeTreasury<'info> {
 
 #[derive(Accounts)]
 pub struct DepositUsdc<'info> {
+    /// Depositor — any wallet can fund the POMM treasury. Signs the
+    /// transfer. Foundation typically pre-funds; community can also top up.
     #[account(mut)]
     pub depositor: Signer<'info>,
+    /// Per-mint Treasury PDA (H-02 c530322). mut for total_usdc increment.
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
+    /// USDC mint — read-only, for transfer_checked decimals enforcement.
     pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// Depositor's USDC source.
     #[account(mut)]
     pub depositor_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    /// Treasury's USDC reserve (owner == treasury PDA per H-05 2f10110).
+    /// address-pinned to registered vault.
     #[account(mut, address = treasury.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -271,24 +278,37 @@ impl<'info> DepositUsdc<'info> {
 
 #[derive(Accounts)]
 pub struct MintLpPosition<'info> {
+    /// Treasury authority. NB: mint_lp_position itself is hard-disabled
+    /// per C-01+C-02+C-03 db555a3 — this context preserved for the #61
+    /// ADR 0009 rebuild (Pyth oracle + Raydium CLMM CPI + on-chain EMA).
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
+    /// Per-mint Treasury PDA. Even though mint_lp_position reverts, seeds
+    /// must remain valid so the call reaches the err! shorthand.
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
 }
 
 #[derive(Accounts)]
 pub struct CollectFees<'info> {
+    /// Treasury authority. NB: collect_fees itself is hard-disabled per
+    /// H-01 600c647 — caller-supplied fees would be unverifiable without
+    /// real CLMM fee-read CPI (rebuild scope).
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
+    /// Per-mint Treasury PDA — same revert-safety note as MintLpPosition.
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
 }
 
 #[derive(Accounts)]
 pub struct AdminTreasury<'info> {
+    /// Treasury authority — currently single-key dev path. Production:
+    /// Squads multisig (H-02 architectural gate). Shared context for
+    /// set_paused + rotate_authority instructions.
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
+    /// Per-mint Treasury PDA. mut for is_paused + authority field updates.
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
 }
