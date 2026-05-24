@@ -200,6 +200,48 @@ pub mod earn_vault {
         });
         Ok(())
     }
+
+    /// Rotate the vault authority to a new pubkey. Pre-audit H-04 partial
+    /// (#22 c.4527111355): without this, the only way to migrate from a
+    /// single-key authority (acceptable for devnet/local) to a Squads
+    /// multisig (mandatory for mainnet per ADR 0019) is to redeploy the
+    /// program — and the placeholder declare_id forbids that.
+    ///
+    /// Caller MUST be the current authority. Survives into #61 rebuild as
+    /// belt-and-braces (the rebuild will add a 7-day timelock on rotation
+    /// per ADR 0019; this scaffold version has no timelock).
+    pub fn rotate_authority(
+        ctx: Context<RotateAuthority>,
+        new_authority: Pubkey,
+    ) -> Result<()> {
+        require!(
+            new_authority != Pubkey::default(),
+            VaultError::ZeroPubkey
+        );
+        let old_authority = ctx.accounts.vault.authority;
+        ctx.accounts.vault.authority = new_authority;
+        emit!(AuthorityRotated {
+            vault: ctx.accounts.vault.key(),
+            old_authority,
+            new_authority,
+        });
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct RotateAuthority<'info> {
+    #[account(
+        mut,
+        seeds = [b"vault", usdc_mint.key().as_ref()],
+        bump = vault.bump,
+        has_one = authority @ VaultError::WrongAuthority,
+    )]
+    pub vault: Account<'info, Vault>,
+    /// Current authority — must sign.
+    pub authority: Signer<'info>,
+    /// usdc_mint is the seed binding (per C-04 fix in f7ea54f).
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
 }
 
 #[account]
@@ -411,6 +453,13 @@ pub struct PausedEvent {
     pub paused: bool,
 }
 
+#[event]
+pub struct AuthorityRotated {
+    pub vault: Pubkey,
+    pub old_authority: Pubkey,
+    pub new_authority: Pubkey,
+}
+
 #[error_code]
 pub enum VaultError {
     #[msg("Vault is paused")]
@@ -435,4 +484,8 @@ pub enum VaultError {
     WrongUsdcVaultOwner,
     #[msg("usdc_vault.mint must equal the usdc_mint passed to initialize_vault")]
     WrongUsdcVaultMint,
+    #[msg("Caller is not the vault authority")]
+    WrongAuthority,
+    #[msg("New authority cannot be the zero pubkey")]
+    ZeroPubkey,
 }
