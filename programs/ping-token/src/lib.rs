@@ -135,6 +135,9 @@ pub mod ping_token {
 
 #[derive(Accounts)]
 pub struct RenounceMintAuthority<'info> {
+    /// Per-mint Registry PDA (H-01 2deaace). has_one = mint enforces that
+    /// the passed mint matches Registry.mint — defense against a caller
+    /// supplying a different mint than the one registered.
     #[account(
         mut,
         seeds = [b"ping-registry", mint.key().as_ref()],
@@ -142,9 +145,13 @@ pub struct RenounceMintAuthority<'info> {
         has_one = mint,
     )]
     pub registry: Account<'info, Registry>,
+    /// The mint whose authority is being renounced. Marked mut because the
+    /// SetAuthority CPI mutates the underlying mint account.
     #[account(mut)]
     pub mint: InterfaceAccount<'info, Mint>,
-    /// Current mint authority (Squads multisig signer in production).
+    /// Current mint authority (Squads multisig signer in production). Must
+    /// match the registered mint_authority — sanity-checked inline via
+    /// require!(registry.mint_authority == mint_authority.key()).
     pub mint_authority: Signer<'info>,
     pub token_program: Interface<'info, TokenInterface>,
 }
@@ -172,12 +179,17 @@ impl Registry {
 
 #[derive(Accounts)]
 pub struct InitializeMint<'info> {
+    /// Fee payer for the Registry account rent. NOT necessarily the same as
+    /// the mint_authority — Foundation may sponsor rent for community-deployed
+    /// instances. Recorded in MintInitialized.payer event field (M-02 d61dc76).
     #[account(mut)]
     pub payer: Signer<'info>,
     /// Pre-audit H-01 remediation: PDA seed binds to mint.key() so the Registry
     /// slot is one-per-mint, not a single global first-come slot. A front-runner
     /// would have to bring their OWN hostile mint to claim a Registry — and that
     /// mint would still fail decimals + freeze + authority + extension checks.
+    /// Schema version is Registry::CURRENT_VERSION = 1 (C-01 b4d606a — future
+    /// migrations branch on Registry.version).
     #[account(
         init,
         payer = payer,
@@ -186,7 +198,14 @@ pub struct InitializeMint<'info> {
         bump
     )]
     pub registry: Account<'info, Registry>,
+    /// The $PING SPL Token-2022 mint being registered. Must satisfy:
+    ///   - decimals == PING_DECIMALS (9)
+    ///   - mint_authority == squads_multisig (caller-supplied)
+    ///   - freeze_authority == None
+    ///   - Token-2022 extensions ⊆ ALLOWED_EXTENSIONS (C-02 360b7ee)
+    /// Anchor's InterfaceAccount<Mint> dispatches against either token program.
     pub mint: InterfaceAccount<'info, Mint>,
+    /// Token program (must be Token-2022 for the extension allow-list path).
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
