@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
+use pyth_sdk_solana::state::SolanaPriceAccount;
 
 // ============================================================================
 // ⚠️  DO NOT DEPLOY THIS PROGRAM TO MAINNET — per ADR 0018 + #22 EPIC gates.
@@ -166,6 +167,73 @@ pub mod pomm {
         Ok(())
     }
 
+    /// C-03 step 2 (#62 c.4527806799): update the on-chain EMA accumulator
+    /// from the live Pyth feed. Permissionless — anyone calling keeps the
+    /// EMA fresh; no operator-trust hole because input is verifiable Pyth
+    /// read, not caller-supplied.
+    ///
+    /// On first call (ema_update_ts == 0): seed ema_price_x64 from Pyth
+    /// directly (no blending — blending against 0 would underweight first
+    /// sample).
+    ///
+    /// On subsequent calls: blend per EMA_ALPHA_BPS:
+    ///     ema_new = (alpha * pyth + (10000 - alpha) * ema_old) / 10000
+    /// where alpha = 200 = 2%. With hourly cadence, ~50-tick half-life
+    /// ≈ 7 days (ADR 0009 "7-day EMA" mandate).
+    pub fn update_ema(ctx: Context<UpdateEma>) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        let price_feed = SolanaPriceAccount::account_info_to_feed(
+            &ctx.accounts.pyth_price_account,
+        )
+        .map_err(|_| error!(PommError::OracleAccountInvalid))?;
+        let price = price_feed
+            .get_price_no_older_than(now, MAX_PYTH_STALENESS_SEC as u64)
+            .ok_or(error!(PommError::OracleStaleOrInvalid))?;
+        require!(price.price > 0, PommError::OracleStaleOrInvalid);
+        // Convert Pyth i64 mantissa + expo to Q64.64
+        let mantissa = price.price as u128;
+        let q64_64_one: u128 = 1u128 << 64;
+        let abs_expo = price.expo.unsigned_abs() as u32;
+        let scale = 10u128
+            .checked_pow(abs_expo)
+            .ok_or(PommError::MathOverflow)?;
+        let pyth_x64 = mantissa
+            .checked_mul(q64_64_one)
+            .ok_or(PommError::MathOverflow)?
+            .checked_div(scale)
+            .ok_or(PommError::MathOverflow)?;
+
+        let treasury = &mut ctx.accounts.treasury;
+        if treasury.ema_update_ts == 0 {
+            // First sample — seed directly.
+            treasury.ema_price_x64 = pyth_x64;
+        } else {
+            // EMA blend: alpha = EMA_ALPHA_BPS (200 = 2%)
+            let alpha = EMA_ALPHA_BPS as u128;
+            let one_minus_alpha = (10_000u128).saturating_sub(alpha);
+            let new_weighted = pyth_x64
+                .checked_mul(alpha)
+                .ok_or(PommError::MathOverflow)?;
+            let old_weighted = treasury
+                .ema_price_x64
+                .checked_mul(one_minus_alpha)
+                .ok_or(PommError::MathOverflow)?;
+            treasury.ema_price_x64 = new_weighted
+                .checked_add(old_weighted)
+                .ok_or(PommError::MathOverflow)?
+                .checked_div(10_000)
+                .ok_or(PommError::MathOverflow)?;
+        }
+        treasury.ema_update_ts = now;
+        emit!(EmaUpdated {
+            treasury: treasury.key(),
+            pyth_price_x64: pyth_x64,
+            ema_price_x64: treasury.ema_price_x64,
+            update_ts: now,
+        });
+        Ok(())
+    }
+
     pub fn emergency_withdraw(ctx: Context<EmergencyWithdraw>, amount: u64) -> Result<()> {
         require!(ctx.accounts.treasury.is_paused, PommError::EmergencyRequiresPause);
 
@@ -234,6 +302,9 @@ pub const EMA_ALPHA_BPS: u16 = 200;
 /// C-03 fix: EMA staleness threshold. update_ema must run within this
 /// window before mint_lp_position can consume ema_price_x64 (when rebuilt).
 pub const MAX_EMA_STALENESS_SEC: i64 = 7_200; // 2 hours
+
+/// C-03 step 2: Pyth staleness threshold mirrors internal-swap a92e86f.
+pub const MAX_PYTH_STALENESS_SEC: i64 = 60;
 
 impl Treasury {
     // 8 disc + 3*32 keys + 3*8 u64 + 1 bool + 1 bump + 8 i64 + 8 u64 + 16 u128 + 8 i64 = 186
@@ -338,6 +409,18 @@ pub struct AdminTreasury<'info> {
 }
 
 #[derive(Accounts)]
+pub struct UpdateEma<'info> {
+    /// Per-mint Treasury PDA; mut for ema_price_x64 + ema_update_ts writes.
+    #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
+    pub treasury: Account<'info, Treasury>,
+    /// USDC mint — seed binding.
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// Pyth price account for $PING/USDC. CHECK: validated inside update_ema
+    /// via SolanaPriceAccount::account_info_to_feed.
+    pub pyth_price_account: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
 pub struct EmergencyWithdraw<'info> {
     /// Treasury authority (Squads multisig in prod). `address =` enforces
     /// signer matches the recorded authority; combined with the
@@ -436,6 +519,15 @@ pub struct TreasuryInitialized {
     pub bump: u8,
 }
 
+#[event]
+#[derive(Debug)]
+pub struct EmaUpdated {
+    pub treasury: Pubkey,
+    pub pyth_price_x64: u128,
+    pub ema_price_x64: u128,
+    pub update_ts: i64,
+}
+
 #[error_code]
 pub enum PommError {
     #[msg("Treasury is paused")]
@@ -464,4 +556,8 @@ pub enum PommError {
     CollectFeesDisabledUntilRebuild,
     #[msg("mint_lp_position disabled in scaffold; full rebuild per ADR 0009 (Pyth oracle + on-chain EMA + Raydium CLMM CPI) required first")]
     DeployToClmmDisabledUntilRebuild,
+    #[msg("Pyth price account could not be parsed as a SolanaPriceAccount")]
+    OracleAccountInvalid,
+    #[msg("Pyth price is stale (>MAX_PYTH_STALENESS_SEC since last update) or non-positive")]
+    OracleStaleOrInvalid,
 }
