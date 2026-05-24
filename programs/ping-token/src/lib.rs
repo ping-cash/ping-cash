@@ -156,7 +156,12 @@ pub struct RenounceMintAuthority<'info> {
     pub token_program: Interface<'info, TokenInterface>,
 }
 
+// Pre-audit L-02 (#22 c.4527049794): #[derive(Debug)] makes Registry
+// printable for off-chain tools (TS test logs, anchor scripts, indexer
+// debug output). Cost: no on-chain footprint — Anchor strips derives
+// from the on-chain account layout.
 #[account]
+#[derive(Debug)]
 pub struct Registry {
     /// Storage layout version. Bump on incompatible field changes; future
     /// migration instructions branch on this value. Pre-audit C-01 fix
@@ -211,6 +216,7 @@ pub struct InitializeMint<'info> {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct MintInitialized {
     pub mint: Pubkey,
     pub mint_authority: Pubkey,
@@ -225,6 +231,7 @@ pub struct MintInitialized {
 }
 
 #[event]
+#[derive(Debug)]
 pub struct MintAuthorityRenounced {
     pub mint: Pubkey,
     pub renounced_by: Pubkey,
