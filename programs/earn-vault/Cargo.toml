@@ -15,6 +15,9 @@ no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+# L-01 ADR 0018 guard (mirrors ping-token): mainnet-ready requires audit-passed
+mainnet-ready = []
+audit-passed = []
 
 [dependencies]
 anchor-lang = "0.30.1"

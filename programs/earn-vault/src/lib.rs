@@ -29,6 +29,15 @@ use anchor_spl::token_interface::{
 //
 // The placeholder declare_id! below cannot be deployed to mainnet (no signer
 // for that pubkey exists).
+//
+// L-01 ADR 0018 compile_error guard (mirrors ping-token 2bd1c24): mainnet-ready
+// feature flag requires audit-passed; replacing the placeholder declare_id
+// without OtterSec sign-off fails compilation.
+#[cfg(all(feature = "mainnet-ready", not(feature = "audit-passed")))]
+compile_error!(
+    "earn-vault: mainnet-ready feature requires audit-passed feature \
+     (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
+);
 declare_id!("EarnVau1tProgr4mPubKeyP1ace0001111111111111");
 
 /// USDC has 6 decimals on Solana mainnet. 1000 USDC = 1_000_000_000 atomic
