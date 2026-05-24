@@ -74,47 +74,31 @@ pub mod pomm {
         Ok(())
     }
 
+    /// SCAFFOLD-LIFETIME DEFENSIVE NO-OP closing pomm Critical findings
+    /// C-01, C-02, C-03 in one stroke (#22 c.4527297108):
+    ///   - C-01: original mint_lp_position did NO actual Raydium CLMM CPI,
+    ///     just bumped a counter — operator-trust hole, same class as
+    ///     earn-vault C-02 harvest (closed in 61407a3)
+    ///   - C-02: oracle_price_x64 + ema_price_x64 were caller-supplied with
+    ///     no Pyth/Switchboard verification — the band check is theater
+    ///     because the authority controls both inputs
+    ///   - C-03: no on-chain EMA state, no per-tick accumulator, no
+    ///     staleness guard — the "7-day EMA" exists only in the ADR
+    ///
+    /// All three are rebuild-scope (ADR 0009 requires Pyth integration,
+    /// real Raydium CLMM CPI, and an on-chain EMA accumulator PDA). Until
+    /// that rebuild lands, mint_lp_position is hard-disabled — every call
+    /// reverts. C-04 (daily cap accountant in 1f995d7) + window state
+    /// stay in the struct so the rebuild can layer on them without further
+    /// data migration. NB: total_usdc / deployed_in_window / window_start_ts
+    /// remain on the Treasury struct.
     pub fn mint_lp_position(
-        ctx: Context<MintLpPosition>,
-        amount: u64,
-        oracle_price_x64: u128,
-        ema_price_x64: u128,
+        _ctx: Context<MintLpPosition>,
+        _amount: u64,
+        _oracle_price_x64: u128,
+        _ema_price_x64: u128,
     ) -> Result<()> {
-        require!(!ctx.accounts.treasury.is_paused, PommError::Paused);
-        require!(amount > 0, PommError::ZeroAmount);
-
-        require!(price_within_band(oracle_price_x64, ema_price_x64), PommError::PriceOutOfBand);
-
-        let max_per_day = (ctx.accounts.treasury.total_usdc as u128)
-            .checked_mul(MAX_PER_DAY_DEPLOYED_BPS as u128).ok_or(PommError::MathOverflow)?
-            .checked_div(10_000).ok_or(PommError::MathOverflow)? as u64;
-
-        // C-04 fix (per #22 c.4527297108): the original check
-        //   require!(amount <= max_per_day, ...)
-        // was per-call only; attacker calls mint_lp_position(max_per_day) N
-        // times to bypass. Proper window-based accumulator:
-        //   - reset deployed_in_window when ≥86400s since window_start_ts
-        //   - check accumulated (deployed_in_window + amount) <= max_per_day
-        let now = Clock::get()?.unix_timestamp;
-        let treasury = &mut ctx.accounts.treasury;
-        if now.saturating_sub(treasury.window_start_ts) >= 86_400 {
-            treasury.window_start_ts = now;
-            treasury.deployed_in_window = 0;
-        }
-        let new_total_in_window = treasury
-            .deployed_in_window
-            .checked_add(amount)
-            .ok_or(PommError::MathOverflow)?;
-        require!(new_total_in_window <= max_per_day, PommError::DailyCapExceeded);
-        treasury.deployed_in_window = new_total_in_window;
-        treasury.deployed_usdc = treasury.deployed_usdc.checked_add(amount).ok_or(PommError::MathOverflow)?;
-
-        emit!(LpMintEvent {
-            treasury: treasury.key(),
-            amount,
-            oracle_price_x64,
-        });
-        Ok(())
+        err!(PommError::DeployToClmmDisabledUntilRebuild)
     }
 
     /// SCAFFOLD-LIFETIME DEFENSIVE NO-OP. H-01 fix (#22 c.4527297108) —
@@ -382,4 +366,6 @@ pub enum PommError {
     ZeroPubkey,
     #[msg("collect_fees disabled in scaffold; full rebuild per ADR 0009 (real CLMM fee-read CPI) required first")]
     CollectFeesDisabledUntilRebuild,
+    #[msg("mint_lp_position disabled in scaffold; full rebuild per ADR 0009 (Pyth oracle + on-chain EMA + Raydium CLMM CPI) required first")]
+    DeployToClmmDisabledUntilRebuild,
 }
