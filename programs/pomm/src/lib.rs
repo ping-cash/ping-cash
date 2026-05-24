@@ -232,7 +232,18 @@ pub struct EmergencyWithdraw<'info> {
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     #[account(mut, address = treasury.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
-    #[account(mut)]
+    /// H-04 fix (per #22 c.4527297108): emergency_withdraw destination
+    /// MUST be owned by treasury.authority (Squads multisig in prod), not
+    /// any caller-chosen wallet. Without this, a single-signer pause-and-
+    /// drain attack works: pause treasury → emergency_withdraw to attacker
+    /// ATA → unpause. ADR 0009 says "Multisig can only pause" — this
+    /// constraint enforces that even an emergency exit can only route
+    /// funds back to the authority's control.
+    #[account(
+        mut,
+        constraint = destination_ata.owner == treasury.authority @ PommError::WrongEmergencyDestination,
+        constraint = destination_ata.mint == usdc_mint.key() @ PommError::WrongVaultMint,
+    )]
     pub destination_ata: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
 }
@@ -300,4 +311,6 @@ pub enum PommError {
     WrongVaultMint,
     #[msg("usdc_vault.close_authority must be None (vault must not be closeable)")]
     VaultMustNotBeCloseable,
+    #[msg("emergency_withdraw destination must be owned by treasury.authority (multisig)")]
+    WrongEmergencyDestination,
 }
