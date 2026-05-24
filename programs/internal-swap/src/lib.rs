@@ -340,18 +340,29 @@ pub struct InitializePool<'info> {
 
 #[derive(Accounts)]
 pub struct SwapUsdcForPing<'info> {
+    /// Swapper — pays USDC, receives $PING. Signs the transfer.
     #[account(mut)]
     pub user: Signer<'info>,
+    /// Per-(usdc,ping)-mint Pool PDA (C5 d238aa7). mut because pool.usdc_balance
+    /// / pool.ping_balance breadcrumb counters update post-swap (the actual
+    /// quote derives from real vault balances per C3 8e77f7c).
     #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
     pub pool: Account<'info, Pool>,
+    /// USDC mint — read-only, for transfer_checked decimals enforcement.
     pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// $PING mint — read-only, for transfer_checked decimals enforcement.
     pub ping_mint: InterfaceAccount<'info, Mint>,
+    /// User's USDC source.
     #[account(mut)]
     pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    /// User's $PING destination.
     #[account(mut)]
     pub user_ping_ata: InterfaceAccount<'info, TokenAccount>,
+    /// Pool's USDC reserve (owner == pool PDA per C4 564e6af). `address =`
+    /// pins to the registered vault; quote reads from .amount per C3 8e77f7c.
     #[account(mut, address = pool.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    /// Pool's $PING reserve. Source of swap output.
     #[account(mut, address = pool.ping_vault)]
     pub ping_vault: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
