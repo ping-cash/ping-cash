@@ -22,6 +22,7 @@ import {
   getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
 import { PublicKey, Transaction } from '@solana/web3.js';
+import type { SendIntent } from '@ping/types';
 
 import { WalletErrors } from '../utils/errors';
 import { logger } from '../utils/logger';
@@ -29,22 +30,8 @@ import { logger } from '../utils/logger';
 const USDC_MINT_MAINNET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const USDC_DECIMALS = 6;
 
-export interface SendIntent {
-  senderWallet: string;
-  recipientWallet: string;
-  amountUsdc: string;
-  serializedTransaction: string;
-  expiresInSeconds: number;
-  meta: {
-    mint: string;
-    program: string;
-    associatedTokenProgram: string;
-    senderAta: string;
-    recipientAta: string;
-    decimals: number;
-    amountAtomic: string;
-  };
-}
+export type { SendIntent };
+
 
 export async function buildSendIntent(
   senderWallet: string,

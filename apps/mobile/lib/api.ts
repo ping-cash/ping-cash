@@ -269,23 +269,9 @@ export interface FxQuote {
   expiresAt: string;
 }
 
-// Pillar 4 send-side intent shape — wallet-service builds, client signs.
-export interface SendIntent {
-  senderWallet: string;
-  recipientWallet: string;
-  amountUsdc: string;
-  serializedTransaction: string; // base64 unsigned tx for Privy MPC sign
-  expiresInSeconds: number;
-  meta: {
-    mint: string;
-    program: string;
-    associatedTokenProgram: string;
-    senderAta: string;
-    recipientAta: string;
-    decimals: number;
-    amountAtomic: string;
-  };
-}
+// Pillar 4 send-side intent shape — backend builds + mobile signs via Privy MPC.
+// Single source of truth lives in @ping/types per ADR 0020.
+export type { SendIntent } from '@ping/types';
 
 // ==========================================
 // Error Handling

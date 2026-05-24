@@ -105,6 +105,30 @@ export interface WalletBalance {
   chain: Chain;
 }
 
+// Pillar 4 send-side: backend builds unsigned SPL Token transferChecked tx +
+// returns ATA + atomic-amount metadata. Mobile client signs via Privy MPC and
+// submits to Solana RPC. Per ADR 0017 + ADR 0020.
+//
+// Single source of truth — consumed by both services/wallet (response shape)
+// and apps/mobile (ApiClient.buildSendIntent return type). Drift between the
+// two surfaces would silently mask Privy MPC sign failures.
+export interface SendIntent {
+  senderWallet: string;
+  recipientWallet: string;
+  amountUsdc: Decimal;
+  serializedTransaction: string; // base64 unsigned tx
+  expiresInSeconds: number;
+  meta: {
+    mint: string;
+    program: string;
+    associatedTokenProgram: string;
+    senderAta: string;
+    recipientAta: string;
+    decimals: number;
+    amountAtomic: string;
+  };
+}
+
 // ============================================
 // Transfer Domain
 // ============================================
