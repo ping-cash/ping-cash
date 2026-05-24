@@ -389,18 +389,27 @@ impl<'info> SwapUsdcForPing<'info> {
 
 #[derive(Accounts)]
 pub struct SwapPingForUsdc<'info> {
+    /// Swapper — pays $PING, receives USDC. Signs the transfer.
     #[account(mut)]
     pub user: Signer<'info>,
+    /// Per-(usdc,ping)-mint Pool PDA (C5 d238aa7). mut for breadcrumb counter
+    /// updates; quote derives from real vault balances per C3 8e77f7c.
     #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
     pub pool: Account<'info, Pool>,
+    /// USDC mint — read-only, for transfer_checked decimals enforcement.
     pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// $PING mint — read-only, for transfer_checked decimals enforcement.
     pub ping_mint: InterfaceAccount<'info, Mint>,
+    /// User's $PING source (debited).
     #[account(mut)]
     pub user_ping_ata: InterfaceAccount<'info, TokenAccount>,
+    /// User's USDC destination (credited).
     #[account(mut)]
     pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    /// Pool's $PING reserve (owner == pool PDA per C4 564e6af). address-pinned.
     #[account(mut, address = pool.ping_vault)]
     pub ping_vault: InterfaceAccount<'info, TokenAccount>,
+    /// Pool's USDC reserve (source of swap output).
     #[account(mut, address = pool.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -427,8 +436,14 @@ impl<'info> SwapPingForUsdc<'info> {
 
 #[derive(Accounts)]
 pub struct AdminPool<'info> {
+    /// Pool authority — currently single-key dev authority. Production
+    /// path is Squads multisig (H-02 architectural gate). `address =`
+    /// enforces signer matches recorded authority. Shared context for
+    /// set_paused + rotate_authority instructions.
     #[account(address = pool.authority)]
     pub authority: Signer<'info>,
+    /// Per-(usdc,ping)-mint Pool PDA (C5 d238aa7). mut for is_paused +
+    /// authority field updates from set_paused / rotate_authority.
     #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
     pub pool: Account<'info, Pool>,
 }
