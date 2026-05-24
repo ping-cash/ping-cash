@@ -92,11 +92,15 @@ impl Registry {
 pub struct InitializeMint<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
+    /// Pre-audit H-01 remediation: PDA seed binds to mint.key() so the Registry
+    /// slot is one-per-mint, not a single global first-come slot. A front-runner
+    /// would have to bring their OWN hostile mint to claim a Registry — and that
+    /// mint would still fail decimals + freeze + authority + extension checks.
     #[account(
         init,
         payer = payer,
         space = Registry::LEN,
-        seeds = [b"ping-registry"],
+        seeds = [b"ping-registry", mint.key().as_ref()],
         bump
     )]
     pub registry: Account<'info, Registry>,
