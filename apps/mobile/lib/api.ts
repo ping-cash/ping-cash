@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import type { SendIntent } from '@ping/types';
 
 /**
  * API Client for Ping Backend Services
