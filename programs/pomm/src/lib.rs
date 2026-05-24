@@ -8,12 +8,16 @@ use anchor_spl::token_interface::{
 // ============================================================================
 // Pre-audit class-pattern fixes will be filed once a dedicated review runs;
 // known scaffold smells inherited from earn-vault review #2 (#22 c.4527111355):
-//   - seeds = [b"treasury"] front-runnable single global PDA → fix per C-04
-//     pattern (bind to usdc_mint, see earn-vault f7ea54f)
-//   - withdraw_usdc rejects on is_paused → financial-safety violation per
-//     H-03 (see earn-vault 2ebfba9)
+//   - seeds = [b"treasury"] front-runnable single global PDA (6 call sites) →
+//     fix per C-04 pattern (bind to usdc_mint, see earn-vault f7ea54f)
 //   - no rotate_authority instruction → migrate-to-multisig path missing
 //     per ping-token H-03 (f1cfab4) + earn-vault H-04 (2d89968)
+//   - deploy_to_clmm has no actual Raydium CLMM CPI yet (placeholder math
+//     only) — same class as earn-vault C-02 harvest (61407a3); should be
+//     hard-disabled until ADR 0009 rebuild lands real CLMM integration
+// (NB: pomm's emergency_withdraw correctly REQUIRES paused — line 113 — so
+// the H-03 'withdraw-locked-during-pause' pattern from earn-vault does NOT
+// apply here. pomm has no plain user-facing withdraw to lock out.)
 //
 // Mainnet deploy gated on (per #22 EPIC):
 //   1. ADR 0009 full implementation (Raydium CLMM CPI, oracle hardening,
