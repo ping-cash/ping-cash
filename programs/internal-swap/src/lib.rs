@@ -189,6 +189,26 @@ pub mod internal_swap {
         emit!(PausedEvent { pool: ctx.accounts.pool.key(), paused });
         Ok(())
     }
+
+    /// Rotate the pool authority to a new pubkey. H-01 fix (#22 c.4527278904).
+    /// Mirror of earn-vault rotate_authority (2d89968) + ping-token H-03
+    /// (f1cfab4). Needed to migrate from single-key dev authority to a Squads
+    /// multisig (ADR 0019) without redeploying — placeholder declare_id
+    /// forbids redeploy.
+    pub fn rotate_authority(
+        ctx: Context<AdminPool>,
+        new_authority: Pubkey,
+    ) -> Result<()> {
+        require!(new_authority != Pubkey::default(), SwapError::ZeroPubkey);
+        let old_authority = ctx.accounts.pool.authority;
+        ctx.accounts.pool.authority = new_authority;
+        emit!(AuthorityRotated {
+            pool: ctx.accounts.pool.key(),
+            old_authority,
+            new_authority,
+        });
+        Ok(())
+    }
 }
 
 fn quote_usdc_to_ping(
@@ -396,6 +416,13 @@ pub struct PausedEvent {
     pub paused: bool,
 }
 
+#[event]
+pub struct AuthorityRotated {
+    pub pool: Pubkey,
+    pub old_authority: Pubkey,
+    pub new_authority: Pubkey,
+}
+
 #[error_code]
 pub enum SwapError {
     #[msg("Pool is paused")]
@@ -418,4 +445,6 @@ pub enum SwapError {
     VaultMustNotBeCloseable,
     #[msg("Slippage exceeded — actual output below minimum_amount_out (sandwich-attack defense)")]
     SlippageExceeded,
+    #[msg("New authority cannot be the zero pubkey")]
+    ZeroPubkey,
 }
