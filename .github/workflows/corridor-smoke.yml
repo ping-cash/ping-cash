@@ -1,0 +1,42 @@
+name: Corridor smoke
+
+# Runs the 7-stage end-to-end Phase-1 walk against the live Sovereign at
+# https://ping.openova.io on every push to main + on a 6-hour schedule.
+# Fails if any stage's response shape regresses. Catches the cebuana-class
+# drift bug Monitor surfaced 2026-05-24 (see #59).
+#
+# This is the only CI workflow that DOES NOT need GHA runner billing to gate
+# image deploys — it's a pure-curl smoke test, runs in <30 seconds.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 */6 * * *' # every 6 hours
+  workflow_dispatch:
+
+jobs:
+  walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Walk full corridor (gcash)
+        run: node scripts/walk-full-corridor.mjs
+      - name: Walk full corridor (maya)
+        env:
+          CASHOUT_METHOD: maya
+        run: node scripts/walk-full-corridor.mjs
+      - name: Walk full corridor (bdo-bank)
+        env:
+          CASHOUT_METHOD: bdo-bank
+        run: node scripts/walk-full-corridor.mjs
+      - name: Walk full corridor (cebuana-cash-pickup — the formerly-drifted method)
+        env:
+          CASHOUT_METHOD: cebuana-cash-pickup
+        run: node scripts/walk-full-corridor.mjs
+      - name: Walk wallet send-intent (Pillar 4 sign verify)
+        run: node scripts/walk-send-intent.mjs
