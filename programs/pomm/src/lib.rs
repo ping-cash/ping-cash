@@ -135,7 +135,15 @@ pub mod pomm {
     pub fn emergency_withdraw(ctx: Context<EmergencyWithdraw>, amount: u64) -> Result<()> {
         require!(ctx.accounts.treasury.is_paused, PommError::EmergencyRequiresPause);
 
-        let seeds = &[b"treasury".as_ref(), &[ctx.accounts.treasury.bump]];
+        // H-02 fix (per #22 c.4527297108): signer seeds bind to usdc_mint
+        // matching the per-mint Treasury PDA. Same pattern as earn-vault C-04
+        // (f7ea54f).
+        let usdc_mint_key = ctx.accounts.treasury.usdc_mint;
+        let seeds = &[
+            b"treasury".as_ref(),
+            usdc_mint_key.as_ref(),
+            &[ctx.accounts.treasury.bump],
+        ];
         let signer = &[&seeds[..]];
         token_interface::transfer_checked(
             ctx.accounts.transfer_ctx().with_signer(signer),
@@ -178,7 +186,7 @@ impl Treasury {
 pub struct InitializeTreasury<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
-    #[account(init, payer = payer, space = Treasury::LEN, seeds = [b"treasury"], bump)]
+    #[account(init, payer = payer, space = Treasury::LEN, seeds = [b"treasury", usdc_mint.key().as_ref()], bump)]
     pub treasury: Account<'info, Treasury>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     // H-05 fix (per #22 c.4527297108): bind usdc_vault to (treasury PDA owner,
@@ -197,7 +205,7 @@ pub struct InitializeTreasury<'info> {
 pub struct DepositUsdc<'info> {
     #[account(mut)]
     pub depositor: Signer<'info>,
-    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     #[account(mut)]
@@ -222,7 +230,7 @@ impl<'info> DepositUsdc<'info> {
 pub struct MintLpPosition<'info> {
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
-    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
 }
 
@@ -230,7 +238,7 @@ pub struct MintLpPosition<'info> {
 pub struct CollectFees<'info> {
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
-    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
 }
 
@@ -238,7 +246,7 @@ pub struct CollectFees<'info> {
 pub struct AdminTreasury<'info> {
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
-    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
 }
 
@@ -246,7 +254,7 @@ pub struct AdminTreasury<'info> {
 pub struct EmergencyWithdraw<'info> {
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
-    #[account(mut, seeds = [b"treasury"], bump = treasury.bump)]
+    #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     #[account(mut, address = treasury.usdc_vault)]
