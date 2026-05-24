@@ -15,6 +15,12 @@ no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+# Pre-audit L-01 ADR 0018 guard: `mainnet-ready` is the gate to swap
+# declare_id from the placeholder; it REQUIRES `audit-passed` which is
+# only set after OtterSec audit completes. The compile_error! in src/lib.rs
+# enforces this.
+mainnet-ready = []
+audit-passed = []
 
 [dependencies]
 anchor-lang = "0.30.1"

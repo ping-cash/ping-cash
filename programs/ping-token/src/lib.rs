@@ -6,6 +6,18 @@ use anchor_spl::token_2022::spl_token_2022::{
 };
 use anchor_spl::token_interface::{set_authority, Mint, SetAuthority, TokenInterface};
 
+// Pre-audit L-01 (#22 c.4527049794) — ADR 0018 DO-NOT-DEPLOY guard
+// backed by a compile-time gate. The default build path produces an
+// artifact pinned to the placeholder declare_id below. To replace the
+// program id with a real Squads-generated keypair you must build with
+// `--features mainnet-ready` AND swap the declare_id! line — this
+// compile_error catches the swap-without-feature footgun.
+#[cfg(all(feature = "mainnet-ready", not(feature = "audit-passed")))]
+compile_error!(
+    "ping-token: mainnet-ready feature requires audit-passed feature \
+     (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
+);
+
 declare_id!("PingTokenProgr4mPubKeyP1ace00011111111111111");
 
 pub const PING_DECIMALS: u8 = 9;
