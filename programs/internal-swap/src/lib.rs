@@ -252,7 +252,19 @@ pub struct InitializePool<'info> {
     pub pool: Account<'info, Pool>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     pub ping_mint: InterfaceAccount<'info, Mint>,
+    // C4 fix (per #22 c.4527278904): bind vaults to (pool PDA, expected mint,
+    // no close authority). Same shape as earn-vault C-03 (2c35aee).
+    #[account(
+        constraint = usdc_vault.owner == pool.key() @ SwapError::WrongVaultOwner,
+        constraint = usdc_vault.mint == usdc_mint.key() @ SwapError::WrongVaultMint,
+        constraint = usdc_vault.close_authority.is_none() @ SwapError::VaultMustNotBeCloseable,
+    )]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        constraint = ping_vault.owner == pool.key() @ SwapError::WrongVaultOwner,
+        constraint = ping_vault.mint == ping_mint.key() @ SwapError::WrongVaultMint,
+        constraint = ping_vault.close_authority.is_none() @ SwapError::VaultMustNotBeCloseable,
+    )]
     pub ping_vault: InterfaceAccount<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
 }
@@ -382,4 +394,10 @@ pub enum SwapError {
     SpreadTooHigh,
     #[msg("Arithmetic overflow")]
     MathOverflow,
+    #[msg("vault.owner must equal the pool PDA")]
+    WrongVaultOwner,
+    #[msg("vault.mint must equal the corresponding mint passed to initialize_pool")]
+    WrongVaultMint,
+    #[msg("vault.close_authority must be None (vault must not be closeable)")]
+    VaultMustNotBeCloseable,
 }
