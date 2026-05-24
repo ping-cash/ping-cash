@@ -403,6 +403,64 @@ fn apply_spread(gross: u128, spread_bps: u16) -> Result<u64> {
     Ok(net as u64)
 }
 
+/// #62 H-02 Squads V4 multisig CPI scaffold — autonomous source-side half
+/// per shepherd coaching 2026-05-24. Constants + helper for verifying the
+/// signer is the vault-PDA of a Squads multisig (not just any single key).
+/// SDK fetch + real CPI calls land on a build host with cargo; the pattern
+/// + program ID + PDA derivation are source-shippable now.
+pub mod squads_multisig {
+    use anchor_lang::prelude::*;
+
+    /// Squads Protocol V4 program (mainnet). Pinned for build
+    /// reproducibility under audit.
+    pub fn id() -> Pubkey {
+        // Mainnet Squads V4: SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf
+        Pubkey::try_from("SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf")
+            .expect("Squads V4 program ID is a known-valid base58")
+    }
+
+    /// Derive the canonical Squads V4 vault PDA for (multisig_pda,
+    /// vault_index). Multisigs have N vaults — the protocol convention
+    /// is vault_index = 0 for the primary treasury vault.
+    ///
+    /// PDA seeds: [b"multisig", multisig_pda.as_ref(), b"vault", &[vault_index]]
+    ///
+    /// Use this to assert a signer is in fact a multisig vault PDA (not
+    /// a single dev key) before allowing privileged operations.
+    pub fn vault_pda(multisig_pda: &Pubkey, vault_index: u8) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                b"multisig",
+                multisig_pda.as_ref(),
+                b"vault",
+                &[vault_index],
+            ],
+            &id(),
+        )
+    }
+
+    /// Assert that `claimed_authority` is the Squads vault PDA derived
+    /// from `multisig_pda` at `vault_index`. Returns Err(WrongAuthority)
+    /// if not. Belt-and-braces alongside Anchor's Signer<'info> +
+    /// `address = ...` constraints.
+    ///
+    /// Note: this does NOT verify the multisig itself has executed the
+    /// underlying intent — that's enforced by the Squads program when
+    /// the vault PDA signs (only Squads can sign as that PDA via CPI
+    /// from a Squads transaction execution). The check here ensures
+    /// the *pubkey shape* matches a multisig vault, blocking
+    /// accidental single-key deploys.
+    pub fn assert_is_vault_pda(
+        claimed_authority: &Pubkey,
+        multisig_pda: &Pubkey,
+        vault_index: u8,
+    ) -> Result<()> {
+        let (expected, _bump) = vault_pda(multisig_pda, vault_index);
+        require_keys_eq!(*claimed_authority, expected, crate::SwapError::WrongAuthority);
+        Ok(())
+    }
+}
+
 pub fn needs_hedge(pool_usdc: u64, pool_ping_usdc_value: u64) -> bool {
     if pool_usdc == 0 || pool_ping_usdc_value == 0 { return false; }
     let larger = pool_usdc.max(pool_ping_usdc_value) as u128;
@@ -662,6 +720,8 @@ pub enum SwapError {
     SlippageExceeded,
     #[msg("New authority cannot be the zero pubkey")]
     ZeroPubkey,
+    #[msg("Claimed authority is not the expected Squads multisig vault PDA (H-02)")]
+    WrongAuthority,
     #[msg("AMM price deviates from Pyth oracle beyond MAX_ORACLE_DEVIATION_BPS — sandwich/manipulation defense")]
     PriceDeviatesFromOracle,
     #[msg("Pyth price account could not be parsed as a SolanaPriceAccount")]

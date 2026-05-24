@@ -347,6 +347,41 @@ pub mod pomm {
     }
 }
 
+/// #62 H-02 Squads V4 multisig CPI scaffold — autonomous source-side half.
+/// Mirror of internal-swap squads_multisig module. Pin program ID +
+/// vault-PDA derivation + assert_is_vault_pda helper. SDK fetch +
+/// real CPI calls land on a build host with cargo.
+pub mod squads_multisig {
+    use anchor_lang::prelude::*;
+
+    pub fn id() -> Pubkey {
+        Pubkey::try_from("SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf")
+            .expect("Squads V4 program ID is a known-valid base58")
+    }
+
+    pub fn vault_pda(multisig_pda: &Pubkey, vault_index: u8) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                b"multisig",
+                multisig_pda.as_ref(),
+                b"vault",
+                &[vault_index],
+            ],
+            &id(),
+        )
+    }
+
+    pub fn assert_is_vault_pda(
+        claimed_authority: &Pubkey,
+        multisig_pda: &Pubkey,
+        vault_index: u8,
+    ) -> Result<()> {
+        let (expected, _bump) = vault_pda(multisig_pda, vault_index);
+        require_keys_eq!(*claimed_authority, expected, crate::PommError::WrongAuthority);
+        Ok(())
+    }
+}
+
 fn price_within_band(price_x64: u128, ema_x64: u128) -> bool {
     if ema_x64 == 0 { return false; }
     let band = ema_x64.checked_mul(EMA_BAND_BPS as u128).and_then(|x| x.checked_div(10_000)).unwrap_or(0);
@@ -732,4 +767,6 @@ pub enum PommError {
     EmaStale,
     #[msg("raydium_clmm_program account does not match the pinned mainnet CLMM program ID")]
     WrongRaydiumCllmProgram,
+    #[msg("Claimed authority is not the expected Squads multisig vault PDA (H-02)")]
+    WrongAuthority,
 }
