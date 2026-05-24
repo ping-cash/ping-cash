@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_2022::spl_token_2022::{
     extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions},
+    instruction::AuthorityType,
     state::Mint as SplMint,
 };
-use anchor_spl::token_interface::{Mint, TokenInterface};
+use anchor_spl::token_interface::{set_authority, Mint, SetAuthority, TokenInterface};
 
 declare_id!("PingTokenProgr4mPubKeyP1ace00011111111111111");
 
@@ -74,6 +75,63 @@ pub mod ping_token {
         });
         Ok(())
     }
+
+    /// Renounce the $PING mint authority permanently. Required for ADR 0008's
+    /// Y5 zero-emissions endgame: after the final halving + Foundation-controlled
+    /// emission completes, calling this sets mint_authority = None forever (no
+    /// further $PING can ever be minted). Irreversible.
+    ///
+    /// Caller must be the current mint_authority (Squads multisig). CPI to
+    /// spl-token-2022 SetAuthority instruction with AuthorityType::MintTokens
+    /// and new_authority = None.
+    ///
+    /// Pre-audit finding H-03 (#22 c.4527049794): without this, the only way
+    /// to reach the zero-emissions endgame is for Squads to misplace its keys.
+    pub fn renounce_mint_authority(ctx: Context<RenounceMintAuthority>) -> Result<()> {
+        // Sanity-check: registry's recorded mint_authority must match the signer
+        // who's calling this. Belt-and-braces alongside Anchor's signer check.
+        require!(
+            ctx.accounts.registry.mint_authority == ctx.accounts.mint_authority.key(),
+            PingTokenError::WrongMintAuthority
+        );
+
+        set_authority(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                SetAuthority {
+                    account_or_mint: ctx.accounts.mint.to_account_info(),
+                    current_authority: ctx.accounts.mint_authority.to_account_info(),
+                },
+            ),
+            AuthorityType::MintTokens,
+            None,
+        )?;
+
+        let registry = &mut ctx.accounts.registry;
+        registry.mint_authority = Pubkey::default(); // record the renounce in the Registry
+
+        emit!(MintAuthorityRenounced {
+            mint: ctx.accounts.mint.key(),
+            renounced_by: ctx.accounts.mint_authority.key(),
+        });
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct RenounceMintAuthority<'info> {
+    #[account(
+        mut,
+        seeds = [b"ping-registry", mint.key().as_ref()],
+        bump = registry.bump,
+        has_one = mint,
+    )]
+    pub registry: Account<'info, Registry>,
+    #[account(mut)]
+    pub mint: InterfaceAccount<'info, Mint>,
+    /// Current mint authority (Squads multisig signer in production).
+    pub mint_authority: Signer<'info>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[account]
@@ -114,6 +172,12 @@ pub struct MintInitialized {
     pub mint: Pubkey,
     pub mint_authority: Pubkey,
     pub decimals: u8,
+}
+
+#[event]
+pub struct MintAuthorityRenounced {
+    pub mint: Pubkey,
+    pub renounced_by: Pubkey,
 }
 
 #[error_code]
