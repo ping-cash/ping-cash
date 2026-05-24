@@ -34,10 +34,10 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 | Status                  | Count | Issues                                                                                |
 | ----------------------- | ----- | ------------------------------------------------------------------------------------- |
-| 🟦 Backlog (no label)   | 4     | #1 EPIC, #22-#24 (Phase 2)                                                            |
-| 🟧 `status/in-progress` | 0     | —                                                                                     |
+| 🟦 Backlog (no label)   | 0     | — (#1 closed; #22 in-progress)                                                        |
+| 🟧 `status/in-progress` | 1     | #22 Phase 2 EPIC (pre-audit Anchor review)                                            |
 | 🟪 `status/uat`         | 0     | —                                                                                     |
-| 🟩 `status/completed`   | 36    | #2-#14 (incl. #6, #11), #17-#21, #25-#39, **#59 + #60 (offramp drift fix + send-intent)** |
+| 🟩 `status/completed`   | 37    | #1 EPIC CLOSED + #2-#14, #17-#21, #25-#39, #59 + #60                                  |
 | 🟥 `status/blocked-ext` | 0     | — (all 6 prior blocked-ext exhausted via P23 + reclassified to parked 2026-05-24)     |
 | ⏸️ `status/parked`      | 7     | #54 GHA billing, #50 vendor keys, #15/#16/#23/#24 Phase-2 mainnet, #58 Wise           |
 
@@ -47,7 +47,9 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 | ID                      | Title                                   | Status      | Owner  | DoD Gate                                                                                      |
 | ----------------------- | --------------------------------------- | ----------- | ------ | --------------------------------------------------------------------------------------------- |
-| #1                      | EPIC: End-to-End Phase 1 Delivery       | UAT         | claude | 5-stage walk + 6 screenshots VERIFIED-PASS on mech-4 stack + Pillar 4 send-intent walk PASS via scripts/walk-send-intent.mjs (real Ed25519 sign + tx.verifySignatures→true) + SendIntent hoisted to @ping/types as single source of truth + ADR 0020 filed; EPIC stays open until founder closes |
+| #1                      | EPIC: End-to-End Phase 1 Delivery       | ✅ CLOSED   | claude | 5-step §6 cycle complete 2026-05-24: Playwright walk + 8 DoD screenshots + sub-agent SHIP verdict (c.4526977280) + status/uat→completed + gh issue close. Founder may reopen async per §6. |
+| #22                     | EPIC: Phase 2 — $PING TGE + Foundation + audit + Raydium | IN PROGRESS | claude | Pre-audit code-review pass on 4 Anchor scaffolds (earn-vault, internal-swap, pomm, ping-token); Cayman + OtterSec are founder-side gates |
+| corridor-smoke CI       | .github/workflows/corridor-smoke.yml    | ✅ shipped  | claude | Runs walk-full-corridor.mjs against ping.openova.io on every push + every 6h; all 4 PH cashout methods + send-intent sign verify |
 | #5                      | auth-service (phone OTP → JWT → wallet) | ✅ closed   | claude | Walked at /auth/\* (stub mode)                                                                |
 | #10                     | fx-service (Pyth + 0.4% spread)         | ✅ closed   | claude | Walked at /fx/\* (stub-rate oracle)                                                           |
 | #12                     | claim-service                           | ✅ closed   | claude | Walked all 5 stages on real browser                                                           |
