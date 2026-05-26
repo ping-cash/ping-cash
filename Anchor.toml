@@ -7,10 +7,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-earn_vault = "EarnVau1tProgr4mPubKeyP1ace0001111111111111"
-internal_swap = "InternalSwapProgr4mPubKeyP1ace0001111111111"
-pomm = "PommProgr4mPubKeyP1ace00011111111111111111"
-ping_token = "PingTokenProgr4mPubKeyP1ace00011111111111111"
+earn_vault = "EarnVau1tProgr4mPubKeyP1aceooo1111111111111"
+internal_swap = "1nternaLSwapProgr4mPubKeyP1aceooo1111111111"
+pomm = "PommProgr4mPubKeyP1aceooo111111111111111111"
+ping_token = "PingTokenProgr4mPubKeyP1aceooo1111111111111"
 
 [registry]
 url = "https://api.apr.dev"

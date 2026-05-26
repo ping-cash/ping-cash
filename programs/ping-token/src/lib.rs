@@ -18,7 +18,7 @@ compile_error!(
      (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
 );
 
-declare_id!("PingTokenProgr4mPubKeyP1ace00011111111111111");
+declare_id!("PingTokenProgr4mPubKeyP1aceooo1111111111111");
 
 pub const PING_DECIMALS: u8 = 9;
 

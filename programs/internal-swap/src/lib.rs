@@ -35,7 +35,7 @@ compile_error!(
     "internal-swap: mainnet-ready feature requires audit-passed feature \
      (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
 );
-declare_id!("InternalSwapProgr4mPubKeyP1ace0001111111111");
+declare_id!("1nternaLSwapProgr4mPubKeyP1aceooo1111111111");
 
 const MAX_SPREAD_BPS: u16 = 100;
 const HEDGE_THRESHOLD_BPS: u16 = 2_000;

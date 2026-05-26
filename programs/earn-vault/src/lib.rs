@@ -38,7 +38,7 @@ compile_error!(
     "earn-vault: mainnet-ready feature requires audit-passed feature \
      (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
 );
-declare_id!("EarnVau1tProgr4mPubKeyP1ace0001111111111111");
+declare_id!("EarnVau1tProgr4mPubKeyP1aceooo1111111111111");
 
 /// Squads V4 multisig program ID (mainnet) + vault PDA derivation.
 /// Mirrors the pattern shipped in internal-swap + pomm (2430d03) so the

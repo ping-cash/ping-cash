@@ -32,7 +32,7 @@ compile_error!(
     "pomm: mainnet-ready feature requires audit-passed feature \
      (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
 );
-declare_id!("PommProgr4mPubKeyP1ace00011111111111111111");
+declare_id!("PommProgr4mPubKeyP1aceooo111111111111111111");
 
 const EMA_BAND_BPS: u16 = 1_500;
 const MAX_PER_DAY_DEPLOYED_BPS: u16 = 50;
