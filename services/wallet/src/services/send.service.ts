@@ -14,6 +14,7 @@
  * (6 decimals for USDC mainnet mint). Recipient ATA is included as a CreateAtaIfNeeded
  * idempotent instruction so brand-new wallets can receive on first send.
  */
+import type { SendIntent } from '@ping/types';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -22,7 +23,6 @@ import {
   getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import type { SendIntent } from '@ping/types';
 
 import { WalletErrors } from '../utils/errors';
 import { logger } from '../utils/logger';

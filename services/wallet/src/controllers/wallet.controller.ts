@@ -1,11 +1,11 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 
+import { buildSendIntent } from '../services/send.service';
 import {
   getBalanceSnapshot,
   isValidSolanaAddress,
 } from '../services/solana.service';
-import { buildSendIntent } from '../services/send.service';
 import {
   buildStakeIntent,
   buildUnstakeIntent,
