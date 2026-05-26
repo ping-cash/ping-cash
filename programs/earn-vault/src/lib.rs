@@ -40,10 +40,83 @@ compile_error!(
 );
 declare_id!("EarnVau1tProgr4mPubKeyP1ace0001111111111111");
 
+/// Squads V4 multisig program ID (mainnet) + vault PDA derivation.
+/// Mirrors the pattern shipped in internal-swap + pomm (2430d03) so the
+/// audit-pass authority migration path is identical across all 4 programs.
+///
+/// At mainnet deploy time the vault.authority field is rotated to the
+/// vault PDA derived from a Squads multisig that the Cayman Foundation
+/// holds the N-of-M signing keys for. Until that ceremony lands the
+/// `authority` is a single-key devnet keypair — and the production-only
+/// invariant `vault.authority == squads_multisig::vault_pda(...)` is
+/// enforced ONLY when `feature = "audit-passed"` is set per the L-01
+/// guard above (cf. ADR 0018).
+pub mod squads_multisig {
+    use anchor_lang::prelude::*;
+
+    /// The mainnet Squads V4 program ID. The scaffold derives PDAs locally
+    /// for verification purposes — the actual CPI to Squads (proposal
+    /// status check on rotate / emergency_withdraw / set_paused) lands when
+    /// the squads-protocol-sdk crate is fetchable per runbook 584c169 Step 1.
+    pub fn id() -> Pubkey {
+        // SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf
+        Pubkey::try_from("SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf")
+            .expect("Squads V4 program id is a valid base58 pubkey")
+    }
+
+    /// Derive the vault PDA for a Squads multisig at a given vault_index.
+    /// vault_index = 0 is the convention for the primary signing vault.
+    pub fn vault_pda(multisig_pda: &Pubkey, vault_index: u8) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                b"multisig",
+                multisig_pda.as_ref(),
+                b"vault",
+                &[vault_index],
+            ],
+            &id(),
+        )
+    }
+
+    /// Authority-guard helper: assert the given key matches the Squads vault PDA
+    /// derived from the recorded `multisig_pda`. Returns Ok(()) when matches.
+    pub fn assert_is_vault_pda(
+        candidate: &Pubkey,
+        multisig_pda: &Pubkey,
+        vault_index: u8,
+    ) -> Result<()> {
+        let (expected, _bump) = vault_pda(multisig_pda, vault_index);
+        require_keys_eq!(*candidate, expected, super::VaultError::WrongAuthority);
+        Ok(())
+    }
+}
+
 /// USDC has 6 decimals on Solana mainnet. 1000 USDC = 1_000_000_000 atomic
 /// units. Pre-audit C-01 mitigation: first stake must be ≥ this to prevent
 /// share-price inflation attack against the empty vault.
 pub const MIN_FIRST_STAKE: u64 = 1_000_000_000;
+
+/// Pre-audit H-05 solvency invariant: the sum of (idle USDC in usdc_vault +
+/// total deployed to adapters) MUST be >= total_staked at every state-mutating
+/// instruction's end. The current scaffold has no adapter deployment, so the
+/// invariant reduces to `usdc_vault.amount >= total_staked`. This catches:
+///   - direct vault drains (someone with token authority moves USDC out)
+///   - rounding bugs in share math that under-track total_staked
+///   - rebuild-introduced bugs where an adapter-CPI lands wrong amount back
+///
+/// When the rebuild (#61) wires real adapter CPIs, this same helper extends
+/// to `usdc_vault.amount + adapter_deployed_total >= total_staked`. For now
+/// the no-adapter form catches every direct-drain class issue.
+pub fn assert_solvency_unchecked(
+    usdc_vault_amount: u64,
+    total_staked: u64,
+) -> Result<()> {
+    require!(
+        usdc_vault_amount >= total_staked,
+        VaultError::SolvencyInvariantBroken
+    );
+    Ok(())
+}
 
 #[program]
 pub mod earn_vault {
@@ -144,6 +217,14 @@ pub mod earn_vault {
             usdc_amount: amount,
             vusdc_amount,
         });
+
+        // H-05 solvency invariant — re-fetch usdc_vault amount after the
+        // CPI transfer landed; assert idle balance covers total_staked.
+        ctx.accounts.usdc_vault.reload()?;
+        assert_solvency_unchecked(
+            ctx.accounts.usdc_vault.amount,
+            ctx.accounts.vault.total_staked,
+        )?;
         Ok(())
     }
 
@@ -212,6 +293,15 @@ pub mod earn_vault {
             vusdc_amount,
             usdc_amount,
         });
+
+        // H-05 solvency invariant — re-fetch usdc_vault amount after the
+        // outbound transfer; remaining idle balance must still cover the
+        // (now-decremented) total_staked.
+        ctx.accounts.usdc_vault.reload()?;
+        assert_solvency_unchecked(
+            ctx.accounts.usdc_vault.amount,
+            ctx.accounts.vault.total_staked,
+        )?;
         Ok(())
     }
 
@@ -248,6 +338,58 @@ pub mod earn_vault {
             old_authority,
             new_authority,
         });
+        Ok(())
+    }
+
+    /// Emergency withdraw — Pre-audit H-04 full (#22 c.4527111355). Allows
+    /// the vault authority (production: Squads multisig) to sweep idle USDC
+    /// from the vault's reserve to a multisig-controlled destination. Use
+    /// case: oracle exploit / adapter compromise where we need to halt user
+    /// activity AND extract reserves before an exploit drains them.
+    ///
+    /// Defense-in-depth: requires `vault.is_paused == true` first so the
+    /// founder can't quietly drain a live vault. Pause MUST be the explicit
+    /// step that precedes any emergency_withdraw call — set_paused emits
+    /// PausedEvent which on-chain monitors alarm on.
+    ///
+    /// Destination is constrained by the EmergencyWithdraw context to be
+    /// owned by the vault authority (the multisig PDA in production), so
+    /// funds can't be misdirected to an attacker-controlled account by a
+    /// single rogue signer.
+    pub fn emergency_withdraw(
+        ctx: Context<EmergencyWithdraw>,
+        amount: u64,
+    ) -> Result<()> {
+        require!(ctx.accounts.vault.is_paused, VaultError::MustPauseFirst);
+        require!(amount > 0, VaultError::ZeroAmount);
+
+        let usdc_mint_key = ctx.accounts.vault.usdc_mint;
+        let seeds = &[
+            b"vault".as_ref(),
+            usdc_mint_key.as_ref(),
+            &[ctx.accounts.vault.bump],
+        ];
+        let signer = &[&seeds[..]];
+        token_interface::transfer_checked(
+            ctx.accounts.transfer_to_destination_ctx().with_signer(signer),
+            amount,
+            ctx.accounts.usdc_mint.decimals,
+        )?;
+
+        emit!(EmergencyWithdrawEvent {
+            vault: ctx.accounts.vault.key(),
+            authority: ctx.accounts.authority.key(),
+            destination: ctx.accounts.destination.key(),
+            amount,
+            ts: Clock::get()?.unix_timestamp,
+        });
+
+        // Solvency invariant is INTENTIONALLY NOT asserted here. The whole
+        // point of emergency_withdraw is to break vault.total_staked >=
+        // usdc_vault.amount when the vault has been compromised. The audit
+        // expectation: once emergency_withdraw fires, the operator pursues
+        // the post-incident playbook (close the vault, refund users from
+        // the recovered USDC + treasury per ADR 0019 §incidents).
         Ok(())
     }
 }
@@ -475,6 +617,53 @@ pub struct SetPaused<'info> {
     pub authority: Signer<'info>,
     #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
+    /// usdc_mint included so the per-mint vault PDA seed binding holds.
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+}
+
+#[derive(Accounts)]
+pub struct EmergencyWithdraw<'info> {
+    /// Vault authority (production: Squads multisig vault PDA). Pause MUST
+    /// be true before this can succeed — see emergency_withdraw body.
+    #[account(address = vault.authority)]
+    pub authority: Signer<'info>,
+    /// Per-mint Vault PDA — signs the outbound transfer via signer seeds.
+    /// Not mut: emergency_withdraw doesn't decrement total_staked because
+    /// the post-incident playbook reconstitutes the user-share accounting
+    /// off-chain from on-chain events (per ADR 0019 §incidents).
+    #[account(seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
+    pub vault: Account<'info, Vault>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// Vault's USDC reserve (source).
+    #[account(mut, address = vault.usdc_vault)]
+    pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    /// Recipient — MUST be owned by the vault authority (multisig PDA in
+    /// production). Belt-and-braces against a rogue signer redirecting funds.
+    #[account(
+        mut,
+        constraint = destination.owner == authority.key()
+            @ VaultError::EmergencyDestinationNotMultisigOwned,
+        constraint = destination.mint == usdc_mint.key()
+            @ VaultError::WrongUsdcVaultMint,
+    )]
+    pub destination: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+impl<'info> EmergencyWithdraw<'info> {
+    fn transfer_to_destination_ctx(
+        &self,
+    ) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+        CpiContext::new(
+            self.token_program.to_account_info(),
+            TransferChecked {
+                from: self.usdc_vault.to_account_info(),
+                mint: self.usdc_mint.to_account_info(),
+                to: self.destination.to_account_info(),
+                authority: self.vault.to_account_info(),
+            },
+        )
+    }
 }
 
 #[event]
@@ -521,6 +710,16 @@ pub struct AuthorityRotated {
 
 #[event]
 #[derive(Debug)]
+pub struct EmergencyWithdrawEvent {
+    pub vault: Pubkey,
+    pub authority: Pubkey,
+    pub destination: Pubkey,
+    pub amount: u64,
+    pub ts: i64,
+}
+
+#[event]
+#[derive(Debug)]
 pub struct VaultInitialized {
     pub vault: Pubkey,
     pub authority: Pubkey,
@@ -561,4 +760,10 @@ pub enum VaultError {
     WrongAuthority,
     #[msg("New authority cannot be the zero pubkey")]
     ZeroPubkey,
+    #[msg("Vault must be paused before emergency_withdraw — set_paused(true) first")]
+    MustPauseFirst,
+    #[msg("emergency_withdraw destination must be owned by the vault authority (multisig in prod)")]
+    EmergencyDestinationNotMultisigOwned,
+    #[msg("Solvency invariant broken: usdc_vault.amount < vault.total_staked")]
+    SolvencyInvariantBroken,
 }
