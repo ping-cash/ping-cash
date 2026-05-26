@@ -38,10 +38,14 @@ describe('send.service.buildSendIntent', () => {
   });
 
   it('rejects invalid sender address', async () => {
-    await expect(buildSendIntent('not-a-pubkey', VALID_B, '5.00')).rejects.toThrow();
+    await expect(
+      buildSendIntent('not-a-pubkey', VALID_B, '5.00')
+    ).rejects.toThrow();
   });
 
   it('rejects invalid recipient address', async () => {
-    await expect(buildSendIntent(VALID_A, 'not-a-pubkey', '5.00')).rejects.toThrow();
+    await expect(
+      buildSendIntent(VALID_A, 'not-a-pubkey', '5.00')
+    ).rejects.toThrow();
   });
 });

@@ -24,12 +24,7 @@ export const VaultErrors = {
   StakeFailed: (details?: Record<string, unknown>) =>
     new AppError('STAKE_FAILED', 'Stake transaction failed.', 502, details),
   UnstakeFailed: (details?: Record<string, unknown>) =>
-    new AppError(
-      'UNSTAKE_FAILED',
-      'Unstake transaction failed.',
-      502,
-      details
-    ),
+    new AppError('UNSTAKE_FAILED', 'Unstake transaction failed.', 502, details),
 };
 
 export function errorHandler(

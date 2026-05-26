@@ -93,11 +93,32 @@ describe('wiseAdapter.payout — real 3-call flow', () => {
   it('happy path: quote + recipient + transfer + fund all succeed', async () => {
     const fetchMock = mockFetchSequence([
       // 1. Quote
-      { ok: true, status: 200, _json: { id: 'quote-uuid-1', rate: 0.925, paymentOptions: [] } },
+      {
+        ok: true,
+        status: 200,
+        _json: { id: 'quote-uuid-1', rate: 0.925, paymentOptions: [] },
+      },
       // 2. Recipient
-      { ok: true, status: 200, _json: { id: 9001, currency: 'EUR', type: 'iban', accountHolderName: 'Alice Recipient' } },
+      {
+        ok: true,
+        status: 200,
+        _json: {
+          id: 9001,
+          currency: 'EUR',
+          type: 'iban',
+          accountHolderName: 'Alice Recipient',
+        },
+      },
       // 3. Transfer
-      { ok: true, status: 201, _json: { id: 77001, status: 'incoming_payment_waiting', customerTransactionId: 'PING-WS-TEST' } },
+      {
+        ok: true,
+        status: 201,
+        _json: {
+          id: 77001,
+          status: 'incoming_payment_waiting',
+          customerTransactionId: 'PING-WS-TEST',
+        },
+      },
       // 4. Fund
       { ok: true, status: 201, _json: { type: 'BALANCE' } },
     ]);
@@ -107,7 +128,10 @@ describe('wiseAdapter.payout — real 3-call flow', () => {
     expect(result.providerName).toBe('wise');
     expect(result.providerReference).toBe('77001');
     expect(result.status).toBe('pending'); // incoming_payment_waiting maps to pending
-    expect(result.metadata).toMatchObject({ quoteId: 'quote-uuid-1', accountId: 9001 });
+    expect(result.metadata).toMatchObject({
+      quoteId: 'quote-uuid-1',
+      accountId: 9001,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(4);
 
     const [quoteUrl, quoteOpts] = fetchMock.mock.calls[0];
@@ -147,13 +171,19 @@ describe('wiseAdapter.payout — real 3-call flow', () => {
     );
 
     const [fundUrl, fundOpts] = fetchMock.mock.calls[3];
-    expect(fundUrl).toBe('https://api.test.wise/v3/profiles/12345/transfers/77001/payments');
+    expect(fundUrl).toBe(
+      'https://api.test.wise/v3/profiles/12345/transfers/77001/payments'
+    );
     expect(JSON.parse(fundOpts.body as string)).toEqual({ type: 'BALANCE' });
   });
 
   it('recipient-create-failure: quote 200, recipient 400 → throws PayoutFailed', async () => {
     const fetchMock = mockFetchSequence([
-      { ok: true, status: 200, _json: { id: 'quote-uuid-2', rate: 0.925, paymentOptions: [] } },
+      {
+        ok: true,
+        status: 200,
+        _json: { id: 'quote-uuid-2', rate: 0.925, paymentOptions: [] },
+      },
       { ok: false, status: 400, _text: 'Bad IBAN' },
     ]);
 
@@ -166,8 +196,21 @@ describe('wiseAdapter.payout — real 3-call flow', () => {
 
   it('transfer-failure: quote 200, recipient 200, transfer 422 → throws PayoutFailed', async () => {
     const fetchMock = mockFetchSequence([
-      { ok: true, status: 200, _json: { id: 'quote-uuid-3', rate: 0.925, paymentOptions: [] } },
-      { ok: true, status: 200, _json: { id: 9002, currency: 'EUR', type: 'iban', accountHolderName: 'Alice Recipient' } },
+      {
+        ok: true,
+        status: 200,
+        _json: { id: 'quote-uuid-3', rate: 0.925, paymentOptions: [] },
+      },
+      {
+        ok: true,
+        status: 200,
+        _json: {
+          id: 9002,
+          currency: 'EUR',
+          type: 'iban',
+          accountHolderName: 'Alice Recipient',
+        },
+      },
       { ok: false, status: 422, _text: 'Insufficient balance' },
     ]);
 
@@ -192,16 +235,41 @@ describe('wiseAdapter.payout — real 3-call flow', () => {
 
   it('fund-step fails: transfer existed but money never moved → status=failed', async () => {
     const fetchMock = mockFetchSequence([
-      { ok: true, status: 200, _json: { id: 'quote-uuid-4', rate: 1.0, paymentOptions: [] } },
-      { ok: true, status: 200, _json: { id: 9003, currency: 'USD', type: 'aba', accountHolderName: 'Alice' } },
-      { ok: true, status: 201, _json: { id: 77002, status: 'incoming_payment_waiting', customerTransactionId: 'uuid-77002' } },
+      {
+        ok: true,
+        status: 200,
+        _json: { id: 'quote-uuid-4', rate: 1.0, paymentOptions: [] },
+      },
+      {
+        ok: true,
+        status: 200,
+        _json: {
+          id: 9003,
+          currency: 'USD',
+          type: 'aba',
+          accountHolderName: 'Alice',
+        },
+      },
+      {
+        ok: true,
+        status: 201,
+        _json: {
+          id: 77002,
+          status: 'incoming_payment_waiting',
+          customerTransactionId: 'uuid-77002',
+        },
+      },
       { ok: false, status: 400, _text: 'BALANCE not funded' },
     ]);
 
     const result = await wiseAdapter.payout({
       ...baseRequest,
       method: 'us-ach',
-      amount: { ...baseRequest.amount, localCurrency: 'USD', localAmount: '100.00' },
+      amount: {
+        ...baseRequest.amount,
+        localCurrency: 'USD',
+        localAmount: '100.00',
+      },
       recipient: {
         ...baseRequest.recipient,
         bankCode: '021000021',
@@ -219,17 +287,47 @@ describe('wiseAdapter.payout — real 3-call flow', () => {
 
   it('GBP path: builds sort_code details', async () => {
     const fetchMock = mockFetchSequence([
-      { ok: true, status: 200, _json: { id: 'quote-uuid-5', rate: 0.8, paymentOptions: [] } },
-      { ok: true, status: 200, _json: { id: 9004, currency: 'GBP', type: 'sort_code', accountHolderName: 'Bob' } },
-      { ok: true, status: 201, _json: { id: 77003, status: 'incoming_payment_waiting', customerTransactionId: 'PING-WS-TEST' } },
+      {
+        ok: true,
+        status: 200,
+        _json: { id: 'quote-uuid-5', rate: 0.8, paymentOptions: [] },
+      },
+      {
+        ok: true,
+        status: 200,
+        _json: {
+          id: 9004,
+          currency: 'GBP',
+          type: 'sort_code',
+          accountHolderName: 'Bob',
+        },
+      },
+      {
+        ok: true,
+        status: 201,
+        _json: {
+          id: 77003,
+          status: 'incoming_payment_waiting',
+          customerTransactionId: 'PING-WS-TEST',
+        },
+      },
       { ok: true, status: 201, _json: {} },
     ]);
 
     await wiseAdapter.payout({
       ...baseRequest,
       method: 'uk-faster-payments',
-      amount: { usdcAmount: '100.00', localAmount: '80.00', localCurrency: 'GBP' },
-      recipient: { name: 'Bob', accountName: 'Bob', accountNumber: '12345678', bankCode: '20-00-00' },
+      amount: {
+        usdcAmount: '100.00',
+        localAmount: '80.00',
+        localCurrency: 'GBP',
+      },
+      recipient: {
+        name: 'Bob',
+        accountName: 'Bob',
+        accountNumber: '12345678',
+        bankCode: '20-00-00',
+      },
     });
 
     const [, accountOpts] = fetchMock.mock.calls[1];
@@ -271,13 +369,17 @@ describe('wiseAdapter — stub mode (no API key OR no profile)', () => {
 describe('wiseAdapter.verifyWebhook', () => {
   it('returns true on correct HMAC-SHA256', async () => {
     const { createHmac } = await import('node:crypto');
-    const payload = '{"data":{"resource":{"id":77001},"current_state":"outgoing_payment_sent"}}';
-    const sig = createHmac('sha256', 'test-webhook-secret').update(payload).digest('hex');
+    const payload =
+      '{"data":{"resource":{"id":77001},"current_state":"outgoing_payment_sent"}}';
+    const sig = createHmac('sha256', 'test-webhook-secret')
+      .update(payload)
+      .digest('hex');
     expect(wiseAdapter.verifyWebhook(payload, sig)).toBe(true);
   });
 
   it('returns false on tampered signature', () => {
-    const payload = '{"data":{"resource":{"id":77001},"current_state":"outgoing_payment_sent"}}';
+    const payload =
+      '{"data":{"resource":{"id":77001},"current_state":"outgoing_payment_sent"}}';
     const wrongSig = 'a'.repeat(64);
     expect(wiseAdapter.verifyWebhook(payload, wrongSig)).toBe(false);
   });

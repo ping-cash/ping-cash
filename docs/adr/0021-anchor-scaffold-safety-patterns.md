@@ -111,6 +111,7 @@ declare_id!("<placeholder>");
 ```
 
 Workflow:
+
 1. Default build → compiles, ships placeholder
 2. `--features mainnet-ready` alone → COMPILE_ERROR
 3. `--features mainnet-ready,audit-passed` (post-audit) → compiles
@@ -120,11 +121,13 @@ Workflow:
 ## Consequences
 
 ### Positive
+
 - Every new Anchor program in this repo inherits the same five defenses by default. Audit findings drop from "discovered per program" to "discovered once + applied four times".
 - ADR 0018 is now backed by compile-time enforcement, not just documentation.
 - Each pattern's receipts link to the actual commit + the audit finding it closed, so future contributors can trace why a constraint exists.
 
 ### Negative
+
 - New error codes proliferate (5-10 per program). Manageable as long as the error-code-to-fix-pattern mapping stays documented here.
 - Per-mint PDA pattern means clients can't hardcode the PDA — they must derive it from (program_id, mint_pubkey). Compensated by the IDL changes auto-flowing to TS clients.
 - The hard-disable pattern bans an instruction during scaffold-lifetime even on devnet — devs testing the instruction's surface must use the rebuilt version.

@@ -51,8 +51,11 @@ describe('router.service.selectAdapters', () => {
     ['KE', 'm-pesa'],
     ['KE', 'airtel-money'],
     ['TR', 'turkish-bank'],
-  ])('every cashout method advertised to %s users resolves to an adapter: %s', (_country, method) => {
-    const adapters = selectAdapters(method as never, _country);
-    expect(adapters.length).toBeGreaterThan(0);
-  });
+  ])(
+    'every cashout method advertised to %s users resolves to an adapter: %s',
+    (_country, method) => {
+      const adapters = selectAdapters(method as never, _country);
+      expect(adapters.length).toBeGreaterThan(0);
+    }
+  );
 });

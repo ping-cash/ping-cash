@@ -136,6 +136,7 @@ ANCHOR_FEATURES=mainnet-ready,audit-passed anchor build
 ## Step 6 — Cayman Foundation incorporation (gates mainnet deploy)
 
 Strict legal sequence (founder-physical per §−2):
+
 1. Engage Walkers / Maples / Conyers (Cayman counsel) — ~$15-25K incorporation + ~$5K/yr maintenance.
 2. Foundation memorandum + articles must explicitly cover (a) holding the multisig keys, (b) executing the audited program upgrades, (c) the $PING token issuance per ADR 0008.
 3. Cayman Beneficial Ownership Registry filing.
@@ -175,16 +176,16 @@ Each program deploy costs ~3 SOL (≈ $500 at $170 SOL) for ~500KB program size.
 
 ## Bastion-vs-build-host responsibility matrix
 
-| Step | Bastion | Build host (anchor/cargo) | Founder-physical |
-|---|---|---|---|
-| 1 crate fetch + cpi:: wire | ❌ (no cargo) | ✅ | — |
-| 2 anchor build + L-01 guard | ❌ (no anchor) | ✅ | — |
-| 3 unit + integration tests | ❌ (no anchor + K3s ban on test-validator) | ✅ | — |
-| 4 Squads key ceremony | ⚠️ vault_pda derivation only | ✅ verify_vault | ✅ generate keypair |
-| 5 OtterSec engagement | — | — | ✅ retainer + remediation review |
-| 6 Cayman incorporation | — | — | ✅ legal engagement + filings |
-| 7 mainnet deploy | — | ✅ build + tx-create | ✅ Squads N-of-M approval |
-| 8 Raydium pool seed | — | — | ✅ Foundation USDC + $PING contribution |
+| Step                        | Bastion                                    | Build host (anchor/cargo) | Founder-physical                        |
+| --------------------------- | ------------------------------------------ | ------------------------- | --------------------------------------- |
+| 1 crate fetch + cpi:: wire  | ❌ (no cargo)                              | ✅                        | —                                       |
+| 2 anchor build + L-01 guard | ❌ (no anchor)                             | ✅                        | —                                       |
+| 3 unit + integration tests  | ❌ (no anchor + K3s ban on test-validator) | ✅                        | —                                       |
+| 4 Squads key ceremony       | ⚠️ vault_pda derivation only               | ✅ verify_vault           | ✅ generate keypair                     |
+| 5 OtterSec engagement       | —                                          | —                         | ✅ retainer + remediation review        |
+| 6 Cayman incorporation      | —                                          | —                         | ✅ legal engagement + filings           |
+| 7 mainnet deploy            | —                                          | ✅ build + tx-create      | ✅ Squads N-of-M approval               |
+| 8 Raydium pool seed         | —                                          | —                         | ✅ Foundation USDC + $PING contribution |
 
 The scaffold-source-side rebuild on bastion (commits ee132a2 through 2430d03 this session — see #22 c.4529771254) covers Step 1's "scaffolded enough to ship". Steps 2-3 are toolchain-bound but autonomous on the build host. Steps 4-8 carry the genuine founder-physical residuals per CLAUDE.md §−2 / §−1 allowlist.
 

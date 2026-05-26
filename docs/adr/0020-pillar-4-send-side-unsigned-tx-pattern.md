@@ -8,9 +8,9 @@ Pillar 4 (Transfer) has two distinct flows:
 
 1. **Phone-claim flow** (canonical Phase-1 UX): sender enters a recipient phone number, `POST /transfers` creates a transfer row + 12-char claim code, recipient clicks the claim URL in web-claim, completes OTP + picks a cashout method, off-chain settlement fires via the offramp adapter. Already shipped + walked end-to-end (see EPIC #1 evidence comment 4526544089).
 
-2. **Wallet-to-wallet flow** (target-state direct send): sender knows the recipient's Solana wallet address (e.g., a friend's Ping account) and wants to move USDC on-chain immediately without a claim code. The recipient just sees their balance increase. This is the missing pillar of Pillar 4 — the *send-side* of a non-custodial USDC P2P network.
+2. **Wallet-to-wallet flow** (target-state direct send): sender knows the recipient's Solana wallet address (e.g., a friend's Ping account) and wants to move USDC on-chain immediately without a claim code. The recipient just sees their balance increase. This is the missing pillar of Pillar 4 — the _send-side_ of a non-custodial USDC P2P network.
 
-ADR 0017 establishes that **wallet-service NEVER signs on behalf of users**. So the wallet-to-wallet flow needs a different shape than the phone-claim flow: the backend builds an *unsigned* transaction, the mobile client signs via the user's Privy MPC wallet, and the client submits to a Solana RPC.
+ADR 0017 establishes that **wallet-service NEVER signs on behalf of users**. So the wallet-to-wallet flow needs a different shape than the phone-claim flow: the backend builds an _unsigned_ transaction, the mobile client signs via the user's Privy MPC wallet, and the client submits to a Solana RPC.
 
 ## Decision
 
@@ -19,11 +19,16 @@ ADR 0017 establishes that **wallet-service NEVER signs on behalf of users**. So 
 ### Wire shape
 
 Request:
+
 ```json
-{ "recipientWallet": "<base58 Solana pubkey>", "amountUsdc": "<decimal string>" }
+{
+  "recipientWallet": "<base58 Solana pubkey>",
+  "amountUsdc": "<decimal string>"
+}
 ```
 
 Response (200):
+
 ```json
 {
   "senderWallet": "<from JWT claim>",
@@ -73,17 +78,18 @@ The atomic amount is included in both the transaction instruction AND the meta b
 
 ### Failure modes (handled)
 
-| Input | Response |
-|---|---|
-| Sender wallet absent from JWT | 404 WALLET_NOT_FOUND |
-| Recipient address fails `new PublicKey()` | 400 INVALID_ADDRESS |
-| Sender address fails `new PublicKey()` | 400 INVALID_ADDRESS |
-| Recipient address < 32 or > 44 chars | 400 VALIDATION_ERROR (zod) |
-| `amountUsdc` not `^\d+(\.\d{1,6})?$` | 400 VALIDATION_ERROR (zod) |
+| Input                                     | Response                   |
+| ----------------------------------------- | -------------------------- |
+| Sender wallet absent from JWT             | 404 WALLET_NOT_FOUND       |
+| Recipient address fails `new PublicKey()` | 400 INVALID_ADDRESS        |
+| Sender address fails `new PublicKey()`    | 400 INVALID_ADDRESS        |
+| Recipient address < 32 or > 44 chars      | 400 VALIDATION_ERROR (zod) |
+| `amountUsdc` not `^\d+(\.\d{1,6})?$`      | 400 VALIDATION_ERROR (zod) |
 
 ## Consequences
 
 ### Positive
+
 - Backend has zero custody surface (no signing keys, no Solana RPC calls per send).
 - Mobile client owns the signing context (Privy MPC inside the app's secure enclave / Privy-hosted MPC).
 - Recipient ATA auto-creation removes the "you can't receive yet, init your account first" footgun.
@@ -91,12 +97,14 @@ The atomic amount is included in both the transaction instruction AND the meta b
 - End-to-end e2e test possible: mint a JWT with a real Solana pubkey wallet claim, POST, deserialize the response into a `Transaction` object, assert instruction count + program IDs + amount.
 
 ### Negative
+
 - Mobile client carries the responsibility of refreshing blockhash before signing. A naive client that signs the placeholder will fail-submit — this is the intended fail-fast behavior, but mobile devs need to know.
 - The unsigned-tx pattern doesn't compose well with multi-instruction batched flows (e.g., "atomic unstake-and-send" from the Earn Vault). When Phase-2 introduces those, this ADR may need a follow-up for multi-instruction intent assembly.
 
 ### Comparison with phone-claim flow
 
 The phone-claim flow remains the canonical Phase-1 UX (recipient doesn't need a Solana wallet to receive — they get a phone OTP). `send-intent` is the **direct-wallet-to-wallet** path used when:
+
 - The mobile app shows a contact-picker of other Ping users with bound wallets
 - A QR-scan flow encodes a `solana:` URI
 - A "send to wallet address" power-user screen

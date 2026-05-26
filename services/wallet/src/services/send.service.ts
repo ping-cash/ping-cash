@@ -32,7 +32,6 @@ const USDC_DECIMALS = 6;
 
 export type { SendIntent };
 
-
 export async function buildSendIntent(
   senderWallet: string,
   recipientWallet: string,
