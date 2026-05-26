@@ -34,13 +34,13 @@ Phase 1 MVP — Philippines corridor. Goal: ship one end-to-end transfer (GCC se
 
 > Counts will populate from `gh issue list` once issues are created. For now this is the placeholder structure.
 
-| Status                  | Count | Issues                                                                                                                                                              |
-| ----------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🟦 Backlog (no label)   | 0     | — (#1 closed; #22 in-progress)                                                                                                                                      |
-| 🟧 `status/in-progress` | 2     | #22 Phase 2 EPIC + #61 earn-vault rebuild (batch-1 source-side shipped 834ced8)                                                                                     |
-| 🟪 `status/uat`         | 0     | —                                                                                                                                                                   |
-| 🟩 `status/completed`   | 39    | #1 EPIC CLOSED + #2-#14, #16, #17-#21, #25-#39, #58, #59, #60                                                                                                       |
-| 🟥 `status/blocked-ext` | 0     | — (all 6 prior blocked-ext exhausted via P23 + reclassified to parked 2026-05-24)                                                                                   |
+| Status                  | Count | Issues                                                                                                                                                                         |
+| ----------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 🟦 Backlog (no label)   | 0     | — (#1 closed; #22 in-progress)                                                                                                                                                 |
+| 🟧 `status/in-progress` | 2     | #22 Phase 2 EPIC + #61 earn-vault rebuild (batch-1 source-side shipped 834ced8)                                                                                                |
+| 🟪 `status/uat`         | 0     | —                                                                                                                                                                              |
+| 🟩 `status/completed`   | 39    | #1 EPIC CLOSED + #2-#14, #16, #17-#21, #25-#39, #58, #59, #60                                                                                                                  |
+| 🟥 `status/blocked-ext` | 0     | — (all 6 prior blocked-ext exhausted via P23 + reclassified to parked 2026-05-24)                                                                                              |
 | ⏸️ `status/parked`      | 5     | #50 vendor keys (founder-paste), #15/#23/#24 Phase-2 mainnet (audit + cayman), #62 internal-swap+pomm rebuild (toolchain-bound) — #54 RESOLVED 2026-05-27 via repo public flip |
 
 ---
