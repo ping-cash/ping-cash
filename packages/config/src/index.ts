@@ -61,6 +61,9 @@ const envSchema = z.object({
   // $PING + Earn Vault mints (Phase 2)
   PING_TOKEN_MINT: z.string().optional(),
   V_USDC_MINT: z.string().optional(),
+  EARN_VAULT_PROGRAM_ID: z.string().optional(),
+  POMM_PROGRAM_ID: z.string().optional(),
+  INTERNAL_SWAP_PROGRAM_ID: z.string().optional(),
 
   // Claim URL base (used by claim-service)
   CLAIM_URL_BASE: z.string().url().default('https://ping.cash/c'),
