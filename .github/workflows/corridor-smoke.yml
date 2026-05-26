@@ -24,6 +24,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - uses: pnpm/action-setup@v3
+        with: { version: '9' }
+      - name: Install deps (walk-send-intent needs @solana/web3.js)
+        run: pnpm install --frozen-lockfile
       - name: Walk full corridor (gcash)
         run: node scripts/walk-full-corridor.mjs
       - name: Walk full corridor (maya)
@@ -39,4 +43,6 @@ jobs:
           CASHOUT_METHOD: cebuana-cash-pickup
         run: node scripts/walk-full-corridor.mjs
       - name: Walk wallet send-intent (Pillar 4 sign verify)
+        env:
+          NODE_PATH: ./services/wallet/node_modules
         run: node scripts/walk-send-intent.mjs
