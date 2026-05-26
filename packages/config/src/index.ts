@@ -46,6 +46,11 @@ const envSchema = z.object({
   // Wise
   WISE_API_KEY: z.string().optional(),
   WISE_WEBHOOK_SECRET: z.string().optional(),
+  WISE_PROFILE_ID: z.string().optional(),
+  WISE_API_BASE_URL: z
+    .string()
+    .url()
+    .default('https://api.transferwise.com'),
 
   // Chainalysis (sanctions / KYT)
   CHAINALYSIS_API_KEY: z.string().optional(),
