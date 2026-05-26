@@ -96,6 +96,13 @@ pub mod squads_multisig {
 /// share-price inflation attack against the empty vault.
 pub const MIN_FIRST_STAKE: u64 = 1_000_000_000;
 
+/// Pre-audit H-04 ADR 0019 governance timelock: authority rotation MUST be
+/// a 2-step process with a 7-day delay between proposal + finalisation.
+/// The delay window gives independent watchers + the wider community time
+/// to react to a malicious multisig signer + revoke the proposal via
+/// `cancel_authority_rotation`. 7 days × 86400 seconds = 604_800.
+pub const AUTHORITY_ROTATION_TIMELOCK_SEC: i64 = 7 * 86_400;
+
 /// Pre-audit H-05 solvency invariant: the sum of (idle USDC in usdc_vault +
 /// total deployed to adapters) MUST be >= total_staked at every state-mutating
 /// instruction's end. The current scaffold has no adapter deployment, so the
@@ -136,6 +143,8 @@ pub mod earn_vault {
         vault.total_vusdc_supply = 0;
         vault.is_paused = false;
         vault.bump = ctx.bumps.vault;
+        vault.pending_authority = Pubkey::default();
+        vault.pending_authority_unlock_ts = 0;
 
         // M-class cross-applied from internal-swap M-04 (eace98f):
         // indexers subscribe to creation event instead of crawling.
@@ -314,29 +323,89 @@ pub mod earn_vault {
         Ok(())
     }
 
-    /// Rotate the vault authority to a new pubkey. Pre-audit H-04 partial
-    /// (#22 c.4527111355): without this, the only way to migrate from a
-    /// single-key authority (acceptable for devnet/local) to a Squads
-    /// multisig (mandatory for mainnet per ADR 0019) is to redeploy the
-    /// program — and the placeholder declare_id forbids that.
+    /// Step 1 of 2-step authority rotation per ADR 0019 + #61 batch-2.
+    /// Proposes a new authority and starts a 7-day timelock; finalisation
+    /// is a SEPARATE call after AUTHORITY_ROTATION_TIMELOCK_SEC elapses.
     ///
-    /// Caller MUST be the current authority. Survives into #61 rebuild as
-    /// belt-and-braces (the rebuild will add a 7-day timelock on rotation
-    /// per ADR 0019; this scaffold version has no timelock).
-    pub fn rotate_authority(
-        ctx: Context<RotateAuthority>,
+    /// During the window:
+    ///   - `cancel_authority_rotation` (callable by CURRENT authority) can
+    ///     abort the pending rotation if a multisig signer turns hostile
+    ///     between propose + finalize
+    ///   - on-chain watchers see the pending-authority field and can alarm
+    ///   - the existing authority retains full control (no half-rotated
+    ///     state where two parties think they're in charge)
+    pub fn propose_authority_rotation(
+        ctx: Context<ProposeAuthorityRotation>,
         new_authority: Pubkey,
     ) -> Result<()> {
+        require!(new_authority != Pubkey::default(), VaultError::ZeroPubkey);
         require!(
-            new_authority != Pubkey::default(),
-            VaultError::ZeroPubkey
+            new_authority != ctx.accounts.vault.authority,
+            VaultError::SameAuthority
+        );
+        let now = Clock::get()?.unix_timestamp;
+        let unlock_ts = now
+            .checked_add(AUTHORITY_ROTATION_TIMELOCK_SEC)
+            .ok_or(VaultError::MathOverflow)?;
+        ctx.accounts.vault.pending_authority = new_authority;
+        ctx.accounts.vault.pending_authority_unlock_ts = unlock_ts;
+        emit!(AuthorityRotationProposed {
+            vault: ctx.accounts.vault.key(),
+            current_authority: ctx.accounts.vault.authority,
+            proposed_authority: new_authority,
+            unlock_ts,
+            ts: now,
+        });
+        Ok(())
+    }
+
+    /// Step 2 of 2 — finalise the rotation after the 7-day timelock elapses.
+    /// Callable by ANYONE (intentional: the new authority should be able to
+    /// pull-pattern claim ownership; the current authority could otherwise
+    /// stall the rotation indefinitely by refusing to call finalize).
+    pub fn finalize_authority_rotation(
+        ctx: Context<FinalizeAuthorityRotation>,
+    ) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        require!(
+            ctx.accounts.vault.pending_authority != Pubkey::default(),
+            VaultError::NoPendingRotation
+        );
+        require!(
+            now >= ctx.accounts.vault.pending_authority_unlock_ts,
+            VaultError::TimelockNotElapsed
         );
         let old_authority = ctx.accounts.vault.authority;
+        let new_authority = ctx.accounts.vault.pending_authority;
         ctx.accounts.vault.authority = new_authority;
+        ctx.accounts.vault.pending_authority = Pubkey::default();
+        ctx.accounts.vault.pending_authority_unlock_ts = 0;
         emit!(AuthorityRotated {
             vault: ctx.accounts.vault.key(),
             old_authority,
             new_authority,
+        });
+        Ok(())
+    }
+
+    /// Cancel a pending rotation. Callable ONLY by the CURRENT authority
+    /// (so a hostile pending-authority can't pre-empt cancel). Use case:
+    /// proposing the wrong key, OR detecting a malicious signer between
+    /// the propose + finalize calls.
+    pub fn cancel_authority_rotation(
+        ctx: Context<CancelAuthorityRotation>,
+    ) -> Result<()> {
+        require!(
+            ctx.accounts.vault.pending_authority != Pubkey::default(),
+            VaultError::NoPendingRotation
+        );
+        let cancelled = ctx.accounts.vault.pending_authority;
+        ctx.accounts.vault.pending_authority = Pubkey::default();
+        ctx.accounts.vault.pending_authority_unlock_ts = 0;
+        emit!(AuthorityRotationCancelled {
+            vault: ctx.accounts.vault.key(),
+            cancelled_authority: cancelled,
+            ts: Clock::get()?.unix_timestamp,
         });
         Ok(())
     }
@@ -395,10 +464,7 @@ pub mod earn_vault {
 }
 
 #[derive(Accounts)]
-pub struct RotateAuthority<'info> {
-    /// Per-mint Vault PDA. has_one = authority + the Signer<'info> below
-    /// belt-and-braces enforce that the signer matches vault.authority.
-    /// mut because vault.authority field is rewritten in-place.
+pub struct ProposeAuthorityRotation<'info> {
     #[account(
         mut,
         seeds = [b"vault", usdc_mint.key().as_ref()],
@@ -408,7 +474,37 @@ pub struct RotateAuthority<'info> {
     pub vault: Account<'info, Vault>,
     /// Current authority — must sign.
     pub authority: Signer<'info>,
-    /// usdc_mint is the seed binding (per C-04 fix in f7ea54f).
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+}
+
+#[derive(Accounts)]
+pub struct FinalizeAuthorityRotation<'info> {
+    /// Per-mint Vault PDA. NB: no has_one constraint — anyone can call
+    /// finalize after the timelock; pending-authority pubkey-binding is
+    /// asserted inside the instruction body.
+    #[account(
+        mut,
+        seeds = [b"vault", usdc_mint.key().as_ref()],
+        bump = vault.bump,
+    )]
+    pub vault: Account<'info, Vault>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// Any signer can call finalize — the new authority pulls ownership
+    /// via the on-chain pending_authority field.
+    pub caller: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CancelAuthorityRotation<'info> {
+    #[account(
+        mut,
+        seeds = [b"vault", usdc_mint.key().as_ref()],
+        bump = vault.bump,
+        has_one = authority @ VaultError::WrongAuthority,
+    )]
+    pub vault: Account<'info, Vault>,
+    /// Current authority must sign to cancel.
+    pub authority: Signer<'info>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
 }
 
@@ -426,10 +522,19 @@ pub struct Vault {
     pub holder_split_bps: u16,
     pub is_paused: bool,
     pub bump: u8,
+    // #61 batch-2 — ADR 0019 7-day timelock on authority rotation. When a
+    // rotation is in flight, pending_authority is non-default + unlock_ts
+    // marks the earliest time finalize_authority_rotation may succeed.
+    // Zero-sentinel pattern (Pubkey::default() / 0 = no pending rotation)
+    // keeps the struct flat + skips Option<> discriminator overhead.
+    pub pending_authority: Pubkey,
+    pub pending_authority_unlock_ts: i64,
 }
 
 impl Vault {
-    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 * 2 + 1 + 1;
+    // 8 (discriminator) + 32×5 (pubkeys) + 8×2 (u64s) + 2×2 (u16s) + 1 + 1
+    // + 32 (pending_authority) + 8 (pending_authority_unlock_ts)
+    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 * 2 + 1 + 1 + 32 + 8;
 }
 
 #[derive(Accounts)]
@@ -710,6 +815,24 @@ pub struct AuthorityRotated {
 
 #[event]
 #[derive(Debug)]
+pub struct AuthorityRotationProposed {
+    pub vault: Pubkey,
+    pub current_authority: Pubkey,
+    pub proposed_authority: Pubkey,
+    pub unlock_ts: i64,
+    pub ts: i64,
+}
+
+#[event]
+#[derive(Debug)]
+pub struct AuthorityRotationCancelled {
+    pub vault: Pubkey,
+    pub cancelled_authority: Pubkey,
+    pub ts: i64,
+}
+
+#[event]
+#[derive(Debug)]
 pub struct EmergencyWithdrawEvent {
     pub vault: Pubkey,
     pub authority: Pubkey,
@@ -766,4 +889,10 @@ pub enum VaultError {
     EmergencyDestinationNotMultisigOwned,
     #[msg("Solvency invariant broken: usdc_vault.amount < vault.total_staked")]
     SolvencyInvariantBroken,
+    #[msg("Proposed authority must differ from current authority")]
+    SameAuthority,
+    #[msg("No pending authority rotation to finalize/cancel")]
+    NoPendingRotation,
+    #[msg("Authority rotation timelock (7 days) has not elapsed yet")]
+    TimelockNotElapsed,
 }
