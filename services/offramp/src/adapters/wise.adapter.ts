@@ -20,7 +20,7 @@
  * Stub-mode-friendly: when WISE_API_KEY is absent OR WISE_PROFILE_ID is unset,
  * returns synthetic payout responses identical to TransFi's stub shape.
  */
-import { createHmac } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 
 import { loadConfig } from '@ping/config';
 
@@ -136,6 +136,10 @@ export const wiseAdapter: ProviderAdapter = {
             // the Pyth-driven FX quote upstream, so quote by target.
             targetAmount: Number(request.amount.localAmount),
             payOut,
+            // payIn=BALANCE matches Step 4's fund-from-balance — keeping these
+            // aligned ensures the quoted fee matches what actually gets charged
+            // (Wise applies different fee schedules per pay-in source).
+            payIn: 'BALANCE',
           }),
         }
       );
@@ -177,8 +181,9 @@ export const wiseAdapter: ProviderAdapter = {
             request.recipient.accountName ??
             request.recipient.name ??
             'Ping Recipient',
-          legalType: 'PRIVATE',
-          details: accountDetails.details,
+          // legalType belongs INSIDE details per Wise OpenAPI v1 accounts
+          // schema (top-level legalType is dropped silently by the API).
+          details: { ...accountDetails.details, legalType: 'PRIVATE' },
         }),
       });
       if (!accountRes.ok) {
@@ -213,7 +218,12 @@ export const wiseAdapter: ProviderAdapter = {
         body: JSON.stringify({
           targetAccount: account.id,
           quoteUuid: quote.id,
-          customerTransactionId: request.reference,
+          // Wise requires customerTransactionId to be a UUID. We can't reuse
+          // request.reference (PING-XXXXXXXX) directly; derive a deterministic
+          // UUIDv5-style value from it would be ideal but UUIDv4 is sufficient
+          // for idempotency at the Wise side (we already de-dupe upstream by
+          // request.reference in our own ledger).
+          customerTransactionId: randomUUID(),
           details: {
             reference: request.reference.slice(0, 16),
             transferPurpose: 'verification.transfers.purpose.pay.bills',
@@ -245,9 +255,13 @@ export const wiseAdapter: ProviderAdapter = {
     }
 
     // Step 4 — Fund transfer from BALANCE.
-    // NB: a failed fund call still leaves the transfer in CREATED state — the
-    // adapter returns 'processing' regardless because the operator-visible
-    // record exists; webhook will surface terminal status. We log + log only.
+    // If the fund call fails the transfer sits in CREATED forever and the
+    // recipient never sees money. We surface a 'failed' status to the
+    // orchestrator so it can decide between (a) retry, (b) cancel + refund,
+    // (c) fall back to TransFi (router.service). The transfer object exists
+    // on Wise's side either way, so providerReference is still returned.
+    let fundFailed = false;
+    let fundFailureDetails: Record<string, unknown> | undefined;
     try {
       const fundRes = await fetch(
         `${baseUrl}/v3/profiles/${profileId}/transfers/${transfer.id}/payments`,
@@ -259,20 +273,24 @@ export const wiseAdapter: ProviderAdapter = {
       );
       if (!fundRes.ok) {
         const errBody = await fundRes.text();
-        logger.warn(
+        logger.error(
           {
             status: fundRes.status,
             body: errBody,
             transferId: transfer.id,
           },
-          'Wise fund step failed — transfer remains in CREATED state; webhook will surface'
+          'Wise fund step failed — surfacing as failed for orchestrator fallback'
         );
+        fundFailed = true;
+        fundFailureDetails = { status: fundRes.status, body: errBody };
       }
     } catch (err) {
-      logger.warn(
+      logger.error(
         { err, transferId: transfer.id },
-        'Wise fund step threw — transfer remains in CREATED state'
+        'Wise fund step threw — surfacing as failed for orchestrator fallback'
       );
+      fundFailed = true;
+      fundFailureDetails = { message: (err as Error).message };
     }
 
     const estimatedSeconds =
@@ -284,27 +302,42 @@ export const wiseAdapter: ProviderAdapter = {
       reference: request.reference,
       providerName: 'wise',
       providerReference: String(transfer.id),
-      status: mapWiseStatus(transfer.status),
+      status: fundFailed ? 'failed' : mapWiseStatus(transfer.status),
       estimatedCompletionSeconds: estimatedSeconds,
-      metadata: { quoteId: quote.id, accountId: account.id },
+      metadata: {
+        quoteId: quote.id,
+        accountId: account.id,
+        ...(fundFailed ? { fundFailure: fundFailureDetails } : {}),
+      },
     };
   },
 
   verifyWebhook(payload: string, signature: string): boolean {
     const secret = config.WISE_WEBHOOK_SECRET;
     if (!secret) {
+      // Production-hard-fail: never accept unsigned webhooks outside dev.
+      // Wise's real webhooks are signed; in dev we may want to skip while
+      // the OpenBao secret is being provisioned, but in production this
+      // is a critical defense.
+      // NB: Wise's production webhooks are RSA-SHA256 against Wise's
+      // published public key, not HMAC. AC of #58 calls for HMAC against
+      // WISE_WEBHOOK_SECRET — keep that for now + file a follow-up TBD
+      // to swap to the RSA-SHA256 verification path against Wise's JWK.
+      if (config.NODE_ENV === 'production') {
+        logger.error(
+          'WISE_WEBHOOK_SECRET not set in production — rejecting webhook'
+        );
+        return false;
+      }
       logger.warn(
-        'WISE_WEBHOOK_SECRET not set — accepting webhook (STUB MODE ONLY)'
+        'WISE_WEBHOOK_SECRET not set — accepting webhook (DEV STUB MODE)'
       );
       return true;
     }
-    const expected = createHmac('sha256', secret).update(payload).digest('hex');
-    if (expected.length !== signature.length) return false;
-    let result = 0;
-    for (let i = 0; i < expected.length; i++) {
-      result |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
-    }
-    return result === 0;
+    const expected = createHmac('sha256', secret).update(payload).digest();
+    const provided = Buffer.from(signature, 'hex');
+    if (provided.length !== expected.length) return false;
+    return timingSafeEqual(expected, provided);
   },
 
   parseWebhook(payload: string): {

@@ -13,13 +13,19 @@ import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 // Mock @ping/config BEFORE importing the adapter so loadConfig returns
 // a deterministic shape with API key + profile set. Tests then flip the
 // mock for the stub-mode case.
-vi.mock('@ping/config', () => ({
-  loadConfig: () => ({
-    WISE_API_KEY: 'test-wise-key',
-    WISE_PROFILE_ID: '12345',
+// Hold a mutable config so individual tests can flip values (stub mode etc.)
+// vi.hoisted runs BEFORE vi.mock so the fixture is initialised in time.
+const { configFixture } = vi.hoisted(() => ({
+  configFixture: {
+    WISE_API_KEY: 'test-wise-key' as string | undefined,
+    WISE_PROFILE_ID: '12345' as string | undefined,
     WISE_API_BASE_URL: 'https://api.test.wise',
-    WISE_WEBHOOK_SECRET: 'test-webhook-secret',
-  }),
+    WISE_WEBHOOK_SECRET: 'test-webhook-secret' as string | undefined,
+    NODE_ENV: 'test' as string,
+  },
+}));
+vi.mock('@ping/config', () => ({
+  loadConfig: () => configFixture,
 }));
 
 // Mock logger to silence test noise.
@@ -112,26 +118,33 @@ describe('wiseAdapter.payout — real 3-call flow', () => {
       targetCurrency: 'EUR',
       targetAmount: 92.5,
       payOut: 'BANK_TRANSFER',
+      payIn: 'BALANCE',
     });
 
     const [accountUrl, accountOpts] = fetchMock.mock.calls[1];
     expect(accountUrl).toBe('https://api.test.wise/v1/accounts');
-    expect(JSON.parse(accountOpts.body as string)).toMatchObject({
+    const accountBody = JSON.parse(accountOpts.body as string);
+    expect(accountBody).toMatchObject({
       currency: 'EUR',
       type: 'iban',
       profile: 12345,
       accountHolderName: 'Alice Recipient',
-      legalType: 'PRIVATE',
-      details: { IBAN: 'DE89370400440532013000' },
+      details: { IBAN: 'DE89370400440532013000', legalType: 'PRIVATE' },
     });
+    // legalType must NOT appear at top level — Wise OpenAPI v1 places it inside details
+    expect(accountBody.legalType).toBeUndefined();
 
     const [transferUrl, transferOpts] = fetchMock.mock.calls[2];
     expect(transferUrl).toBe('https://api.test.wise/v1/transfers');
-    expect(JSON.parse(transferOpts.body as string)).toMatchObject({
+    const transferBody = JSON.parse(transferOpts.body as string);
+    expect(transferBody).toMatchObject({
       targetAccount: 9001,
       quoteUuid: 'quote-uuid-1',
-      customerTransactionId: 'PING-WS-TEST',
     });
+    // customerTransactionId is now UUIDv4 per Wise schema
+    expect(transferBody.customerTransactionId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    );
 
     const [fundUrl, fundOpts] = fetchMock.mock.calls[3];
     expect(fundUrl).toBe('https://api.test.wise/v3/profiles/12345/transfers/77001/payments');
@@ -177,11 +190,11 @@ describe('wiseAdapter.payout — real 3-call flow', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('fund-step soft-fails: transfer succeeded so adapter still returns processing', async () => {
+  it('fund-step fails: transfer existed but money never moved → status=failed', async () => {
     const fetchMock = mockFetchSequence([
       { ok: true, status: 200, _json: { id: 'quote-uuid-4', rate: 1.0, paymentOptions: [] } },
       { ok: true, status: 200, _json: { id: 9003, currency: 'USD', type: 'aba', accountHolderName: 'Alice' } },
-      { ok: true, status: 201, _json: { id: 77002, status: 'incoming_payment_waiting', customerTransactionId: 'PING-WS-TEST' } },
+      { ok: true, status: 201, _json: { id: 77002, status: 'incoming_payment_waiting', customerTransactionId: 'uuid-77002' } },
       { ok: false, status: 400, _text: 'BALANCE not funded' },
     ]);
 
@@ -196,9 +209,12 @@ describe('wiseAdapter.payout — real 3-call flow', () => {
       },
     });
 
-    expect(result.providerReference).toBe('77002');
-    expect(result.status).toBe('pending');
-    expect(fetchMock).toHaveBeenCalledTimes(4); // Fund still called even though it failed
+    expect(result.providerReference).toBe('77002'); // Transfer object still exists on Wise side
+    expect(result.status).toBe('failed'); // Orchestrator must see the actual failure to fallback
+    expect(result.metadata).toMatchObject({
+      fundFailure: { status: 400, body: 'BALANCE not funded' },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it('GBP path: builds sort_code details', async () => {
@@ -232,24 +248,23 @@ describe('wiseAdapter — stub mode (no API key OR no profile)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('returns synthetic response when both API key + profile absent', async () => {
-    // Flip the module's config-loader cache to undefined env.
-    vi.doMock('@ping/config', () => ({
-      loadConfig: () => ({
-        WISE_API_KEY: undefined,
-        WISE_PROFILE_ID: undefined,
-        WISE_API_BASE_URL: 'https://api.test.wise',
-        WISE_WEBHOOK_SECRET: undefined,
-      }),
-    }));
-    // Re-import the adapter against the new mock.
-    const { wiseAdapter: stubAdapter } = await import('./wise.adapter?stub-test');
-
-    const result = await stubAdapter.payout(baseRequest);
-    expect(result.providerName).toBe('wise');
-    expect(result.providerReference).toMatch(/^WS_STUB_\d+$/);
-    expect(result.status).toBe('processing');
-    expect(result.metadata).toEqual({ stub: true });
+  it('returns synthetic response when API key is absent', async () => {
+    // Flip the mutable config fixture so the already-imported adapter sees
+    // a stub config. Restore after — guards against cross-test leakage.
+    const savedKey = configFixture.WISE_API_KEY;
+    const savedProfile = configFixture.WISE_PROFILE_ID;
+    configFixture.WISE_API_KEY = undefined;
+    configFixture.WISE_PROFILE_ID = undefined;
+    try {
+      const result = await wiseAdapter.payout(baseRequest);
+      expect(result.providerName).toBe('wise');
+      expect(result.providerReference).toMatch(/^WS_STUB_\d+$/);
+      expect(result.status).toBe('processing');
+      expect(result.metadata).toEqual({ stub: true });
+    } finally {
+      configFixture.WISE_API_KEY = savedKey;
+      configFixture.WISE_PROFILE_ID = savedProfile;
+    }
   });
 });
 
@@ -269,6 +284,30 @@ describe('wiseAdapter.verifyWebhook', () => {
 
   it('returns false on length-mismatched signature', () => {
     expect(wiseAdapter.verifyWebhook('payload', 'short')).toBe(false);
+  });
+
+  it('returns false in production when secret is missing', () => {
+    const savedEnv = configFixture.NODE_ENV;
+    const savedSecret = configFixture.WISE_WEBHOOK_SECRET;
+    configFixture.NODE_ENV = 'production';
+    configFixture.WISE_WEBHOOK_SECRET = undefined;
+    try {
+      expect(wiseAdapter.verifyWebhook('payload', 'any-sig')).toBe(false);
+    } finally {
+      configFixture.NODE_ENV = savedEnv;
+      configFixture.WISE_WEBHOOK_SECRET = savedSecret;
+    }
+  });
+
+  it('accepts unsigned webhook in dev when secret is missing (stub-mode warn)', () => {
+    const savedSecret = configFixture.WISE_WEBHOOK_SECRET;
+    configFixture.WISE_WEBHOOK_SECRET = undefined;
+    try {
+      // NODE_ENV stays 'test' (not production) so we get the dev path
+      expect(wiseAdapter.verifyWebhook('payload', 'any-sig')).toBe(true);
+    } finally {
+      configFixture.WISE_WEBHOOK_SECRET = savedSecret;
+    }
   });
 });
 
