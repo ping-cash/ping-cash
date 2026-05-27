@@ -11,7 +11,7 @@
 import { Keypair, Transaction } from '@solana/web3.js';
 import { createHmac, createHash } from 'node:crypto';
 
-const ENDPOINT = process.env.PING_ENDPOINT || 'https://ping.openova.io';
+const ENDPOINT = process.env.PING_ENDPOINT || 'https://app.ping.cash';
 const JWT_SECRET =
   process.env.JWT_SECRET ||
   'phase1-stub-secret-32-chars-minimum-length-for-hs256-only';

@@ -12,11 +12,11 @@
  *   6. POST /claims/{cc}/verify  → verified=true + verificationToken + cashoutMethods[4]
  *   7. POST /claims/{cc}/cashout → status=processing + offrampReference=PING-<hex>
  *
- * Default endpoint: https://ping.openova.io (override via PING_ENDPOINT).
+ * Default endpoint: https://app.ping.cash (override via PING_ENDPOINT).
  * Default amount: $50; method: gcash. Override AMOUNT_USD, CASHOUT_METHOD.
  */
 
-const ENDPOINT = process.env.PING_ENDPOINT || 'https://ping.openova.io';
+const ENDPOINT = process.env.PING_ENDPOINT || 'https://app.ping.cash';
 const AMOUNT_USD = process.env.AMOUNT_USD || '50.00';
 const CASHOUT_METHOD = process.env.CASHOUT_METHOD || 'gcash';
 const RECIPIENT_PHONE = process.env.RECIPIENT_PHONE || '+639501234100';

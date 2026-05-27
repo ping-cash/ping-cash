@@ -51,7 +51,8 @@
       },
       "eas": {
         "projectId": "your-project-id"
-      }
+      },
+      "apiUrl": "https://app.ping.cash"
     }
   }
 }
