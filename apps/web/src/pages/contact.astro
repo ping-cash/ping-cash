@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Contact — Ping"
+  description="Get in touch. Partner enquiries, press, support."
+  path="/contact"
+>
+  <section class="bg-gradient-to-b from-bg-primary to-bg-secondary py-24">
+    <div class="mx-auto max-w-3xl px-4">
+      <h1 class="text-balance text-5xl font-bold tracking-tight text-text-primary sm:text-6xl">
+        Get in touch
+      </h1>
+      <p class="mt-8 text-lg leading-relaxed text-text-secondary">
+        Direct email is the fastest way to reach us. We answer within 24 hours on weekdays.
+      </p>
+    </div>
+  </section>
+
+  <section class="py-24">
+    <div class="mx-auto max-w-3xl px-4">
+      <div class="grid gap-8 sm:grid-cols-2">
+        <a href="mailto:hello@ping.cash" class="rounded-2xl border border-border-primary bg-bg-secondary/50 p-8 transition-all duration-200 hover:bg-bg-secondary hover:border-emerald-500/40">
+          <h3 class="text-xl font-semibold text-text-primary">General</h3>
+          <p class="mt-2 text-text-secondary">For anything — questions, ideas, feedback.</p>
+          <p class="mt-4 font-mono text-emerald-400">hello@ping.cash</p>
+        </a>
+        <a href="mailto:support@ping.cash" class="rounded-2xl border border-border-primary bg-bg-secondary/50 p-8 transition-all duration-200 hover:bg-bg-secondary hover:border-emerald-500/40">
+          <h3 class="text-xl font-semibold text-text-primary">Support</h3>
+          <p class="mt-2 text-text-secondary">Transfer issue, claim not arriving, account question.</p>
+          <p class="mt-4 font-mono text-emerald-400">support@ping.cash</p>
+        </a>
+        <a href="mailto:partnerships@ping.cash" class="rounded-2xl border border-border-primary bg-bg-secondary/50 p-8 transition-all duration-200 hover:bg-bg-secondary hover:border-emerald-500/40">
+          <h3 class="text-xl font-semibold text-text-primary">Partnerships</h3>
+          <p class="mt-2 text-text-secondary">New corridor, off-ramp partner, B2B integration.</p>
+          <p class="mt-4 font-mono text-emerald-400">partnerships@ping.cash</p>
+        </a>
+        <a href="mailto:press@ping.cash" class="rounded-2xl border border-border-primary bg-bg-secondary/50 p-8 transition-all duration-200 hover:bg-bg-secondary hover:border-emerald-500/40">
+          <h3 class="text-xl font-semibold text-text-primary">Press</h3>
+          <p class="mt-2 text-text-secondary">Media enquiries, interviews, press kit.</p>
+          <p class="mt-4 font-mono text-emerald-400">press@ping.cash</p>
+        </a>
+      </div>
+
+      <div class="mt-16 rounded-2xl border border-border-primary bg-bg-secondary/50 p-8 text-center">
+        <h3 class="text-xl font-semibold text-text-primary">Code lives on GitHub</h3>
+        <p class="mt-2 text-text-secondary">All Ping code is open source. File an issue, open a PR.</p>
+        <a href="https://github.com/ping-cash" target="_blank" rel="noopener" class="mt-4 inline-flex items-center gap-2 font-medium text-emerald-400 hover:underline">
+          github.com/ping-cash
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

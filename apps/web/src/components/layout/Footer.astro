@@ -1,0 +1,70 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-border-primary bg-bg-primary">
+  <div class="mx-auto max-w-7xl px-4 py-16">
+    <div class="grid gap-12 md:grid-cols-4">
+      <div>
+        <a href="/" class="flex items-center gap-2 text-text-primary">
+          <svg width="28" height="28" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="footer-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#10B981" />
+                <stop offset="100%" stop-color="#22D3EE" />
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="28" fill="url(#footer-logo-grad)" />
+            <circle cx="32" cy="32" r="20" fill="none" stroke="white" stroke-width="3" opacity="0.5" />
+            <circle cx="32" cy="32" r="10" fill="white" />
+          </svg>
+          <span class="text-lg font-bold">Ping</span>
+        </a>
+        <p class="mt-4 text-sm text-text-tertiary leading-relaxed">
+          Send money instantly worldwide.<br />
+          P2P, social, low fee.<br />
+          Recipients get cash in seconds.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="mb-4 font-medium text-text-primary">Product</h3>
+        <ul class="flex flex-col gap-2">
+          <li><a href="/#how-it-works" class="text-sm text-text-tertiary hover:text-text-secondary transition-colors">How it works</a></li>
+          <li><a href="/#corridors" class="text-sm text-text-tertiary hover:text-text-secondary transition-colors">Corridors</a></li>
+          <li><a href="/#earn" class="text-sm text-text-tertiary hover:text-text-secondary transition-colors">Earn yield</a></li>
+          <li><a href="https://ping.openova.io" class="text-sm text-text-tertiary hover:text-text-secondary transition-colors">Open app</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="mb-4 font-medium text-text-primary">Company</h3>
+        <ul class="flex flex-col gap-2">
+          <li><a href="/about" class="text-sm text-text-tertiary hover:text-text-secondary transition-colors">About</a></li>
+          <li><a href="/contact" class="text-sm text-text-tertiary hover:text-text-secondary transition-colors">Contact</a></li>
+          <li><a href="https://github.com/ping-cash" class="text-sm text-text-tertiary hover:text-text-secondary transition-colors" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="mailto:hello@ping.cash" class="text-sm text-text-tertiary hover:text-text-secondary transition-colors">hello@ping.cash</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="mb-4 font-medium text-text-primary">Trust</h3>
+        <ul class="flex flex-col gap-2">
+          <li><span class="text-sm text-text-tertiary">Open source code</span></li>
+          <li><span class="text-sm text-text-tertiary">Non-custodial wallet</span></li>
+          <li><span class="text-sm text-text-tertiary">0.4% fee · no FX markup</span></li>
+          <li><span class="text-sm text-text-tertiary">Pyth on-chain pricing</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border-primary pt-8 md:flex-row">
+      <p class="text-sm text-text-tertiary">
+        &copy; {year} Ping. Built on the openova.io Sovereign platform.
+      </p>
+      <p class="text-sm text-text-tertiary">
+        Send money like a message.
+      </p>
+    </div>
+  </div>
+</footer>

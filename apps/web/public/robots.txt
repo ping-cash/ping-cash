@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /downloads/OpenOva-Investor-Deck-PreSeed.pdf
+
+Sitemap: https://openova.io/sitemap-index.xml

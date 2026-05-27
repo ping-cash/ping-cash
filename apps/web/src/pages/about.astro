@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="About — Ping"
+  description="Ping is a P2P social money network. 0.4% flat fee. No FX markup. Open source. Built on the openova.io Sovereign platform."
+  path="/about"
+>
+  <section class="bg-gradient-to-b from-bg-primary to-bg-secondary py-24">
+    <div class="mx-auto max-w-3xl px-4">
+      <h1 class="text-balance text-5xl font-bold tracking-tight text-text-primary sm:text-6xl">
+        Money should move like a message.
+      </h1>
+      <p class="mt-8 text-lg leading-relaxed text-text-secondary">
+        The remittance industry takes 7-15% per transfer and makes recipients wait days.
+        For people sending $200 to family back home, that's a week of groceries lost to
+        middlemen who add no value.
+      </p>
+      <p class="mt-6 text-lg leading-relaxed text-text-secondary">
+        Ping cuts the middlemen. USDC moves on Solana in under a second. We charge 0.4%
+        to cover the actual cost of off-ramp to GCash / Maya / UPI / M-Pesa / JazzCash.
+        No FX markup. Pyth on-chain pricing. The recipient sees the same number their
+        sender saw.
+      </p>
+    </div>
+  </section>
+
+  <section class="py-24">
+    <div class="mx-auto max-w-3xl px-4">
+      <h2 class="text-3xl font-bold text-text-primary">How we built it</h2>
+      <p class="mt-6 text-lg leading-relaxed text-text-secondary">
+        Ping runs on the open-source <a href="https://openova.io" class="text-emerald-400 hover:underline">openova.io</a>
+        Sovereign platform — Kubernetes + Flux GitOps + Cilium service mesh +
+        cert-manager + NATS JetStream + CNPG Postgres. We didn't reinvent the
+        infrastructure; we used the best-in-class open-source components and
+        composed them into a remittance platform.
+      </p>
+      <p class="mt-6 text-lg leading-relaxed text-text-secondary">
+        On-chain: USDC on Solana for settlement. Pyth for FX rates.
+        Privy MPC for non-custodial wallets. Wise + TransFi for last-mile fiat off-ramp.
+        Everything user-facing is auditable on GitHub.
+      </p>
+    </div>
+  </section>
+
+  <section class="border-t border-border-primary bg-bg-secondary py-24">
+    <div class="mx-auto max-w-3xl px-4">
+      <h2 class="text-3xl font-bold text-text-primary">Principles</h2>
+      <ul class="mt-8 space-y-6">
+        <li class="flex gap-4">
+          <span class="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">✓</span>
+          <div>
+            <h3 class="font-semibold text-text-primary">Non-custodial</h3>
+            <p class="mt-1 text-text-secondary">Your USDC is in your Privy MPC wallet. We can't freeze it, can't move it, can't see it without your signature.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">✓</span>
+          <div>
+            <h3 class="font-semibold text-text-primary">Open source</h3>
+            <p class="mt-1 text-text-secondary">Every line is on GitHub. Reproducible builds. No hidden fees in some closed-source contract.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">✓</span>
+          <div>
+            <h3 class="font-semibold text-text-primary">No FX markup</h3>
+            <p class="mt-1 text-text-secondary">Pyth on-chain price. Same rate Bloomberg sees. No spread, no hidden commission.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">✓</span>
+          <div>
+            <h3 class="font-semibold text-text-primary">User-first</h3>
+            <p class="mt-1 text-text-secondary">Recipients don't need a wallet, an app download, a seed phrase. Just their phone. Same number their family already calls them on.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

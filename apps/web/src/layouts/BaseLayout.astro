@@ -1,0 +1,152 @@
+---
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  path?: string;
+  schemaType?: string;
+}
+
+const { title, description, path = '', schemaType } = Astro.props;
+const canonicalUrl = `https://ping.cash${path}`;
+const pageName = path
+  ? path.slice(1).charAt(0).toUpperCase() + path.slice(2)
+  : 'Home';
+
+const breadcrumbList = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: 'https://ping.cash',
+    },
+    ...(path
+      ? [
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: pageName,
+            item: canonicalUrl,
+          },
+        ]
+      : []),
+  ],
+};
+
+const webPage = {
+  '@context': 'https://schema.org',
+  '@type': schemaType || 'WebPage',
+  name: title,
+  description,
+  url: canonicalUrl,
+  publisher: {
+    '@type': 'Organization',
+    name: 'Ping',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://ping.cash/logo-icon.svg',
+    },
+  },
+  image: `https://ping.cash/og${path || '/home'}.png`,
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+
+    <title>{title}</title>
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta
+      property="og:image"
+      content={`https://ping.cash/og${path || '/home'}.png`}
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta
+      name="twitter:image"
+      content={`https://ping.cash/og${path || '/home'}.png`}
+    />
+
+    <meta property="og:site_name" content="Ping" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Preload fonts -->
+    <link
+      rel="preload"
+      href="/fonts/inter-variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      fetchpriority="high"
+    />
+
+    <!-- Structured Data -->
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Ping',
+        url: 'https://ping.cash',
+        description:
+          'Send money instantly worldwide. Worldwide P2P social money network — recipients get GCash, Maya, UPI, M-Pesa, JazzCash and 30+ more in seconds.',
+        logo: 'https://ping.cash/logo-icon.svg',
+      })}
+    />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(webPage)}
+    />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(breadcrumbList)}
+    />
+  </head>
+  <body class="min-h-screen">
+    <Header />
+    <main class="pt-16">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+      );
+      document
+        .querySelectorAll('.reveal, .reveal-children')
+        .forEach((el) => observer.observe(el));
+    </script>
+  </body>
+</html>

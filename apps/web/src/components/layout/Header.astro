@@ -1,0 +1,90 @@
+---
+import { navigation } from '../../data/navigation';
+---
+
+<header class="fixed top-0 z-50 w-full border-b border-border-primary/50 bg-bg-primary/80 backdrop-blur-xl">
+  <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+    <a href="/" class="flex items-center gap-2 text-text-primary" aria-label="Ping home">
+      <svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true" class="flex-shrink-0">
+        <defs>
+          <linearGradient id="ping-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#10B981" />
+            <stop offset="100%" stop-color="#22D3EE" />
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="28" fill="url(#ping-logo-grad)" />
+        <circle cx="32" cy="32" r="20" fill="none" stroke="white" stroke-width="3" opacity="0.5" />
+        <circle cx="32" cy="32" r="10" fill="white" />
+      </svg>
+      <span class="text-xl font-bold">Ping</span>
+    </a>
+
+    <ul class="hidden items-center gap-8 md:flex">
+      {navigation.map((item) => (
+        <li>
+          <a
+            href={item.href}
+            class="text-sm text-text-secondary transition-colors duration-200 hover:text-text-primary"
+          >
+            {item.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <div class="flex items-center gap-3">
+      <a
+        href="https://ping.openova.io"
+        class="hidden rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 px-5 py-2 text-sm font-medium text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 md:inline-block"
+      >
+        Open app
+      </a>
+      <button
+        type="button"
+        class="md:hidden text-text-primary"
+        aria-label="Open menu"
+        data-mobile-toggle
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <div
+    class="mobile-menu hidden border-t border-border-primary/50 bg-bg-primary md:hidden"
+    data-mobile-menu
+  >
+    <ul class="space-y-3 px-4 py-4">
+      {navigation.map((item) => (
+        <li>
+          <a
+            href={item.href}
+            class="block text-base text-text-secondary hover:text-text-primary"
+          >
+            {item.label}
+          </a>
+        </li>
+      ))}
+      <li class="pt-3">
+        <a
+          href="https://ping.openova.io"
+          class="inline-block rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 px-5 py-2 text-sm font-medium text-white"
+        >
+          Open app
+        </a>
+      </li>
+    </ul>
+  </div>
+</header>
+
+<script>
+  const toggle = document.querySelector('[data-mobile-toggle]');
+  const menu = document.querySelector('[data-mobile-menu]');
+  toggle?.addEventListener('click', () => {
+    menu?.classList.toggle('hidden');
+  });
+</script>
