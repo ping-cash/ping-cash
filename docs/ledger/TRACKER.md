@@ -77,7 +77,7 @@ The platform is fully walkable TODAY on stub-mode adapters. None of the rows bel
 
 | Real cred              | Current state                     | Hot-swap path                                      |
 | ---------------------- | --------------------------------- | -------------------------------------------------- |
-| Twilio Verify SMS      | stub OTP `123456` accepted        | Set `TWILIO_VERIFY_SID` + `TWILIO_AUTH_TOKEN` env  |
+| Twilio Verify SMS      | **LIVE 2026-05-28** — Verify SID `VA6b6...` wired via `ping-twilio-credentials` Secret; auth-service rolling. WhatsApp/Email channels dropped from v1 scope (#72/#73 closed not-planned) | Already plugged via openova-private PRs #228-#234. Auth Token rotation due post-test. |
 | Privy MPC wallet       | stub wallet address returned      | Set `PRIVY_APP_ID` + `PRIVY_APP_SECRET` env        |
 | TransFi sandbox payout | deterministic adapter routing     | Set `TRANSFI_API_KEY` + `TRANSFI_API_SECRET` env   |
 | Chainalysis KYT        | stub returns `clean` for non-OFAC | Set `CHAINALYSIS_API_KEY` env                      |
