@@ -319,17 +319,23 @@ fn assert_amm_within_oracle_band(
     amm_usdc_per_ping_x64: u128,
     oracle_usdc_per_ping_x64: u128,
 ) -> Result<()> {
-    // Compute |amm - oracle| / oracle in bps. Saturating math — at scaffold
-    // start we accept clamping to u128::MAX rather than overflow-revert; the
-    // band check below catches that case (any saturated diff > band → revert).
+    // Pre-audit CRIT (2026-05-27 sub-agent review on #22): saturating_mul/div
+    // could clamp the band to u128::MAX, silently bypassing the deviation
+    // guard. Switched to checked_* + propagate overflow as MathOverflow.
     let diff = if amm_usdc_per_ping_x64 > oracle_usdc_per_ping_x64 {
-        amm_usdc_per_ping_x64 - oracle_usdc_per_ping_x64
+        amm_usdc_per_ping_x64
+            .checked_sub(oracle_usdc_per_ping_x64)
+            .ok_or(SwapError::MathOverflow)?
     } else {
-        oracle_usdc_per_ping_x64 - amm_usdc_per_ping_x64
+        oracle_usdc_per_ping_x64
+            .checked_sub(amm_usdc_per_ping_x64)
+            .ok_or(SwapError::MathOverflow)?
     };
     let band = oracle_usdc_per_ping_x64
-        .saturating_mul(MAX_ORACLE_DEVIATION_BPS as u128)
-        .saturating_div(10_000);
+        .checked_mul(MAX_ORACLE_DEVIATION_BPS as u128)
+        .ok_or(SwapError::MathOverflow)?
+        .checked_div(10_000)
+        .ok_or(SwapError::MathOverflow)?;
     require!(diff <= band, SwapError::PriceDeviatesFromOracle);
     Ok(())
 }
@@ -348,6 +354,14 @@ fn assert_amm_within_oracle_band(
 
 pub const MAX_PYTH_STALENESS_SEC: i64 = 60;
 
+/// Pre-audit CRIT (2026-05-27 sub-agent review on #22): Pyth's confidence
+/// interval (`price.conf`) is the publisher-aggregated uncertainty band.
+/// Pyth recommends rejecting a read when `conf / |price| > MAX_CONF_RATIO`
+/// (i.e., publishers disagree more than the threshold). Default 1% per
+/// Pyth docs — tight enough that a malicious/manipulated outlier publisher
+/// gets filtered, loose enough that normal market volatility doesn't false-
+/// positive.
+pub const MAX_PYTH_CONF_BPS: u64 = 100; // 100 bps = 1%
 
 fn read_pyth_ping_per_usdc_x64(
     price_account: &AccountInfo,
@@ -361,6 +375,19 @@ fn read_pyth_ping_per_usdc_x64(
     // Reject if price is non-positive (Pyth permits negative for derivatives;
     // for a spot price feed we treat this as bad data).
     require!(price.price > 0, SwapError::OracleStaleOrInvalid);
+    // Pre-audit CRIT — confidence-interval check. Reject if publishers
+    // disagree by more than MAX_PYTH_CONF_BPS (1%) of the median price.
+    // (price.conf is u64; price.price is i64 — already checked > 0 above.)
+    let abs_price = price.price as u64;
+    let conf_bps = (price.conf as u128)
+        .checked_mul(10_000)
+        .ok_or(SwapError::MathOverflow)?
+        .checked_div(abs_price as u128)
+        .ok_or(SwapError::MathOverflow)?;
+    require!(
+        conf_bps <= MAX_PYTH_CONF_BPS as u128,
+        SwapError::OracleConfidenceTooWide
+    );
     // Convert Pyth's i64 + expo into a Q64.64 fixed-point matching
     // assert_amm_within_oracle_band's amm_x64 scale. Pyth.expo is typically
     // negative (e.g., -8 means price is in units of 10^-8 USD per unit).
@@ -728,4 +755,6 @@ pub enum SwapError {
     OracleAccountInvalid,
     #[msg("Pyth price is stale (>MAX_PYTH_STALENESS_SEC since last update) or non-positive")]
     OracleStaleOrInvalid,
+    #[msg("Pyth confidence interval exceeds MAX_PYTH_CONF_BPS — publishers disagree too widely")]
+    OracleConfidenceTooWide,
 }

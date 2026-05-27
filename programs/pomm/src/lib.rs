@@ -277,6 +277,20 @@ pub mod pomm {
             .get_price_no_older_than(now, MAX_PYTH_STALENESS_SEC as u64)
             .ok_or(error!(PommError::OracleStaleOrInvalid))?;
         require!(price.price > 0, PommError::OracleStaleOrInvalid);
+        // Pre-audit CRIT (2026-05-27 sub-agent review on #22): Pyth
+        // confidence-interval check. Reject if publishers disagree by more
+        // than MAX_PYTH_CONF_BPS (1%) of the median price — same threshold
+        // as internal-swap (cross-program consistency).
+        let abs_price = price.price as u64;
+        let conf_bps = (price.conf as u128)
+            .checked_mul(10_000)
+            .ok_or(PommError::MathOverflow)?
+            .checked_div(abs_price as u128)
+            .ok_or(PommError::MathOverflow)?;
+        require!(
+            conf_bps <= MAX_PYTH_CONF_BPS as u128,
+            PommError::OracleConfidenceTooWide
+        );
         // Convert Pyth i64 mantissa + expo to Q64.64
         let mantissa = price.price as u128;
         let q64_64_one: u128 = 1u128 << 64;
@@ -427,6 +441,10 @@ pub const MAX_EMA_STALENESS_SEC: i64 = 7_200; // 2 hours
 
 /// C-03 step 2: Pyth staleness threshold mirrors internal-swap a92e86f.
 pub const MAX_PYTH_STALENESS_SEC: i64 = 60;
+
+/// Pre-audit CRIT (2026-05-27): Pyth confidence interval threshold.
+/// Same value as internal-swap (1% / 100 bps) for cross-program consistency.
+pub const MAX_PYTH_CONF_BPS: u64 = 100;
 
 impl Treasury {
     // 8 disc + 3*32 keys + 3*8 u64 + 1 bool + 1 bump + 8 i64 + 8 u64 + 16 u128 + 8 i64 = 186
@@ -761,6 +779,8 @@ pub enum PommError {
     OracleAccountInvalid,
     #[msg("Pyth price is stale (>MAX_PYTH_STALENESS_SEC since last update) or non-positive")]
     OracleStaleOrInvalid,
+    #[msg("Pyth confidence interval exceeds MAX_PYTH_CONF_BPS — publishers disagree too widely")]
+    OracleConfidenceTooWide,
     #[msg("EMA accumulator has never been updated — call update_ema first")]
     EmaUnseeded,
     #[msg("EMA is stale (>MAX_EMA_STALENESS_SEC since last update) — call update_ema first")]
