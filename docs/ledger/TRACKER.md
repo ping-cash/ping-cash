@@ -81,7 +81,7 @@ The platform is fully walkable TODAY on stub-mode adapters. None of the rows bel
 | Privy MPC wallet       | stub wallet address returned      | Set `PRIVY_APP_ID` + `PRIVY_APP_SECRET` env        |
 | TransFi sandbox payout | deterministic adapter routing     | Set `TRANSFI_API_KEY` + `TRANSFI_API_SECRET` env   |
 | Chainalysis KYT        | stub returns `clean` for non-OFAC | Set `CHAINALYSIS_API_KEY` env                      |
-| WhatsApp Business API  | SMS fallback live (parallel)      | Set `WHATSAPP_PHONE_NUMBER_ID` + `_ACCESS_TOKEN`   |
+| WhatsApp delivery to recipients | **LIVE 2026-05-28** via mobile send-screen — sender's own WhatsApp (`whatsapp://send?phone=…&text=<claim-link>` deep link, falls back to `wa.me/…`); industry-standard pattern (Cash App, Revolut Pay, Wise share). Zero vendor cost, no Meta approval. | Server-side WhatsApp Business API send (Path B) intentionally not scoped for v1 — adds Trust Hub + entity gate. |
 | Persona/Onfido KYC     | stub `persona_stub_*` IDs         | Set `PERSONA_API_KEY` + `ONFIDO_API_KEY` env       |
 | ping.cash apex domain  | live at ping.openova.io           | DNS cutover after launch (founder business choice) |
 
