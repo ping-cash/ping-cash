@@ -597,15 +597,23 @@ pub struct Stake<'info> {
     /// mut because mint_to CPI increments supply.
     #[account(mut)]
     pub vusdc_mint: InterfaceAccount<'info, Mint>,
-    /// Sender of the USDC. Owned by `user` (signer).
-    #[account(mut)]
+    /// Sender of the USDC. Owned by `user` (signer). #22 HIGH #2:
+    /// constraint token::mint = usdc_mint ensures the SPL transfer is
+    /// actually USDC, not an attacker-substituted token.
+    #[account(
+        mut,
+        constraint = user_usdc_ata.mint == usdc_mint.key() @ VaultError::WrongUsdcMint
+    )]
     pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
     /// Vault's USDC reserve (owner == vault PDA per C-03 2c35aee).
     /// address = vault.usdc_vault pins to the registered account.
     #[account(mut, address = vault.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
-    /// Recipient of the vUSDC mint_to.
-    #[account(mut)]
+    /// Recipient of the vUSDC mint_to. #22 HIGH #2: bind to vusdc_mint.
+    #[account(
+        mut,
+        constraint = user_vusdc_ata.mint == vusdc_mint.key() @ VaultError::WrongUsdcMint
+    )]
     pub user_vusdc_ata: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
 }
@@ -689,11 +697,18 @@ pub struct Unstake<'info> {
     /// Vault's USDC reserve (source of withdrawal).
     #[account(mut, address = vault.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
-    /// Recipient of the USDC payout.
-    #[account(mut)]
+    /// Recipient of the USDC payout. #22 HIGH #2: bind to usdc_mint.
+    #[account(
+        mut,
+        constraint = user_usdc_ata.mint == usdc_mint.key() @ VaultError::WrongUsdcMint
+    )]
     pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
-    /// User's vUSDC source (burned in this instruction).
-    #[account(mut)]
+    /// User's vUSDC source (burned in this instruction). #22 HIGH #2:
+    /// bind to vusdc_mint.
+    #[account(
+        mut,
+        constraint = user_vusdc_ata.mint == vusdc_mint.key() @ VaultError::WrongUsdcMint
+    )]
     pub user_vusdc_ata: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
 }

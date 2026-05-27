@@ -642,11 +642,17 @@ pub struct SwapUsdcForPing<'info> {
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// $PING mint — read-only, for transfer_checked decimals enforcement.
     pub ping_mint: InterfaceAccount<'info, Mint>,
-    /// User's USDC source.
-    #[account(mut)]
+    /// User's USDC source. #22 HIGH #2: bind to usdc_mint.
+    #[account(
+        mut,
+        constraint = user_usdc_ata.mint == usdc_mint.key() @ SwapError::WrongUsdcMint
+    )]
     pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
-    /// User's $PING destination.
-    #[account(mut)]
+    /// User's $PING destination. #22 HIGH #2: bind to ping_mint.
+    #[account(
+        mut,
+        constraint = user_ping_ata.mint == ping_mint.key() @ SwapError::WrongUsdcMint
+    )]
     pub user_ping_ata: InterfaceAccount<'info, TokenAccount>,
     /// Pool's USDC reserve (owner == pool PDA per C4 564e6af). `address =`
     /// pins to the registered vault; quote reads from .amount per C3 8e77f7c.
@@ -700,11 +706,17 @@ pub struct SwapPingForUsdc<'info> {
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// $PING mint — read-only, for transfer_checked decimals enforcement.
     pub ping_mint: InterfaceAccount<'info, Mint>,
-    /// User's $PING source (debited).
-    #[account(mut)]
+    /// User's $PING source (debited). #22 HIGH #2: bind to ping_mint.
+    #[account(
+        mut,
+        constraint = user_ping_ata.mint == ping_mint.key() @ SwapError::WrongUsdcMint
+    )]
     pub user_ping_ata: InterfaceAccount<'info, TokenAccount>,
-    /// User's USDC destination (credited).
-    #[account(mut)]
+    /// User's USDC destination (credited). #22 HIGH #2: bind to usdc_mint.
+    #[account(
+        mut,
+        constraint = user_usdc_ata.mint == usdc_mint.key() @ SwapError::WrongUsdcMint
+    )]
     pub user_usdc_ata: InterfaceAccount<'info, TokenAccount>,
     /// Pool's $PING reserve (owner == pool PDA per C4 564e6af). address-pinned.
     #[account(mut, address = pool.ping_vault)]
