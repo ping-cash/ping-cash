@@ -7,12 +7,12 @@ export interface ResourceSpec {
 }
 
 export interface TShirtCapabilities {
-  bandwidth: string;         // "100 GB/mo" / "Unmetered"
-  backupRetention: string;   // "—" / "7 days" / "60 days"
-  auditLogs: string;         // matches backup retention
-  uptimeSla: string;         // "—" / "99.9%" / "99.99%"
-  responseSla: string;       // "—" / "8h" / "1h"
-  supportChannel: string;    // "Community" / "Email" / "Email + Chat" / "+ Phone" / "Named team"
+  bandwidth: string; // "100 GB/mo" / "Unmetered"
+  backupRetention: string; // "—" / "7 days" / "60 days"
+  auditLogs: string; // matches backup retention
+  uptimeSla: string; // "—" / "99.9%" / "99.99%"
+  responseSla: string; // "—" / "8h" / "1h"
+  supportChannel: string; // "Community" / "Email" / "Email + Chat" / "+ Phone" / "Named team"
 }
 
 export interface TShirtTier {
@@ -22,8 +22,8 @@ export interface TShirtTier {
   tagline: string;
   description: string;
   resources: ResourceSpec;
-  monthlyPrice: number;           // baisa — Scale uses a "from" floor
-  priceFrom?: boolean;            // Scale tier shows "From OMR X" prefix
+  monthlyPrice: number; // baisa — Scale uses a "from" floor
+  priceFrom?: boolean; // Scale tier shows "From OMR X" prefix
   popular?: boolean;
   features: string[];
   capabilities: TShirtCapabilities;
@@ -99,7 +99,12 @@ export interface Bundle {
   recommendedSize: TShirtSize;
 }
 
-export type AddOnCategory = 'security' | 'backup' | 'monitoring' | 'infrastructure' | 'support';
+export type AddOnCategory =
+  | 'security'
+  | 'backup'
+  | 'monitoring'
+  | 'infrastructure'
+  | 'support';
 
 export interface AddOn {
   id: string;

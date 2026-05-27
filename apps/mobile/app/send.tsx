@@ -90,7 +90,8 @@ export default function SendScreen() {
           </View>
           <Text style={styles.successHeader}>Send the claim link</Text>
           <Text style={styles.successSub}>
-            Your recipient claims the money by opening this link. It expires in 7 days.
+            Your recipient claims the money by opening this link. It expires in
+            7 days.
           </Text>
 
           <TouchableOpacity style={styles.waButton} onPress={shareViaWhatsApp}>
@@ -245,7 +246,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
   },
-  successSub: { color: '#A0A0C0', fontSize: 14, marginBottom: 24, lineHeight: 20 },
+  successSub: {
+    color: '#A0A0C0',
+    fontSize: 14,
+    marginBottom: 24,
+    lineHeight: 20,
+  },
   waButton: {
     backgroundColor: '#25D366',
     paddingVertical: 16,
@@ -269,7 +275,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   linkLabel: { color: '#A0A0C0', fontSize: 12, marginBottom: 6 },
-  linkValue: { color: '#FFFFFF', fontSize: 13, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  linkValue: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
   doneButton: {
     paddingVertical: 14,
     alignItems: 'center',

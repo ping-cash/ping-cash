@@ -44,7 +44,10 @@ export async function sendOtp(
   const verifyServiceSid = config.TWILIO_VERIFY_SID;
 
   if (isTestPhone(phone)) {
-    logger.info({ phone }, '[TEST PHONE] Bypassing Twilio — accept code 123456');
+    logger.info(
+      { phone },
+      '[TEST PHONE] Bypassing Twilio — accept code 123456'
+    );
     return { sid: `test_${Date.now()}`, status: 'pending' };
   }
 
@@ -85,7 +88,10 @@ export async function verifyOtp(phone: string, code: string): Promise<boolean> {
   const verifyServiceSid = config.TWILIO_VERIFY_SID;
 
   if (isTestPhone(phone)) {
-    logger.info({ phone }, '[TEST PHONE] Bypassing Twilio — code must be 123456');
+    logger.info(
+      { phone },
+      '[TEST PHONE] Bypassing Twilio — code must be 123456'
+    );
     return code === '123456';
   }
 

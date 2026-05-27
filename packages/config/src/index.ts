@@ -39,7 +39,14 @@ const envSchema = z.object({
   // real phone in it.
   OTP_TEST_PHONES: z
     .string()
-    .transform(s => (s === '' ? [] : s.split(',').map(p => p.trim()).filter(Boolean)))
+    .transform(s =>
+      s === ''
+        ? []
+        : s
+            .split(',')
+            .map(p => p.trim())
+            .filter(Boolean)
+    )
     .optional(),
 
   // WhatsApp
