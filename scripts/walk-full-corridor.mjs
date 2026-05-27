@@ -19,13 +19,14 @@
 const ENDPOINT = process.env.PING_ENDPOINT || 'https://app.ping.cash';
 const AMOUNT_USD = process.env.AMOUNT_USD || '50.00';
 const CASHOUT_METHOD = process.env.CASHOUT_METHOD || 'gcash';
-// Test phones use the UK Ofcom drama range (+447700990XXX). auth-service is
-// configured via OTP_TEST_PHONES=+447700990 to bypass Twilio for this prefix
-// and accept code '123456'. Real users on other prefixes hit real Twilio Verify.
+// Test phones use the UK Ofcom drama range +447700900000-+447700900999.
+// auth-service is configured via OTP_TEST_PHONES=+447700900 to bypass Twilio
+// for this prefix and accept code '123456'. Real users on other prefixes
+// hit real Twilio Verify. UK mobile format is exactly 10 digits after +44.
 const RECIPIENT_PHONE =
-  process.env.RECIPIENT_PHONE || `+447700990${String((Date.now() % 5000) + 5000).padStart(4, '0')}`;
+  process.env.RECIPIENT_PHONE || `+447700900${String((Date.now() % 500) + 500).padStart(3, '0')}`;
 const SENDER_PHONE =
-  process.env.SENDER_PHONE || `+447700990${String(Date.now() % 5000).padStart(4, '0')}`;
+  process.env.SENDER_PHONE || `+447700900${String(Date.now() % 500).padStart(3, '0')}`;
 
 let failed = 0;
 function ok(stage, msg) {
