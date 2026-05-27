@@ -4,7 +4,29 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-27 (post backlog-sweep + CI-unblock + Prisma migrations-on-startup session). **Root-cause fix to #54:** `gh repo edit ping-cash/ping-cash --visibility public` (per repo CLAUDE.md note) — public repos get unlimited Actions minutes on the FREE org plan. CI now actually runs; previously masked failures surface. **#63 filed + shipped same session:** restore corridor-smoke green by (a) wallet lint --fix (2 import-order errors) + (b) Prisma migrations-on-startup pattern across transfer/ledger/user services. **Commits this session:** a162dac (Wise real 4-call flow + 15 vitest), 0d1ee1a (sub-agent reviewer 8 wire-format fixes), 096046e (earn-vault-svc Fastify scaffold + GET /users/:userId/vault + stub-aware reader), 834ced8 (earn-vault #61 batch-1 — squads multisig scaffold + solvency invariant + emergency_withdraw closing H-02 + H-04 + H-05), a410d86 (#50 paste-helper script), 075fbd1 (#63 wallet lint + transfer/ledger Prisma migrations), f461e88 (#63 user-service Prisma migrations). **Issue flips:** #58 closed (PARTIAL → PASS after fixes); #16 closed (scaffold complete; activation gated on #15 program); #61 in-progress (batch-1 of N — adapter CPIs + UserShare PDA remain toolchain-bound per runbook 584c169); #63 in-progress (CI build pending). **Workspace health:** 19/19 pnpm packages typecheck clean; 37+ vitest passing in offramp + 3 passing in earn-vault. **CI:** unblocked end-to-end via repo public flip + lint fixes; Build & Deploy on f461e88 running. **No workarounds rule (founder 2026-05-27):** all session work flows through GHA CI → ghcr.io → openova-private Flux. Mech-4 podman+ghcr is BANNED (saved as durable memory feedback_no_workarounds_ever.md).
+**Last refreshed:** 2026-05-28 (vendor-wiring + 7-day delivery slate commit session). Twilio + Privy + TransFi all wired and live in K8s Secrets on openova-private. Mobile WhatsApp share UX shipped (commit a31e3d2). 12 new deliverable issues filed (#74-#85). 7-day commitment table below.
+
+## 7-Day Delivery Slate — committed 2026-05-28
+
+| # | Title | ETA | Status |
+|---|---|---|---|
+| #65 | Twilio + corridor walk evidence | Today | 🟧 in-progress (CI building) |
+| #74 | Devnet treasury auto-fund | Day 2 | 🟦 backlog |
+| #75 | OFAC SDN screener service | Day 2 | 🟦 backlog |
+| #76 | Web claim flow polish | Day 3 | 🟦 backlog |
+| #77 | Mobile wallet balance + activity feed | Day 3 | 🟦 backlog |
+| #78 | Hourly corridor smoke cron | Day 3 | 🟦 backlog |
+| #79 | Mainnet readiness audit doc | Day 3 | 🟦 backlog |
+| #80 | Mobile onboarding 3-tap polish | Day 4-5 | 🟦 backlog |
+| #83 | Per-corridor demo videos (5x30s) | Day 5-6 | 🟦 backlog |
+| #84 | Backlog burn — close everything else | Continuous | 🟦 backlog |
+| #81 | Push notifications | ⏸ pending founder APNS .p8 | 🟡 |
+| #82 | MoonPay cash-in | ⏸ pending founder MoonPay signup | 🟡 |
+| #85 | App Store + Play Store submission | ⏸ pending founder Play Console signup | 🟡 |
+
+Phase-2 / mainnet issues (#15, #22-24, #50, #61, #62, #70, #71) explicitly OUT of 7-day scope per session 2026-05-28.
+
+**Prior refresh (2026-05-27):** post backlog-sweep + CI-unblock + Prisma migrations-on-startup session. **Root-cause fix to #54:** `gh repo edit ping-cash/ping-cash --visibility public` (per repo CLAUDE.md note) — public repos get unlimited Actions minutes on the FREE org plan. CI now actually runs; previously masked failures surface. **#63 filed + shipped same session:** restore corridor-smoke green by (a) wallet lint --fix (2 import-order errors) + (b) Prisma migrations-on-startup pattern across transfer/ledger/user services. **Commits this session:** a162dac (Wise real 4-call flow + 15 vitest), 0d1ee1a (sub-agent reviewer 8 wire-format fixes), 096046e (earn-vault-svc Fastify scaffold + GET /users/:userId/vault + stub-aware reader), 834ced8 (earn-vault #61 batch-1 — squads multisig scaffold + solvency invariant + emergency_withdraw closing H-02 + H-04 + H-05), a410d86 (#50 paste-helper script), 075fbd1 (#63 wallet lint + transfer/ledger Prisma migrations), f461e88 (#63 user-service Prisma migrations). **Issue flips:** #58 closed (PARTIAL → PASS after fixes); #16 closed (scaffold complete; activation gated on #15 program); #61 in-progress (batch-1 of N — adapter CPIs + UserShare PDA remain toolchain-bound per runbook 584c169); #63 in-progress (CI build pending). **Workspace health:** 19/19 pnpm packages typecheck clean; 37+ vitest passing in offramp + 3 passing in earn-vault. **CI:** unblocked end-to-end via repo public flip + lint fixes; Build & Deploy on f461e88 running. **No workarounds rule (founder 2026-05-27):** all session work flows through GHA CI → ghcr.io → openova-private Flux. Mech-4 podman+ghcr is BANNED (saved as durable memory feedback_no_workarounds_ever.md).
 
 **Prior refresh (2026-05-24):** FULL-stack mech-4 sweep + P23 5-mech audit + 6 DoD screenshots + Monitor-caught cebuana drift fix + locale-matrix contract test + per-Wave issue #59 retroactively filed. **All 10 ping services on bastion-built mech-4 images** (auth/wallet/fx/compliance/gamification/notify/token/web-claim → 55189e6; ledger/user/transfer/claim → 5793640; offramp → df1c0d9). Bastion podman + classic PAT push to ghcr bypasses #54 GHA billing block. Full 5-stage corridor walks PASS on the all-fresh stack: latest claimCode=g5xPbCaCc4C3 → PING-A368B1BB. Side-walks confirm wallet/balance hits real Solana mainnet RPC (258297.574098 USDC). TRUST: 64 🟢 / 3 🟡 / 11 🔴. **P23 5-mech audit on each parked**: #50 reclassified (direct ConfigMap path; founder-paste-only — 15 keys from provider dashboards); #15/#23/#24 confirmed founder-business gate (Cayman + audit per runbook 584c169); #62 toolchain-bound residuals documented.
 
