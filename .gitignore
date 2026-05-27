@@ -78,3 +78,4 @@ packages/api-client/src/generated/
 # Anchor / Rust build artifacts
 target/
 **/*.rs.bk
+programs/*/Cargo.lock

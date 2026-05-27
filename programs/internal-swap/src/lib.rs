@@ -748,7 +748,7 @@ pub struct FinalizeAuthorityRotation<'info> {
     pub caller: Signer<'info>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug)]
 pub enum SwapDirection {
     UsdcForPing,
     PingForUsdc,
