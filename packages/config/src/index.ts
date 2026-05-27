@@ -47,10 +47,18 @@ const envSchema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
 
-  // TransFi
+  // TransFi (HTTP Basic auth + mid header per docs.transfi.com)
+  TRANSFI_USERNAME: z.string().optional(),
+  TRANSFI_API_PASSWORD: z.string().optional(),
+  TRANSFI_MID: z.string().optional(),
+  TRANSFI_WEBHOOK_SECRET: z.string().optional(),
+  TRANSFI_API_BASE_URL: z
+    .string()
+    .url()
+    .default('https://sandbox-api.transfi.com'),
+  // Deprecated — kept for backwards compat during cutover (unused in new code).
   TRANSFI_API_KEY: z.string().optional(),
   TRANSFI_API_SECRET: z.string().optional(),
-  TRANSFI_WEBHOOK_SECRET: z.string().optional(),
 
   // Wise
   WISE_API_KEY: z.string().optional(),

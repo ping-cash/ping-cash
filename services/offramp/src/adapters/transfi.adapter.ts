@@ -51,13 +51,16 @@ export const transfiAdapter: ProviderAdapter = {
   },
 
   async payout(request: PayoutRequest): Promise<PayoutResult> {
-    const apiKey = config.TRANSFI_API_KEY;
-    const apiSecret = config.TRANSFI_API_SECRET;
+    const username = config.TRANSFI_USERNAME;
+    const password = config.TRANSFI_API_PASSWORD;
+    const mid = config.TRANSFI_MID;
+    const apiBase =
+      config.TRANSFI_API_BASE_URL ?? 'https://sandbox-api.transfi.com';
 
-    if (!apiKey || !apiSecret) {
+    if (!username || !password || !mid) {
       logger.info(
         { reference: request.reference, method: request.method },
-        '[STUB MODE] TransFi payout'
+        '[STUB MODE] TransFi payout — username/password/mid not set'
       );
       return {
         reference: request.reference,
@@ -75,10 +78,14 @@ export const transfiAdapter: ProviderAdapter = {
     }
 
     try {
-      const response = await fetch('https://api.transfi.com/v1/payouts', {
+      const basicAuth = Buffer.from(`${username}:${password}`).toString(
+        'base64'
+      );
+      const response = await fetch(`${apiBase}/v2/payouts/orders`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Basic ${basicAuth}`,
+          mid,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
