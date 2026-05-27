@@ -24,10 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust 1.79.0 (anchor 0.30.1 cargo compat — lockfile v3)
+      - name: Install Rust 1.85.0 (edition2024 stabilized — needed for digest 0.11/block-buffer 0.12)
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.79.0
+          toolchain: 1.85.0
           components: rustfmt, clippy
 
       - name: Install Solana CLI
