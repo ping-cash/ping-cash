@@ -30,7 +30,11 @@ function getClient() {
  */
 function isTestPhone(phone: string): boolean {
   const list = (config.OTP_TEST_PHONES ?? []) as string[];
-  return list.includes(phone);
+  // Each entry is matched as a prefix. So a single entry like
+  // "+447700990" whitelists the entire UK Ofcom drama range
+  // (+447700990000…+447700990999) which never routes to real users.
+  // Exact-match entries still work since "+447700990001".startsWith("+447700990001") === true.
+  return list.some(prefix => phone.startsWith(prefix));
 }
 
 export async function sendOtp(
