@@ -1,0 +1,112 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const categories = [
+  {
+    title: 'Getting started',
+    items: [
+      'How to sign up with your phone number',
+      'Send your first transfer',
+      'Add your recipient\'s phone number',
+      'What is a Privy MPC wallet?',
+    ],
+  },
+  {
+    title: 'Transfers',
+    items: [
+      'How long does a transfer take?',
+      'What fees and rates apply?',
+      'Cancel a transfer before it\'s claimed',
+      'My transfer says "pending" — what next?',
+    ],
+  },
+  {
+    title: 'Recipients',
+    items: [
+      'How do I pick up cash?',
+      'GCash / Maya / UPI / M-Pesa: which to choose?',
+      'I didn\'t get an SMS / WhatsApp',
+      'OTP not arriving',
+    ],
+  },
+  {
+    title: 'Account & security',
+    items: [
+      'Lost my phone — how to recover',
+      'Why FaceID matters (Privy MPC)',
+      'KYC: when is it required?',
+      'Why is Ping non-custodial?',
+    ],
+  },
+  {
+    title: 'Limits & countries',
+    items: [
+      'Daily and monthly limits',
+      'Which countries can I send to?',
+      'Request a new corridor',
+      'Send to a specific bank — supported?',
+    ],
+  },
+  {
+    title: 'Earn (Phase 2)',
+    items: [
+      'How does the earn yield work?',
+      'Which DeFi protocols are used?',
+      'Withdraw from earn balance',
+      'Is my earn balance non-custodial?',
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title="Help · Ping"
+  description="Browse help articles by category, or email support@ping.cash for direct help. 24/7 inbox monitoring."
+  path="/help"
+>
+  <section class="bg-gradient-to-b from-bg-primary to-bg-secondary py-20">
+    <div class="mx-auto max-w-3xl px-4 text-center">
+      <h1 class="text-balance text-5xl font-bold tracking-tight text-text-primary sm:text-6xl">
+        How can we help?
+      </h1>
+      <p class="mt-6 text-lg leading-relaxed text-text-secondary">
+        Browse by topic, or email
+        <a href="mailto:support@ping.cash" class="text-emerald-400 hover:underline">support@ping.cash</a>
+        for direct help. We answer within 24 hours every day.
+      </p>
+    </div>
+  </section>
+
+  <section class="py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {categories.map((cat) => (
+          <div class="rounded-2xl border border-border-primary bg-bg-secondary/50 p-8 transition-colors duration-200 hover:border-emerald-500/40">
+            <h2 class="text-xl font-semibold text-text-primary">{cat.title}</h2>
+            <ul class="mt-4 space-y-3 text-sm text-text-secondary">
+              {cat.items.map((item) => (
+                <li class="flex items-start gap-2 leading-relaxed">
+                  <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div class="mt-16 rounded-3xl border border-border-primary bg-bg-secondary/50 p-12 text-center">
+        <h2 class="text-3xl font-bold text-text-primary">Still stuck?</h2>
+        <p class="mt-4 text-lg text-text-secondary">
+          Email us with your transfer reference (PING-xxxxxxxx) and we'll respond within 24 hours.
+        </p>
+        <a
+          href="mailto:support@ping.cash"
+          class="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 px-10 py-4 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105"
+        >
+          support@ping.cash
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

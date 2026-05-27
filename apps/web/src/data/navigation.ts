@@ -1,9 +1,11 @@
 import type { NavItem } from '../types';
 
+// Mirrors Wise / Remitly / WorldRemit top-level nav structure:
+// personal-vs-business split + help + log-in CTA.
 export const navigation: NavItem[] = [
-  { label: 'How it works', href: '/#how-it-works' },
-  { label: 'Corridors', href: '/#corridors' },
-  { label: 'Earn', href: '/#earn' },
+  { label: 'Send money', href: '/#send' },
+  { label: 'Where you send', href: '/#countries' },
+  { label: 'Fees', href: '/#fees' },
+  { label: 'Help', href: '/help' },
   { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
 ];
