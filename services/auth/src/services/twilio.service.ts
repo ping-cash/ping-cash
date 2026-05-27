@@ -28,11 +28,21 @@ function getClient() {
  *
  * In stub mode (no credentials), returns a fake SID and logs the would-be call.
  */
+function isTestPhone(phone: string): boolean {
+  const list = (config.OTP_TEST_PHONES ?? []) as string[];
+  return list.includes(phone);
+}
+
 export async function sendOtp(
   phone: string
 ): Promise<{ sid: string; status: string }> {
   const client = getClient();
   const verifyServiceSid = config.TWILIO_VERIFY_SID;
+
+  if (isTestPhone(phone)) {
+    logger.info({ phone }, '[TEST PHONE] Bypassing Twilio — accept code 123456');
+    return { sid: `test_${Date.now()}`, status: 'pending' };
+  }
 
   if (!client || !verifyServiceSid) {
     logger.info({ phone }, '[STUB MODE] Would send OTP via Twilio Verify');
@@ -69,6 +79,11 @@ export async function sendOtp(
 export async function verifyOtp(phone: string, code: string): Promise<boolean> {
   const client = getClient();
   const verifyServiceSid = config.TWILIO_VERIFY_SID;
+
+  if (isTestPhone(phone)) {
+    logger.info({ phone }, '[TEST PHONE] Bypassing Twilio — code must be 123456');
+    return code === '123456';
+  }
 
   if (!client || !verifyServiceSid) {
     logger.info(

@@ -32,6 +32,15 @@ const envSchema = z.object({
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_VERIFY_SID: z.string().optional(),
   TWILIO_FROM_NUMBER: z.string().optional(),
+  // Comma-separated list of phone numbers that bypass Twilio Verify
+  // entirely — for them, sendOtp() is a no-op and verifyOtp() accepts
+  // code "123456". Used by CI corridor walks + smoke tests so we don't
+  // need real SMS round-trips. NEVER set this in production with any
+  // real phone in it.
+  OTP_TEST_PHONES: z
+    .string()
+    .transform(s => (s === '' ? [] : s.split(',').map(p => p.trim()).filter(Boolean)))
+    .optional(),
 
   // WhatsApp
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
