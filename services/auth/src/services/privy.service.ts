@@ -55,13 +55,20 @@ export async function bindPhoneToWallet(
   }
 
   try {
-    // Look up or create user by phone
+    // Look up or create user by phone. getUserByPhoneNumber returns null
+    // (NOT throws) when user doesn't exist — we must check explicitly.
     let user;
     let isNewUser = false;
     try {
       user = await client.getUserByPhoneNumber(phone);
-    } catch {
-      // User doesn't exist, create
+    } catch (lookupErr) {
+      logger.warn(
+        { err: (lookupErr as Error).message, phone },
+        'Privy getUserByPhoneNumber threw — treating as not-found'
+      );
+      user = null;
+    }
+    if (!user) {
       isNewUser = true;
       user = await client.importUser({
         linkedAccounts: [{ type: 'phone', number: phone }],
@@ -71,7 +78,7 @@ export async function bindPhoneToWallet(
 
     if (!user) {
       throw AuthErrors.PrivyFailure({
-        message: 'Privy user lookup returned null',
+        message: 'Privy user creation returned null after import',
       });
     }
 
