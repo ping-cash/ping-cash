@@ -474,6 +474,7 @@ pub struct ProposeAuthorityRotation<'info> {
     pub vault: Account<'info, Vault>,
     /// Current authority — must sign.
     pub authority: Signer<'info>,
+    #[account(address = vault.usdc_mint @ VaultError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
 }
 
@@ -488,6 +489,7 @@ pub struct FinalizeAuthorityRotation<'info> {
         bump = vault.bump,
     )]
     pub vault: Account<'info, Vault>,
+    #[account(address = vault.usdc_mint @ VaultError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// Any signer can call finalize — the new authority pulls ownership
     /// via the on-chain pending_authority field.
@@ -505,6 +507,7 @@ pub struct CancelAuthorityRotation<'info> {
     pub vault: Account<'info, Vault>,
     /// Current authority must sign to cancel.
     pub authority: Signer<'info>,
+    #[account(address = vault.usdc_mint @ VaultError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
 }
 
@@ -588,6 +591,7 @@ pub struct Stake<'info> {
     pub vault: Account<'info, Vault>,
     /// USDC mint (mainnet pubkey EPjFWdd5...). Read-only — used for the
     /// transfer_checked decimals enforcement.
+    #[account(address = vault.usdc_mint @ VaultError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// vUSDC mint, authority = vault PDA (enforced at init per C-03 2c35aee).
     /// mut because mint_to CPI increments supply.
@@ -642,6 +646,7 @@ pub struct Harvest<'info> {
     #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
     /// USDC mint — read-only.
+    #[account(address = vault.usdc_mint @ VaultError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// Vault's USDC reserve (would source the yield-distribution transfer
     /// post-rebuild; currently unused since harvest reverts).
@@ -676,6 +681,7 @@ pub struct Unstake<'info> {
     /// Per-mint Vault PDA; mut for total_staked/total_vusdc_supply decrement.
     #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
+    #[account(address = vault.usdc_mint @ VaultError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// vUSDC mint; mut because burn decrements supply.
     #[account(mut)]
@@ -723,6 +729,7 @@ pub struct SetPaused<'info> {
     #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
     /// usdc_mint included so the per-mint vault PDA seed binding holds.
+    #[account(address = vault.usdc_mint @ VaultError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
 }
 
@@ -738,6 +745,7 @@ pub struct EmergencyWithdraw<'info> {
     /// off-chain from on-chain events (per ADR 0019 §incidents).
     #[account(seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
+    #[account(address = vault.usdc_mint @ VaultError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// Vault's USDC reserve (source).
     #[account(mut, address = vault.usdc_vault)]
@@ -879,6 +887,8 @@ pub enum VaultError {
     WrongUsdcVaultOwner,
     #[msg("usdc_vault.mint must equal the usdc_mint passed to initialize_vault")]
     WrongUsdcVaultMint,
+    #[msg("usdc_mint must equal vault.usdc_mint — defense-in-depth on top of PDA seed binding (#22 CRIT #1)")]
+    WrongUsdcMint,
     #[msg("Caller is not the vault authority")]
     WrongAuthority,
     #[msg("New authority cannot be the zero pubkey")]
