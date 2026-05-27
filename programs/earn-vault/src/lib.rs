@@ -250,8 +250,28 @@ pub mod earn_vault {
     /// is hard-disabled — every call reverts with HarvestDisabledUntilRebuild.
     /// This makes the C-02 attack PHYSICALLY IMPOSSIBLE for the
     /// scaffold-lifetime regardless of who calls it.
+    ///
+    /// #22 HIGH #3 (sub-agent review 2026-05-27 c.4552070490): make the
+    /// disable STRUCTURAL via feature gate rather than just RUNTIME via
+    /// err!(). The cfg-attribute on the err! call makes the intent
+    /// explicit + auditor-greppable: only when BOTH `harvest-enabled`
+    /// AND `audit-passed` features are set does the function permit
+    /// future real-impl code to land in this branch. Anchor's #[program]
+    /// macro doesn't allow cfg-gated dual definitions of the same
+    /// instruction, so we use a single function with cfg-gated branches.
     pub fn harvest(_ctx: Context<Harvest>, _yield_amount: u64) -> Result<()> {
-        err!(VaultError::HarvestDisabledUntilRebuild)
+        #[cfg(not(all(feature = "harvest-enabled", feature = "audit-passed")))]
+        {
+            return err!(VaultError::HarvestDisabledUntilRebuild);
+        }
+        // Real harvest impl lands here under #61 rebuild — must read yield
+        // from adapter state CPIs (Kamino/Marginfi/Aave/Drift per ADR 0012),
+        // NOT accept caller-supplied yield_amount. Until that impl ships
+        // this audit-passed branch ALSO reverts (defense-in-depth).
+        #[cfg(all(feature = "harvest-enabled", feature = "audit-passed"))]
+        {
+            return err!(VaultError::HarvestDisabledUntilRebuild);
+        }
     }
 
     pub fn unstake(ctx: Context<Unstake>, vusdc_amount: u64) -> Result<()> {

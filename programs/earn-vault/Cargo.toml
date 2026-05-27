@@ -18,6 +18,10 @@ idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 # L-01 ADR 0018 guard (mirrors ping-token): mainnet-ready requires audit-passed
 mainnet-ready = []
 audit-passed = []
+# #22 HIGH #3 — structural harvest disable. Without this feature the
+# harvest function body is just `err!()` and the real impl literally
+# doesn't compile. Set ONLY after ADR 0012 adapter-CPI rebuild lands.
+harvest-enabled = []
 
 [dependencies]
 anchor-lang = "0.30.1"
