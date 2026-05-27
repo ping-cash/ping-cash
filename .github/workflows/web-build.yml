@@ -1,0 +1,93 @@
+name: Build & Deploy Website
+
+on:
+  push:
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/web-build.yml'
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  WEBSITE_IMAGE: ghcr.io/ping-cash/web
+
+jobs:
+  build-website:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      sha_short: ${{ steps.vars.outputs.sha_short }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set short SHA
+        id: vars
+        run: echo "sha_short=$(echo $GITHUB_SHA | head -c 7)" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build website image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          file: apps/web/Containerfile
+          push: true
+          tags: |
+            ${{ env.WEBSITE_IMAGE }}:${{ github.sha }}
+            ${{ env.WEBSITE_IMAGE }}:${{ steps.vars.outputs.sha_short }}
+            ${{ env.WEBSITE_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  bump-sovereign:
+    name: Bump openova-private SHA
+    needs: [build-website]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out openova-private
+        uses: actions/checkout@v4
+        with:
+          repository: openova-io/openova-private
+          token: ${{ secrets.SOVEREIGN_DEPLOY_PAT }}
+          path: openova-private
+
+      - name: Bump ping-marketing image SHA
+        working-directory: openova-private
+        run: |
+          TARGET="clusters/contabo-mkt/apps/ping-marketing/deployment.yaml"
+          if [ ! -f "$TARGET" ]; then
+            echo "::warning::$TARGET not found — manifest must be added first"
+            exit 0
+          fi
+          sed -i -E "s|(ghcr\.io/ping-cash/web):[A-Za-z0-9-]+|\1:${GITHUB_SHA}|" "$TARGET"
+          echo "Bumped image SHA in $TARGET"
+
+      - name: Create SHA-bump PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          path: openova-private
+          token: ${{ secrets.SOVEREIGN_DEPLOY_PAT }}
+          commit-message: |
+            bump(ping-marketing): SHA ${{ github.sha }}
+
+            Bumps ping.cash marketing site to image built from
+            ping-cash/ping-cash@${{ github.sha }}.
+          branch: bump/ping-marketing-${{ github.sha }}
+          delete-branch: true
+          title: 'bump(ping-marketing): ${{ steps.vars.outputs.sha_short }}'
+          body: |
+            ## Automated marketing site bump
+
+            **Source commit:** ping-cash/ping-cash@${{ github.sha }}
+
+            Flux reconciles in ~30s after merge; SHA-pinned deployment
+            picks up the new image.
