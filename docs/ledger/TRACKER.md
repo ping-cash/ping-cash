@@ -10,7 +10,7 @@
 
 | #   | Title                                 | ETA                                   | Status                       |
 | --- | ------------------------------------- | ------------------------------------- | ---------------------------- |
-| #65 | Twilio + corridor walk evidence       | Today                                 | 🟧 in-progress (CI building) |
+| #65 | Twilio + corridor walk evidence       | DONE 2026-05-28                       | 🟩 PASS (artifact 1 of 2)    |
 | #74 | Devnet treasury auto-fund             | Day 2                                 | 🟦 backlog                   |
 | #75 | OFAC SDN screener service             | Day 2                                 | 🟦 backlog                   |
 | #76 | Web claim flow polish                 | Day 3                                 | 🟦 backlog                   |
