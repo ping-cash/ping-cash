@@ -29,5 +29,5 @@ solana-program = "=1.18.17"
 # #62 C-03 rebuild dep — Pyth read for on-chain EMA accumulator. Same
 # patch-pinned version as internal-swap (a92e86f) for cross-program
 # build reproducibility under audit.
-pyth-sdk-solana = "=0.10.5"
+pyth-sdk-solana = "=0.10.6"
 

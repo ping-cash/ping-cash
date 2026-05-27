@@ -31,5 +31,5 @@ solana-program = "=1.18.17"
 # Reads SOL/USDC + $PING/USD price accounts on swap-time. The pinned
 # major.minor (0.10) tracks the Solana 1.18-compatible release; pinning
 # patch via `=0.10.5` keeps reproducible builds deterministic for audit.
-pyth-sdk-solana = "=0.10.5"
+pyth-sdk-solana = "=0.10.6"
 

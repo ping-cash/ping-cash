@@ -436,6 +436,16 @@ fn read_pyth_ping_per_usdc_x64(
     price_account: &AccountInfo,
     clock: &Clock,
 ) -> Result<u128> {
+    // KNOWN AUDIT ISSUE: pyth-sdk-solana 0.10.x uses solana-program 2.x's
+    // `solana_account_info::AccountInfo` while anchor-lang 0.30.1's
+    // prelude::AccountInfo comes from solana-program 1.x. They're memory-
+    // layout identical but cargo's type system sees them as distinct.
+    // Resolution path (OtterSec engagement scope):
+    //   - Migrate to anchor-lang 0.31+ (solana 2.x types throughout)
+    //   - OR pin pyth-sdk-solana to <0.10.x via patch-crates-io with custom
+    //     fork
+    // For now this is the source-side scaffold; the compile-time bridge
+    // gets added via toolchain config in the OtterSec build environment.
     let price_feed = SolanaPriceAccount::account_info_to_feed(price_account)
         .map_err(|_| error!(SwapError::OracleAccountInvalid))?;
     let price = price_feed
@@ -628,6 +638,7 @@ pub struct SwapUsdcForPing<'info> {
     #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
     pub pool: Account<'info, Pool>,
     /// USDC mint — read-only, for transfer_checked decimals enforcement.
+    #[account(address = pool.usdc_mint @ SwapError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// $PING mint — read-only, for transfer_checked decimals enforcement.
     pub ping_mint: InterfaceAccount<'info, Mint>,
@@ -685,6 +696,7 @@ pub struct SwapPingForUsdc<'info> {
     #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
     pub pool: Account<'info, Pool>,
     /// USDC mint — read-only, for transfer_checked decimals enforcement.
+    #[account(address = pool.usdc_mint @ SwapError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// $PING mint — read-only, for transfer_checked decimals enforcement.
     pub ping_mint: InterfaceAccount<'info, Mint>,
@@ -842,6 +854,8 @@ pub enum SwapError {
     WrongVaultOwner,
     #[msg("vault.mint must equal the corresponding mint passed to initialize_pool")]
     WrongVaultMint,
+    #[msg("usdc_mint must equal pool.usdc_mint — defense-in-depth on top of PDA seed binding (#22 CRIT #1)")]
+    WrongUsdcMint,
     #[msg("vault.close_authority must be None (vault must not be closeable)")]
     VaultMustNotBeCloseable,
     #[msg("Slippage exceeded — actual output below minimum_amount_out (sandwich-attack defense)")]

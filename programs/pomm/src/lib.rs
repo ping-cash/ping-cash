@@ -555,6 +555,7 @@ pub struct DepositUsdc<'info> {
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
     /// USDC mint — read-only, for transfer_checked decimals enforcement.
+    #[account(address = treasury.usdc_mint @ PommError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// Depositor's USDC source.
     #[account(mut)]
@@ -591,6 +592,7 @@ pub struct MintLpPosition<'info> {
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
     /// USDC mint — seed binding + reference for CLMM token_0 / token_1.
+    #[account(address = treasury.usdc_mint @ PommError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// Treasury's USDC reserve — debited into the CLMM pool token vault.
     #[account(mut, address = treasury.usdc_vault)]
@@ -674,6 +676,9 @@ pub struct CollectFees<'info> {
     /// Per-mint Treasury PDA — same revert-safety note as MintLpPosition.
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
+    /// usdc_mint — seed binding (added in #22 CRIT #1 cleanup).
+    #[account(address = treasury.usdc_mint @ PommError::WrongUsdcMint)]
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
 }
 
 #[derive(Accounts)]
@@ -687,6 +692,7 @@ pub struct AdminTreasury<'info> {
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
     /// usdc_mint — seed binding for the per-mint Treasury PDA.
+    #[account(address = treasury.usdc_mint @ PommError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
 }
 
@@ -695,6 +701,7 @@ pub struct FinalizeAuthorityRotation<'info> {
     /// Per-mint Treasury PDA. mut to flip authority + clear pending.
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
+    #[account(address = treasury.usdc_mint @ PommError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// Anyone may finalize after timelock — new authority pulls ownership.
     pub caller: Signer<'info>,
@@ -706,6 +713,7 @@ pub struct UpdateEma<'info> {
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
     /// USDC mint — seed binding.
+    #[account(address = treasury.usdc_mint @ PommError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// Pyth price account for $PING/USDC. CHECK: validated inside update_ema
     /// via SolanaPriceAccount::account_info_to_feed.
@@ -724,6 +732,7 @@ pub struct EmergencyWithdraw<'info> {
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
     /// USDC mint (read-only — decimals enforcement in transfer_checked).
+    #[account(address = treasury.usdc_mint @ PommError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     /// Treasury's USDC reserve. address-pinned to the registered vault.
     #[account(mut, address = treasury.usdc_vault)]
@@ -891,4 +900,6 @@ pub enum PommError {
     WrongRaydiumCllmProgram,
     #[msg("Claimed authority is not the expected Squads multisig vault PDA (H-02)")]
     WrongAuthority,
+    #[msg("usdc_mint must equal treasury.usdc_mint — defense-in-depth on top of PDA seed binding (#22 CRIT #1)")]
+    WrongUsdcMint,
 }
