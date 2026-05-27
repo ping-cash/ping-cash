@@ -57,6 +57,9 @@ pub mod internal_swap {
         pool.ping_balance = 0;
         pool.is_paused = false;
         pool.bump = ctx.bumps.pool;
+        // #22 HIGH #5 — initialize pending-rotation fields to zero-sentinels.
+        pool.pending_authority = Pubkey::default();
+        pool.pending_authority_unlock_ts = 0;
 
         // M-04 fix (#22 c.4527278904): dashboards/indexers need a creation
         // event to know when a pool exists + its config. Without this, the
@@ -266,17 +269,77 @@ pub mod internal_swap {
     /// (f1cfab4). Needed to migrate from single-key dev authority to a Squads
     /// multisig (ADR 0019) without redeploying — placeholder declare_id
     /// forbids redeploy.
-    pub fn rotate_authority(
+    /// Step 1 of 2-step authority rotation per ADR 0019 + #22 pre-audit
+    /// HIGH #5. Proposes a new authority and starts a 7-day timelock;
+    /// finalisation is a separate call after AUTHORITY_ROTATION_TIMELOCK_SEC.
+    /// Matches earn-vault batch-2 (5041316) for cross-program consistency.
+    pub fn propose_authority_rotation(
         ctx: Context<AdminPool>,
         new_authority: Pubkey,
     ) -> Result<()> {
         require!(new_authority != Pubkey::default(), SwapError::ZeroPubkey);
+        require!(
+            new_authority != ctx.accounts.pool.authority,
+            SwapError::SameAuthority
+        );
+        let now = Clock::get()?.unix_timestamp;
+        let unlock_ts = now
+            .checked_add(AUTHORITY_ROTATION_TIMELOCK_SEC)
+            .ok_or(SwapError::MathOverflow)?;
+        ctx.accounts.pool.pending_authority = new_authority;
+        ctx.accounts.pool.pending_authority_unlock_ts = unlock_ts;
+        emit!(AuthorityRotationProposed {
+            pool: ctx.accounts.pool.key(),
+            current_authority: ctx.accounts.pool.authority,
+            proposed_authority: new_authority,
+            unlock_ts,
+            ts: now,
+        });
+        Ok(())
+    }
+
+    /// Step 2 — anyone may finalize after timelock elapses; the pending
+    /// authority pulls ownership via on-chain field binding.
+    pub fn finalize_authority_rotation(
+        ctx: Context<FinalizeAuthorityRotation>,
+    ) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        require!(
+            ctx.accounts.pool.pending_authority != Pubkey::default(),
+            SwapError::NoPendingRotation
+        );
+        require!(
+            now >= ctx.accounts.pool.pending_authority_unlock_ts,
+            SwapError::TimelockNotElapsed
+        );
         let old_authority = ctx.accounts.pool.authority;
+        let new_authority = ctx.accounts.pool.pending_authority;
         ctx.accounts.pool.authority = new_authority;
+        ctx.accounts.pool.pending_authority = Pubkey::default();
+        ctx.accounts.pool.pending_authority_unlock_ts = 0;
         emit!(AuthorityRotated {
             pool: ctx.accounts.pool.key(),
             old_authority,
             new_authority,
+        });
+        Ok(())
+    }
+
+    /// Cancel a pending rotation. Callable ONLY by the CURRENT authority.
+    pub fn cancel_authority_rotation(
+        ctx: Context<AdminPool>,
+    ) -> Result<()> {
+        require!(
+            ctx.accounts.pool.pending_authority != Pubkey::default(),
+            SwapError::NoPendingRotation
+        );
+        let cancelled = ctx.accounts.pool.pending_authority;
+        ctx.accounts.pool.pending_authority = Pubkey::default();
+        ctx.accounts.pool.pending_authority_unlock_ts = 0;
+        emit!(AuthorityRotationCancelled {
+            pool: ctx.accounts.pool.key(),
+            cancelled_authority: cancelled,
+            ts: Clock::get()?.unix_timestamp,
         });
         Ok(())
     }
@@ -313,6 +376,12 @@ fn quote_usdc_to_ping(
 /// override the AMM quote.
 
 pub const MAX_ORACLE_DEVIATION_BPS: u16 = 300;
+
+/// Pre-audit HIGH #5 (2026-05-27 sub-agent review on #22 c.4552070490):
+/// ADR 0019 governance timelock — authority rotation MUST be a 2-step
+/// process with a 7-day delay. Matches the pattern shipped in earn-vault
+/// batch-2 (5041316) for cross-program consistency.
+pub const AUTHORITY_ROTATION_TIMELOCK_SEC: i64 = 7 * 86_400;
 
 
 fn assert_amm_within_oracle_band(
@@ -512,10 +581,15 @@ pub struct Pool {
     pub spread_bps: u16,
     pub is_paused: bool,
     pub bump: u8,
+    // #22 HIGH #5 — ADR 0019 7-day timelock on authority rotation. Zero-
+    // sentinel pattern matches earn-vault batch-2.
+    pub pending_authority: Pubkey,
+    pub pending_authority_unlock_ts: i64,
 }
 
 impl Pool {
-    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 + 1 + 1;
+    // 8 disc + 32×5 pubkeys + 8×2 + 2 + 1 + 1 + 32 (pending_authority) + 8 (unlock_ts)
+    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 + 1 + 1 + 32 + 8;
 }
 
 #[derive(Accounts)]
@@ -656,13 +730,22 @@ pub struct AdminPool<'info> {
     /// Pool authority — currently single-key dev authority. Production
     /// path is Squads multisig (H-02 architectural gate). `address =`
     /// enforces signer matches recorded authority. Shared context for
-    /// set_paused + rotate_authority instructions.
+    /// set_paused + propose/cancel_authority_rotation instructions.
     #[account(address = pool.authority)]
     pub authority: Signer<'info>,
     /// Per-(usdc,ping)-mint Pool PDA (C5 d238aa7). mut for is_paused +
     /// authority field updates from set_paused / rotate_authority.
     #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
     pub pool: Account<'info, Pool>,
+}
+
+#[derive(Accounts)]
+pub struct FinalizeAuthorityRotation<'info> {
+    /// Per-(usdc,ping)-mint Pool PDA. mut to flip authority + clear pending.
+    #[account(mut, seeds = [b"pool", pool.usdc_mint.as_ref(), pool.ping_mint.as_ref()], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    /// Anyone may finalize after timelock — new authority pulls ownership.
+    pub caller: Signer<'info>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
@@ -723,6 +806,24 @@ pub struct AuthorityRotated {
     pub new_authority: Pubkey,
 }
 
+#[event]
+#[derive(Debug)]
+pub struct AuthorityRotationProposed {
+    pub pool: Pubkey,
+    pub current_authority: Pubkey,
+    pub proposed_authority: Pubkey,
+    pub unlock_ts: i64,
+    pub ts: i64,
+}
+
+#[event]
+#[derive(Debug)]
+pub struct AuthorityRotationCancelled {
+    pub pool: Pubkey,
+    pub cancelled_authority: Pubkey,
+    pub ts: i64,
+}
+
 #[error_code]
 pub enum SwapError {
     #[msg("Pool is paused")]
@@ -757,4 +858,10 @@ pub enum SwapError {
     OracleStaleOrInvalid,
     #[msg("Pyth confidence interval exceeds MAX_PYTH_CONF_BPS — publishers disagree too widely")]
     OracleConfidenceTooWide,
+    #[msg("Proposed authority must differ from current authority")]
+    SameAuthority,
+    #[msg("No pending authority rotation to finalize/cancel")]
+    NoPendingRotation,
+    #[msg("Authority rotation timelock (7 days) has not elapsed yet")]
+    TimelockNotElapsed,
 }

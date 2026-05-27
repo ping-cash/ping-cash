@@ -54,6 +54,9 @@ pub mod pomm {
         treasury.collected_fees_lifetime = 0;
         treasury.is_paused = false;
         treasury.bump = ctx.bumps.treasury;
+        // #22 HIGH #5 — initialize pending-rotation fields to zero-sentinels.
+        treasury.pending_authority = Pubkey::default();
+        treasury.pending_authority_unlock_ts = 0;
         // C-04: initialize 24h cap-window accountant
         let now = Clock::get()?.unix_timestamp;
         treasury.window_start_ts = now;
@@ -235,21 +238,76 @@ pub mod pomm {
         Ok(())
     }
 
-    /// Rotate the treasury authority to a new pubkey. H-03 fix
-    /// (per #22 c.4527297108). Mirrors earn-vault 2d89968 +
-    /// ping-token f1cfab4 + internal-swap 23d62cc. Same migration-to-
-    /// multisig pattern across all 4 Phase-2 Anchor programs.
-    pub fn rotate_authority(
+    /// Step 1 of 2-step authority rotation per ADR 0019 + #22 pre-audit
+    /// HIGH #5. Replaces the single-call rotate_authority with propose-
+    /// then-finalize gated by 7-day timelock. Matches earn-vault batch-2
+    /// (5041316) + internal-swap for cross-program consistency.
+    pub fn propose_authority_rotation(
         ctx: Context<AdminTreasury>,
         new_authority: Pubkey,
     ) -> Result<()> {
         require!(new_authority != Pubkey::default(), PommError::ZeroPubkey);
+        require!(
+            new_authority != ctx.accounts.treasury.authority,
+            PommError::SameAuthority
+        );
+        let now = Clock::get()?.unix_timestamp;
+        let unlock_ts = now
+            .checked_add(AUTHORITY_ROTATION_TIMELOCK_SEC)
+            .ok_or(PommError::MathOverflow)?;
+        ctx.accounts.treasury.pending_authority = new_authority;
+        ctx.accounts.treasury.pending_authority_unlock_ts = unlock_ts;
+        emit!(AuthorityRotationProposed {
+            treasury: ctx.accounts.treasury.key(),
+            current_authority: ctx.accounts.treasury.authority,
+            proposed_authority: new_authority,
+            unlock_ts,
+            ts: now,
+        });
+        Ok(())
+    }
+
+    /// Step 2 — anyone may finalize after timelock; new authority pulls.
+    pub fn finalize_authority_rotation(
+        ctx: Context<FinalizeAuthorityRotation>,
+    ) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        require!(
+            ctx.accounts.treasury.pending_authority != Pubkey::default(),
+            PommError::NoPendingRotation
+        );
+        require!(
+            now >= ctx.accounts.treasury.pending_authority_unlock_ts,
+            PommError::TimelockNotElapsed
+        );
         let old_authority = ctx.accounts.treasury.authority;
+        let new_authority = ctx.accounts.treasury.pending_authority;
         ctx.accounts.treasury.authority = new_authority;
+        ctx.accounts.treasury.pending_authority = Pubkey::default();
+        ctx.accounts.treasury.pending_authority_unlock_ts = 0;
         emit!(AuthorityRotated {
             treasury: ctx.accounts.treasury.key(),
             old_authority,
             new_authority,
+        });
+        Ok(())
+    }
+
+    /// Cancel a pending rotation. Callable ONLY by the CURRENT authority.
+    pub fn cancel_authority_rotation(
+        ctx: Context<AdminTreasury>,
+    ) -> Result<()> {
+        require!(
+            ctx.accounts.treasury.pending_authority != Pubkey::default(),
+            PommError::NoPendingRotation
+        );
+        let cancelled = ctx.accounts.treasury.pending_authority;
+        ctx.accounts.treasury.pending_authority = Pubkey::default();
+        ctx.accounts.treasury.pending_authority_unlock_ts = 0;
+        emit!(AuthorityRotationCancelled {
+            treasury: ctx.accounts.treasury.key(),
+            cancelled_authority: cancelled,
+            ts: Clock::get()?.unix_timestamp,
         });
         Ok(())
     }
@@ -428,6 +486,9 @@ pub struct Treasury {
     // half-life ≈ 7 days at hourly ticks).
     pub ema_price_x64: u128,
     pub ema_update_ts: i64,
+    // #22 HIGH #5 — ADR 0019 7-day timelock on authority rotation.
+    pub pending_authority: Pubkey,
+    pub pending_authority_unlock_ts: i64,
 }
 
 /// C-03 fix: EMA decay constant. 200 bps = 2% new-sample weight, 98%
@@ -446,9 +507,14 @@ pub const MAX_PYTH_STALENESS_SEC: i64 = 60;
 /// Same value as internal-swap (1% / 100 bps) for cross-program consistency.
 pub const MAX_PYTH_CONF_BPS: u64 = 100;
 
+/// Pre-audit HIGH #5 (2026-05-27): ADR 0019 governance timelock.
+/// 7 days × 86400 = 604_800. Same value as earn-vault batch-2 + internal-swap.
+pub const AUTHORITY_ROTATION_TIMELOCK_SEC: i64 = 7 * 86_400;
+
 impl Treasury {
-    // 8 disc + 3*32 keys + 3*8 u64 + 1 bool + 1 bump + 8 i64 + 8 u64 + 16 u128 + 8 i64 = 186
-    pub const LEN: usize = 8 + 32 * 3 + 8 * 3 + 1 + 1 + 8 + 8 + 16 + 8;
+    // 8 disc + 3*32 keys + 3*8 u64 + 1 bool + 1 bump + 8 i64 + 8 u64
+    //   + 16 u128 + 8 i64 (EMA) + 32 pubkey + 8 i64 (timelock)
+    pub const LEN: usize = 8 + 32 * 3 + 8 * 3 + 1 + 1 + 8 + 8 + 16 + 8 + 32 + 8;
 }
 
 #[derive(Accounts)]
@@ -614,12 +680,24 @@ pub struct CollectFees<'info> {
 pub struct AdminTreasury<'info> {
     /// Treasury authority — currently single-key dev path. Production:
     /// Squads multisig (H-02 architectural gate). Shared context for
-    /// set_paused + rotate_authority instructions.
+    /// set_paused + propose/cancel_authority_rotation instructions.
     #[account(address = treasury.authority)]
     pub authority: Signer<'info>,
     /// Per-mint Treasury PDA. mut for is_paused + authority field updates.
     #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
     pub treasury: Account<'info, Treasury>,
+    /// usdc_mint — seed binding for the per-mint Treasury PDA.
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+}
+
+#[derive(Accounts)]
+pub struct FinalizeAuthorityRotation<'info> {
+    /// Per-mint Treasury PDA. mut to flip authority + clear pending.
+    #[account(mut, seeds = [b"treasury", usdc_mint.key().as_ref()], bump = treasury.bump)]
+    pub treasury: Account<'info, Treasury>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    /// Anyone may finalize after timelock — new authority pulls ownership.
+    pub caller: Signer<'info>,
 }
 
 #[derive(Accounts)]
@@ -729,6 +807,24 @@ pub struct AuthorityRotated {
 
 #[event]
 #[derive(Debug)]
+pub struct AuthorityRotationProposed {
+    pub treasury: Pubkey,
+    pub current_authority: Pubkey,
+    pub proposed_authority: Pubkey,
+    pub unlock_ts: i64,
+    pub ts: i64,
+}
+
+#[event]
+#[derive(Debug)]
+pub struct AuthorityRotationCancelled {
+    pub treasury: Pubkey,
+    pub cancelled_authority: Pubkey,
+    pub ts: i64,
+}
+
+#[event]
+#[derive(Debug)]
 pub struct TreasuryInitialized {
     pub treasury: Pubkey,
     pub authority: Pubkey,
@@ -781,6 +877,12 @@ pub enum PommError {
     OracleStaleOrInvalid,
     #[msg("Pyth confidence interval exceeds MAX_PYTH_CONF_BPS — publishers disagree too widely")]
     OracleConfidenceTooWide,
+    #[msg("Proposed authority must differ from current authority")]
+    SameAuthority,
+    #[msg("No pending authority rotation to finalize/cancel")]
+    NoPendingRotation,
+    #[msg("Authority rotation timelock (7 days) has not elapsed yet")]
+    TimelockNotElapsed,
     #[msg("EMA accumulator has never been updated — call update_ema first")]
     EmaUnseeded,
     #[msg("EMA is stale (>MAX_EMA_STALENESS_SEC since last update) — call update_ema first")]
