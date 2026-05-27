@@ -19,9 +19,13 @@
 const ENDPOINT = process.env.PING_ENDPOINT || 'https://app.ping.cash';
 const AMOUNT_USD = process.env.AMOUNT_USD || '50.00';
 const CASHOUT_METHOD = process.env.CASHOUT_METHOD || 'gcash';
-const RECIPIENT_PHONE = process.env.RECIPIENT_PHONE || '+639501234100';
+// Test phones use the UK Ofcom drama range (+447700990XXX). auth-service is
+// configured via OTP_TEST_PHONES=+447700990 to bypass Twilio for this prefix
+// and accept code '123456'. Real users on other prefixes hit real Twilio Verify.
+const RECIPIENT_PHONE =
+  process.env.RECIPIENT_PHONE || `+447700990${String((Date.now() % 5000) + 5000).padStart(4, '0')}`;
 const SENDER_PHONE =
-  process.env.SENDER_PHONE || `+44770099${String(Date.now() % 10000).padStart(4, '0')}`;
+  process.env.SENDER_PHONE || `+447700990${String(Date.now() % 5000).padStart(4, '0')}`;
 
 let failed = 0;
 function ok(stage, msg) {
