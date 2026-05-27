@@ -145,6 +145,7 @@ pub mod earn_vault {
         vault.bump = ctx.bumps.vault;
         vault.pending_authority = Pubkey::default();
         vault.pending_authority_unlock_ts = 0;
+        vault.multisig_pda = Pubkey::default();
 
         // M-class cross-applied from internal-swap M-04 (eace98f):
         // indexers subscribe to creation event instead of crawling.
@@ -327,13 +328,11 @@ pub mod earn_vault {
     /// Proposes a new authority and starts a 7-day timelock; finalisation
     /// is a SEPARATE call after AUTHORITY_ROTATION_TIMELOCK_SEC elapses.
     ///
-    /// During the window:
-    ///   - `cancel_authority_rotation` (callable by CURRENT authority) can
-    ///     abort the pending rotation if a multisig signer turns hostile
-    ///     between propose + finalize
-    ///   - on-chain watchers see the pending-authority field and can alarm
-    ///   - the existing authority retains full control (no half-rotated
-    ///     state where two parties think they're in charge)
+    /// #22 HIGH #6 + #7: when vault.multisig_pda is set (post-ceremony),
+    /// the proposed_authority MUST be the Squads vault PDA derived from
+    /// the recorded multisig_pda at vault_index=0. This prevents a
+    /// single-key authority from rotating to another single-key authority
+    /// once the multisig ceremony has established the binding.
     pub fn propose_authority_rotation(
         ctx: Context<ProposeAuthorityRotation>,
         new_authority: Pubkey,
@@ -343,6 +342,14 @@ pub mod earn_vault {
             new_authority != ctx.accounts.vault.authority,
             VaultError::SameAuthority
         );
+        // #22 HIGH #6 + #7: enforce multisig binding once ceremony has run.
+        if ctx.accounts.vault.multisig_pda != Pubkey::default() {
+            squads_multisig::assert_is_vault_pda(
+                &new_authority,
+                &ctx.accounts.vault.multisig_pda,
+                0,
+            )?;
+        }
         let now = Clock::get()?.unix_timestamp;
         let unlock_ts = now
             .checked_add(AUTHORITY_ROTATION_TIMELOCK_SEC)
@@ -355,6 +362,35 @@ pub mod earn_vault {
             proposed_authority: new_authority,
             unlock_ts,
             ts: now,
+        });
+        Ok(())
+    }
+
+    /// One-time Squads multisig binding — #22 HIGH #6 + #7. The vault
+    /// starts with multisig_pda = default (dev/devnet phase). The first
+    /// authority (typically a Squads-multisig vault PDA after the
+    /// ceremony) calls this once to RECORD which multisig pubkey is
+    /// canonical for future rotations. After that point, all future
+    /// rotations must target a Squads vault PDA derived from this
+    /// recorded multisig.
+    ///
+    /// Callable ONLY when multisig_pda is still default — once set, it's
+    /// immutable (single-write field). This prevents a hostile current
+    /// authority from re-binding to a different multisig they control.
+    pub fn set_multisig_pda(
+        ctx: Context<AdminVault>,
+        multisig_pda: Pubkey,
+    ) -> Result<()> {
+        require!(
+            ctx.accounts.vault.multisig_pda == Pubkey::default(),
+            VaultError::MultisigAlreadySet
+        );
+        require!(multisig_pda != Pubkey::default(), VaultError::ZeroPubkey);
+        ctx.accounts.vault.multisig_pda = multisig_pda;
+        emit!(MultisigPdaSet {
+            vault: ctx.accounts.vault.key(),
+            multisig_pda,
+            ts: Clock::get()?.unix_timestamp,
         });
         Ok(())
     }
@@ -532,12 +568,18 @@ pub struct Vault {
     // keeps the struct flat + skips Option<> discriminator overhead.
     pub pending_authority: Pubkey,
     pub pending_authority_unlock_ts: i64,
+    // #22 HIGH #6 + #7 — Squads multisig binding for production. Zero
+    // sentinel = no multisig set yet (devnet/dev keypair phase). Once
+    // set via set_multisig_pda (one-time, authority-gated), any future
+    // authority rotation must target a Squads vault PDA derived from
+    // this multisig pubkey (asserted in propose_authority_rotation).
+    pub multisig_pda: Pubkey,
 }
 
 impl Vault {
     // 8 (discriminator) + 32×5 (pubkeys) + 8×2 (u64s) + 2×2 (u16s) + 1 + 1
-    // + 32 (pending_authority) + 8 (pending_authority_unlock_ts)
-    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 * 2 + 1 + 1 + 32 + 8;
+    // + 32 (pending_authority) + 8 (unlock_ts) + 32 (multisig_pda)
+    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 * 2 + 1 + 1 + 32 + 8 + 32;
 }
 
 #[derive(Accounts)]
@@ -748,6 +790,18 @@ pub struct SetPaused<'info> {
     pub usdc_mint: InterfaceAccount<'info, Mint>,
 }
 
+/// #22 HIGH #6 + #7: context for set_multisig_pda (one-time binding) +
+/// any future admin instructions that only need authority + vault.
+#[derive(Accounts)]
+pub struct AdminVault<'info> {
+    #[account(address = vault.authority)]
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [b"vault", usdc_mint.key().as_ref()], bump = vault.bump)]
+    pub vault: Account<'info, Vault>,
+    #[account(address = vault.usdc_mint @ VaultError::WrongUsdcMint)]
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+}
+
 #[derive(Accounts)]
 pub struct EmergencyWithdraw<'info> {
     /// Vault authority (production: Squads multisig vault PDA). Pause MUST
@@ -838,6 +892,14 @@ pub struct AuthorityRotated {
 
 #[event]
 #[derive(Debug)]
+pub struct MultisigPdaSet {
+    pub vault: Pubkey,
+    pub multisig_pda: Pubkey,
+    pub ts: i64,
+}
+
+#[event]
+#[derive(Debug)]
 pub struct AuthorityRotationProposed {
     pub vault: Pubkey,
     pub current_authority: Pubkey,
@@ -914,6 +976,8 @@ pub enum VaultError {
     EmergencyDestinationNotMultisigOwned,
     #[msg("Solvency invariant broken: usdc_vault.amount < vault.total_staked")]
     SolvencyInvariantBroken,
+    #[msg("multisig_pda is already set — single-write field per #22 HIGH #6/#7")]
+    MultisigAlreadySet,
     #[msg("Proposed authority must differ from current authority")]
     SameAuthority,
     #[msg("No pending authority rotation to finalize/cancel")]
