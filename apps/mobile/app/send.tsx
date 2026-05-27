@@ -15,6 +15,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Share,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +28,7 @@ export default function SendScreen() {
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
+  const [claimUrl, setClaimUrl] = useState<string | null>(null);
 
   const handleSend = async () => {
     if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
@@ -47,22 +50,74 @@ export default function SendScreen() {
         currency: 'USDC',
         note: note || undefined,
       });
-      Alert.alert(
-        'Transfer sent!',
-        `Claim link: ${transfer.claimUrl ?? 'check Activity for details'}`,
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      if (transfer.claimUrl) {
+        setClaimUrl(transfer.claimUrl);
+      } else {
+        Alert.alert('Sent', 'Check Activity for details', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      }
     } catch (err) {
       Alert.alert('Send failed', (err as Error).message);
     } finally {
       setLoading(false);
     }
   };
+
+  const shareViaWhatsApp = async () => {
+    if (!claimUrl) return;
+    const phoneDigits = phone.replace(/[^\d]/g, '');
+    const message = `I sent you $${amount} on Ping${note ? ` (${note})` : ''}. Claim it here: ${claimUrl}`;
+    const url = `whatsapp://send?phone=${phoneDigits}&text=${encodeURIComponent(message)}`;
+    const fallback = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
+    const canOpen = await Linking.canOpenURL(url);
+    Linking.openURL(canOpen ? url : fallback);
+  };
+
+  const shareViaSheet = async () => {
+    if (!claimUrl) return;
+    const message = `I sent you $${amount} on Ping${note ? ` (${note})` : ''}. Claim it here: ${claimUrl}`;
+    await Share.share({ message, url: claimUrl });
+  };
+
+  if (claimUrl) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <View style={styles.successBadge}>
+            <Text style={styles.successAmount}>${amount}</Text>
+            <Text style={styles.successTo}>to {phone}</Text>
+          </View>
+          <Text style={styles.successHeader}>Send the claim link</Text>
+          <Text style={styles.successSub}>
+            Your recipient claims the money by opening this link. It expires in 7 days.
+          </Text>
+
+          <TouchableOpacity style={styles.waButton} onPress={shareViaWhatsApp}>
+            <Text style={styles.waButtonText}>Send via WhatsApp</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.shareButton} onPress={shareViaSheet}>
+            <Text style={styles.shareButtonText}>Share another way…</Text>
+          </TouchableOpacity>
+
+          <View style={styles.linkBox}>
+            <Text style={styles.linkLabel}>Or copy the link</Text>
+            <Text selectable style={styles.linkValue}>
+              {claimUrl}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -175,4 +230,49 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
+  successBadge: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    backgroundColor: '#10B98115',
+    borderRadius: 16,
+    marginBottom: 24,
+  },
+  successAmount: { color: '#10B981', fontSize: 48, fontWeight: '700' },
+  successTo: { color: '#A0A0C0', fontSize: 16, marginTop: 4 },
+  successHeader: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  successSub: { color: '#A0A0C0', fontSize: 14, marginBottom: 24, lineHeight: 20 },
+  waButton: {
+    backgroundColor: '#25D366',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  waButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
+  shareButton: {
+    backgroundColor: '#2A2A4A',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  shareButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '500' },
+  linkBox: {
+    backgroundColor: '#2A2A4A',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  linkLabel: { color: '#A0A0C0', fontSize: 12, marginBottom: 6 },
+  linkValue: { color: '#FFFFFF', fontSize: 13, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  doneButton: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  doneButtonText: { color: '#6B6B8C', fontSize: 15 },
 });
