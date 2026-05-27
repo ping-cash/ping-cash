@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
+#[cfg(feature = "pyth-real")]
 use pyth_sdk_solana::state::SolanaPriceAccount;
 
 // ============================================================================
@@ -356,40 +357,46 @@ pub mod pomm {
     /// ≈ 7 days (ADR 0009 "7-day EMA" mandate).
     pub fn update_ema(ctx: Context<UpdateEma>) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
-        let price_feed = SolanaPriceAccount::account_info_to_feed(
-            &ctx.accounts.pyth_price_account,
-        )
-        .map_err(|_| error!(PommError::OracleAccountInvalid))?;
-        let price = price_feed
-            .get_price_no_older_than(now, MAX_PYTH_STALENESS_SEC as u64)
-            .ok_or(error!(PommError::OracleStaleOrInvalid))?;
-        require!(price.price > 0, PommError::OracleStaleOrInvalid);
-        // Pre-audit CRIT (2026-05-27 sub-agent review on #22): Pyth
-        // confidence-interval check. Reject if publishers disagree by more
-        // than MAX_PYTH_CONF_BPS (1%) of the median price — same threshold
-        // as internal-swap (cross-program consistency).
-        let abs_price = price.price as u64;
-        let conf_bps = (price.conf as u128)
-            .checked_mul(10_000)
-            .ok_or(PommError::MathOverflow)?
-            .checked_div(abs_price as u128)
-            .ok_or(PommError::MathOverflow)?;
-        require!(
-            conf_bps <= MAX_PYTH_CONF_BPS as u128,
-            PommError::OracleConfidenceTooWide
-        );
-        // Convert Pyth i64 mantissa + expo to Q64.64
-        let mantissa = price.price as u128;
-        let q64_64_one: u128 = 1u128 << 64;
-        let abs_expo = price.expo.unsigned_abs() as u32;
-        let scale = 10u128
-            .checked_pow(abs_expo)
-            .ok_or(PommError::MathOverflow)?;
-        let pyth_x64 = mantissa
-            .checked_mul(q64_64_one)
-            .ok_or(PommError::MathOverflow)?
-            .checked_div(scale)
-            .ok_or(PommError::MathOverflow)?;
+        // DEVNET (default) — mock $0.10/PING as Q64.64. Same rationale as
+        // internal-swap's read_pyth_ping_per_usdc_x64: avoid the anchor
+        // 0.30.1 ↔ pyth-sdk-solana 0.10.x AccountInfo type split for
+        // devnet validation. Mainnet build adds `pyth-real` feature.
+        #[cfg(not(feature = "pyth-real"))]
+        let pyth_x64: u128 = (1u128 << 64) / 10;
+
+        #[cfg(feature = "pyth-real")]
+        let pyth_x64 = {
+            let price_feed = SolanaPriceAccount::account_info_to_feed(
+                &ctx.accounts.pyth_price_account,
+            )
+            .map_err(|_| error!(PommError::OracleAccountInvalid))?;
+            let price = price_feed
+                .get_price_no_older_than(now, MAX_PYTH_STALENESS_SEC as u64)
+                .ok_or(error!(PommError::OracleStaleOrInvalid))?;
+            require!(price.price > 0, PommError::OracleStaleOrInvalid);
+            // Pre-audit CRIT confidence-interval check.
+            let abs_price = price.price as u64;
+            let conf_bps = (price.conf as u128)
+                .checked_mul(10_000)
+                .ok_or(PommError::MathOverflow)?
+                .checked_div(abs_price as u128)
+                .ok_or(PommError::MathOverflow)?;
+            require!(
+                conf_bps <= MAX_PYTH_CONF_BPS as u128,
+                PommError::OracleConfidenceTooWide
+            );
+            let mantissa = price.price as u128;
+            let q64_64_one: u128 = 1u128 << 64;
+            let abs_expo = price.expo.unsigned_abs() as u32;
+            let scale = 10u128
+                .checked_pow(abs_expo)
+                .ok_or(PommError::MathOverflow)?;
+            mantissa
+                .checked_mul(q64_64_one)
+                .ok_or(PommError::MathOverflow)?
+                .checked_div(scale)
+                .ok_or(PommError::MathOverflow)?
+        };
 
         let treasury = &mut ctx.accounts.treasury;
         if treasury.ema_update_ts == 0 {

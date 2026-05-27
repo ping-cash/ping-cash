@@ -18,6 +18,12 @@ idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 # L-01 ADR 0018 guard (mirrors ping-token): mainnet-ready requires audit-passed
 mainnet-ready = []
 audit-passed = []
+# Devnet builds default to OFF — read_pyth_ping_per_usdc_x64 returns a
+# fixed mock price (1 PING = $0.10) so the program compiles + deploys
+# without the pyth-sdk-solana ↔ anchor-lang 0.30.1 AccountInfo type
+# split blocking devnet validation. Mainnet build adds `pyth-real` to
+# wire the real Pyth integration (with confidence + staleness checks).
+pyth-real = ["dep:pyth-sdk-solana"]
 
 [dependencies]
 anchor-lang = "0.30.1"
@@ -28,8 +34,8 @@ anchor-spl = { version = "0.30.1", features = ["token_2022"] }
 # crate version keeps the Pyth integration's type signatures unified.
 solana-program = "=1.18.17"
 # Per #62 rebuild scope (ADR 0009 H-04): Pyth price-feed verification.
-# Reads SOL/USDC + $PING/USD price accounts on swap-time. The pinned
-# major.minor (0.10) tracks the Solana 1.18-compatible release; pinning
-# patch via `=0.10.5` keeps reproducible builds deterministic for audit.
-pyth-sdk-solana = "=0.10.6"
+# OPTIONAL — only pulled in when `pyth-real` feature is set (mainnet
+# build). Devnet defaults to mock price to avoid the anchor-lang 0.30.1
+# ↔ pyth-sdk-solana solana-program 1.x/2.x AccountInfo type split.
+pyth-sdk-solana = { version = "=0.10.6", optional = true }
 

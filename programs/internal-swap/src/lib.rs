@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
+#[cfg(feature = "pyth-real")]
 use pyth_sdk_solana::state::SolanaPriceAccount;
 
 // ============================================================================
@@ -465,55 +466,57 @@ pub const MAX_PYTH_STALENESS_SEC: i64 = 60;
 pub const MAX_PYTH_CONF_BPS: u64 = 100; // 100 bps = 1%
 
 fn read_pyth_ping_per_usdc_x64(
-    price_account: &AccountInfo,
-    clock: &Clock,
+    _price_account: &AccountInfo,
+    _clock: &Clock,
 ) -> Result<u128> {
-    // KNOWN AUDIT ISSUE: pyth-sdk-solana 0.10.x uses solana-program 2.x's
-    // `solana_account_info::AccountInfo` while anchor-lang 0.30.1's
-    // prelude::AccountInfo comes from solana-program 1.x. They're memory-
-    // layout identical but cargo's type system sees them as distinct.
-    // Resolution path (OtterSec engagement scope):
-    //   - Migrate to anchor-lang 0.31+ (solana 2.x types throughout)
-    //   - OR pin pyth-sdk-solana to <0.10.x via patch-crates-io with custom
-    //     fork
-    // For now this is the source-side scaffold; the compile-time bridge
-    // gets added via toolchain config in the OtterSec build environment.
-    let price_feed = SolanaPriceAccount::account_info_to_feed(price_account)
-        .map_err(|_| error!(SwapError::OracleAccountInvalid))?;
-    let price = price_feed
-        .get_price_no_older_than(clock.unix_timestamp, MAX_PYTH_STALENESS_SEC as u64)
-        .ok_or(error!(SwapError::OracleStaleOrInvalid))?;
-    // Reject if price is non-positive (Pyth permits negative for derivatives;
-    // for a spot price feed we treat this as bad data).
-    require!(price.price > 0, SwapError::OracleStaleOrInvalid);
-    // Pre-audit CRIT — confidence-interval check. Reject if publishers
-    // disagree by more than MAX_PYTH_CONF_BPS (1%) of the median price.
-    // (price.conf is u64; price.price is i64 — already checked > 0 above.)
-    let abs_price = price.price as u64;
-    let conf_bps = (price.conf as u128)
-        .checked_mul(10_000)
-        .ok_or(SwapError::MathOverflow)?
-        .checked_div(abs_price as u128)
-        .ok_or(SwapError::MathOverflow)?;
-    require!(
-        conf_bps <= MAX_PYTH_CONF_BPS as u128,
-        SwapError::OracleConfidenceTooWide
-    );
-    // Convert Pyth's i64 + expo into a Q64.64 fixed-point matching
-    // assert_amm_within_oracle_band's amm_x64 scale. Pyth.expo is typically
-    // negative (e.g., -8 means price is in units of 10^-8 USD per unit).
-    let mantissa = price.price as u128;
-    let q64_64_one: u128 = 1u128 << 64;
-    // value_x64 = mantissa * 2^64 / 10^|expo|
-    let abs_expo = price.expo.unsigned_abs() as u32;
-    let scale = 10u128
-        .checked_pow(abs_expo)
-        .ok_or(SwapError::MathOverflow)?;
-    mantissa
-        .checked_mul(q64_64_one)
-        .ok_or(SwapError::MathOverflow)?
-        .checked_div(scale)
-        .ok_or(SwapError::MathOverflow.into())
+    // DEVNET (default) — return mock $0.10/PING as Q64.64 so the program
+    // compiles + deploys without pyth-sdk-solana. Devnet doesn't need a
+    // real oracle to validate the swap path; the band-check assertion
+    // still runs against this mock price.
+    #[cfg(not(feature = "pyth-real"))]
+    {
+        // 0.10 × 2^64 = (1 << 64) / 10
+        return Ok((1u128 << 64) / 10);
+    }
+
+    // MAINNET — real Pyth integration. Gated on `pyth-real` feature,
+    // which in turn requires resolving the anchor-lang 0.30.1 ↔
+    // pyth-sdk-solana 0.10.x AccountInfo type split (anchor 0.31
+    // migration OR custom fork via [patch.crates-io]). Audit-readiness
+    // checks below (confidence interval, staleness) preserved verbatim
+    // from the pre-stub source so the OtterSec engagement reviews the
+    // same code that will deploy to mainnet.
+    #[cfg(feature = "pyth-real")]
+    {
+        let price_feed = SolanaPriceAccount::account_info_to_feed(_price_account)
+            .map_err(|_| error!(SwapError::OracleAccountInvalid))?;
+        let price = price_feed
+            .get_price_no_older_than(_clock.unix_timestamp, MAX_PYTH_STALENESS_SEC as u64)
+            .ok_or(error!(SwapError::OracleStaleOrInvalid))?;
+        require!(price.price > 0, SwapError::OracleStaleOrInvalid);
+        let abs_price = price.price as u64;
+        let conf_bps = (price.conf as u128)
+            .checked_mul(10_000)
+            .ok_or(SwapError::MathOverflow)?
+            .checked_div(abs_price as u128)
+            .ok_or(SwapError::MathOverflow)?;
+        require!(
+            conf_bps <= MAX_PYTH_CONF_BPS as u128,
+            SwapError::OracleConfidenceTooWide
+        );
+        // Convert Pyth's i64 + expo into a Q64.64 fixed-point.
+        let mantissa = price.price as u128;
+        let q64_64_one: u128 = 1u128 << 64;
+        let abs_expo = price.expo.unsigned_abs() as u32;
+        let scale = 10u128
+            .checked_pow(abs_expo)
+            .ok_or(SwapError::MathOverflow)?;
+        mantissa
+            .checked_mul(q64_64_one)
+            .ok_or(SwapError::MathOverflow)?
+            .checked_div(scale)
+            .ok_or(SwapError::MathOverflow.into())
+    }
 }
 
 fn quote_ping_to_usdc(
