@@ -60,6 +60,7 @@ pub mod internal_swap {
         // #22 HIGH #5 — initialize pending-rotation fields to zero-sentinels.
         pool.pending_authority = Pubkey::default();
         pool.pending_authority_unlock_ts = 0;
+        pool.multisig_pda = Pubkey::default();
 
         // M-04 fix (#22 c.4527278904): dashboards/indexers need a creation
         // event to know when a pool exists + its config. Without this, the
@@ -282,6 +283,15 @@ pub mod internal_swap {
             new_authority != ctx.accounts.pool.authority,
             SwapError::SameAuthority
         );
+        // #22 HIGH #6 + #7: enforce Squads vault PDA binding once
+        // multisig_pda is set (post-ceremony). Mirrors earn-vault f73ed68.
+        if ctx.accounts.pool.multisig_pda != Pubkey::default() {
+            squads_multisig::assert_is_vault_pda(
+                &new_authority,
+                &ctx.accounts.pool.multisig_pda,
+                0,
+            )?;
+        }
         let now = Clock::get()?.unix_timestamp;
         let unlock_ts = now
             .checked_add(AUTHORITY_ROTATION_TIMELOCK_SEC)
@@ -321,6 +331,28 @@ pub mod internal_swap {
             pool: ctx.accounts.pool.key(),
             old_authority,
             new_authority,
+        });
+        Ok(())
+    }
+
+    /// One-time Squads multisig binding (#22 HIGH #6 + #7) — mirrors
+    /// earn-vault::set_multisig_pda (f73ed68). Records the canonical
+    /// Squads multisig pubkey on this pool so future rotations are
+    /// constrained to its vault PDAs.
+    pub fn set_multisig_pda(
+        ctx: Context<AdminPool>,
+        multisig_pda: Pubkey,
+    ) -> Result<()> {
+        require!(
+            ctx.accounts.pool.multisig_pda == Pubkey::default(),
+            SwapError::MultisigAlreadySet
+        );
+        require!(multisig_pda != Pubkey::default(), SwapError::ZeroPubkey);
+        ctx.accounts.pool.multisig_pda = multisig_pda;
+        emit!(MultisigPdaSet {
+            pool: ctx.accounts.pool.key(),
+            multisig_pda,
+            ts: Clock::get()?.unix_timestamp,
         });
         Ok(())
     }
@@ -595,11 +627,13 @@ pub struct Pool {
     // sentinel pattern matches earn-vault batch-2.
     pub pending_authority: Pubkey,
     pub pending_authority_unlock_ts: i64,
+    // #22 HIGH #6 + #7 — Squads multisig binding (mirrors earn-vault f73ed68).
+    pub multisig_pda: Pubkey,
 }
 
 impl Pool {
-    // 8 disc + 32×5 pubkeys + 8×2 + 2 + 1 + 1 + 32 (pending_authority) + 8 (unlock_ts)
-    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 + 1 + 1 + 32 + 8;
+    // 8 disc + 32×5 + 8×2 + 2 + 1 + 1 + 32 (pending) + 8 (unlock_ts) + 32 (multisig_pda)
+    pub const LEN: usize = 8 + 32 * 5 + 8 * 2 + 2 + 1 + 1 + 32 + 8 + 32;
 }
 
 #[derive(Accounts)]
@@ -848,6 +882,14 @@ pub struct AuthorityRotationCancelled {
     pub ts: i64,
 }
 
+#[event]
+#[derive(Debug)]
+pub struct MultisigPdaSet {
+    pub pool: Pubkey,
+    pub multisig_pda: Pubkey,
+    pub ts: i64,
+}
+
 #[error_code]
 pub enum SwapError {
     #[msg("Pool is paused")]
@@ -890,4 +932,6 @@ pub enum SwapError {
     NoPendingRotation,
     #[msg("Authority rotation timelock (7 days) has not elapsed yet")]
     TimelockNotElapsed,
+    #[msg("multisig_pda is already set — single-write field per #22 HIGH #6/#7")]
+    MultisigAlreadySet,
 }

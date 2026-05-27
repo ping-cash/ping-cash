@@ -57,6 +57,7 @@ pub mod pomm {
         // #22 HIGH #5 — initialize pending-rotation fields to zero-sentinels.
         treasury.pending_authority = Pubkey::default();
         treasury.pending_authority_unlock_ts = 0;
+        treasury.multisig_pda = Pubkey::default();
         // C-04: initialize 24h cap-window accountant
         let now = Clock::get()?.unix_timestamp;
         treasury.window_start_ts = now;
@@ -251,6 +252,14 @@ pub mod pomm {
             new_authority != ctx.accounts.treasury.authority,
             PommError::SameAuthority
         );
+        // #22 HIGH #6 + #7: enforce Squads vault PDA binding post-ceremony.
+        if ctx.accounts.treasury.multisig_pda != Pubkey::default() {
+            squads_multisig::assert_is_vault_pda(
+                &new_authority,
+                &ctx.accounts.treasury.multisig_pda,
+                0,
+            )?;
+        }
         let now = Clock::get()?.unix_timestamp;
         let unlock_ts = now
             .checked_add(AUTHORITY_ROTATION_TIMELOCK_SEC)
@@ -289,6 +298,26 @@ pub mod pomm {
             treasury: ctx.accounts.treasury.key(),
             old_authority,
             new_authority,
+        });
+        Ok(())
+    }
+
+    /// One-time Squads multisig binding (#22 HIGH #6 + #7). Mirrors
+    /// earn-vault::set_multisig_pda (f73ed68).
+    pub fn set_multisig_pda(
+        ctx: Context<AdminTreasury>,
+        multisig_pda: Pubkey,
+    ) -> Result<()> {
+        require!(
+            ctx.accounts.treasury.multisig_pda == Pubkey::default(),
+            PommError::MultisigAlreadySet
+        );
+        require!(multisig_pda != Pubkey::default(), PommError::ZeroPubkey);
+        ctx.accounts.treasury.multisig_pda = multisig_pda;
+        emit!(MultisigPdaSet {
+            treasury: ctx.accounts.treasury.key(),
+            multisig_pda,
+            ts: Clock::get()?.unix_timestamp,
         });
         Ok(())
     }
@@ -489,6 +518,8 @@ pub struct Treasury {
     // #22 HIGH #5 — ADR 0019 7-day timelock on authority rotation.
     pub pending_authority: Pubkey,
     pub pending_authority_unlock_ts: i64,
+    // #22 HIGH #6 + #7 — Squads multisig binding (mirrors earn-vault f73ed68).
+    pub multisig_pda: Pubkey,
 }
 
 /// C-03 fix: EMA decay constant. 200 bps = 2% new-sample weight, 98%
@@ -513,8 +544,8 @@ pub const AUTHORITY_ROTATION_TIMELOCK_SEC: i64 = 7 * 86_400;
 
 impl Treasury {
     // 8 disc + 3*32 keys + 3*8 u64 + 1 bool + 1 bump + 8 i64 + 8 u64
-    //   + 16 u128 + 8 i64 (EMA) + 32 pubkey + 8 i64 (timelock)
-    pub const LEN: usize = 8 + 32 * 3 + 8 * 3 + 1 + 1 + 8 + 8 + 16 + 8 + 32 + 8;
+    //   + 16 u128 + 8 i64 (EMA) + 32 pubkey + 8 i64 (timelock) + 32 multisig_pda
+    pub const LEN: usize = 8 + 32 * 3 + 8 * 3 + 1 + 1 + 8 + 8 + 16 + 8 + 32 + 8 + 32;
 }
 
 #[derive(Accounts)]
@@ -834,6 +865,14 @@ pub struct AuthorityRotationCancelled {
 
 #[event]
 #[derive(Debug)]
+pub struct MultisigPdaSet {
+    pub treasury: Pubkey,
+    pub multisig_pda: Pubkey,
+    pub ts: i64,
+}
+
+#[event]
+#[derive(Debug)]
 pub struct TreasuryInitialized {
     pub treasury: Pubkey,
     pub authority: Pubkey,
@@ -892,6 +931,8 @@ pub enum PommError {
     NoPendingRotation,
     #[msg("Authority rotation timelock (7 days) has not elapsed yet")]
     TimelockNotElapsed,
+    #[msg("multisig_pda is already set — single-write field per #22 HIGH #6/#7")]
+    MultisigAlreadySet,
     #[msg("EMA accumulator has never been updated — call update_ema first")]
     EmaUnseeded,
     #[msg("EMA is stale (>MAX_EMA_STALENESS_SEC since last update) — call update_ema first")]
