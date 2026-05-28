@@ -12,7 +12,6 @@ import Animated, {
   useSharedValue,
   withDelay,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { authStore } from '../lib/auth-store';
@@ -24,54 +23,42 @@ export default function LandingScreen() {
   const router = useRouter();
   const { height } = useWindowDimensions();
 
-  const logoOpacity = useSharedValue(0);
-  const logoScale = useSharedValue(0.8);
-  const taglineOpacity = useSharedValue(0);
-  const taglineY = useSharedValue(20);
-  const ctaOpacity = useSharedValue(0);
-  const ctaY = useSharedValue(40);
-  const orbOpacity = useSharedValue(0);
+  // Entry animation: keep elements VISIBLE from frame 1 (so the
+  // accessibility tree + Maestro see them) and only animate subtle
+  // translateY for polish. Opacity-from-zero animations were filtering
+  // children out of the accessibility tree.
+  const logoScale = useSharedValue(0.92);
+  const taglineY = useSharedValue(16);
+  const ctaY = useSharedValue(24);
 
   useEffect(() => {
-    logoOpacity.value = withTiming(1, { duration: 700 });
     logoScale.value = withSpring(1, { damping: 14, stiffness: 180 });
-    orbOpacity.value = withDelay(150, withTiming(1, { duration: 1100 }));
-    taglineOpacity.value = withDelay(300, withTiming(1, { duration: 500 }));
     taglineY.value = withDelay(
-      300,
+      120,
       withSpring(0, { damping: 18, stiffness: 180 })
     );
-    ctaOpacity.value = withDelay(600, withTiming(1, { duration: 500 }));
-    ctaY.value = withDelay(600, withSpring(0, { damping: 18, stiffness: 180 }));
+    ctaY.value = withDelay(240, withSpring(0, { damping: 18, stiffness: 180 }));
     if (authStore.isAuthenticated()) {
       router.replace('/(tabs)');
     }
   }, []);
 
   const logoAnim = useAnimatedStyle(() => ({
-    opacity: logoOpacity.value,
     transform: [{ scale: logoScale.value }],
   }));
   const taglineAnim = useAnimatedStyle(() => ({
-    opacity: taglineOpacity.value,
     transform: [{ translateY: taglineY.value }],
   }));
   const ctaAnim = useAnimatedStyle(() => ({
-    opacity: ctaOpacity.value,
     transform: [{ translateY: ctaY.value }],
-  }));
-  const orbAnim = useAnimatedStyle(() => ({
-    opacity: orbOpacity.value,
   }));
 
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
       {/* Soft brand-tinted orb glow at top */}
-      <Animated.View style={[styles.orb, { top: height * 0.05 }, orbAnim]} />
-      <Animated.View
-        style={[styles.orbAccent, { top: height * 0.25 }, orbAnim]}
-      />
+      <View style={[styles.orb, { top: height * 0.05 }]} />
+      <View style={[styles.orbAccent, { top: height * 0.25 }]} />
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.brandingArea}>
