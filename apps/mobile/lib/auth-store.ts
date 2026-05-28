@@ -16,15 +16,35 @@ class AuthStore {
   refreshToken: string | null = null;
 
   async hydrate(): Promise<void> {
-    const [token, refresh, userStr] = await Promise.all([
-      AsyncStorage.getItem(TOKEN_KEY),
-      AsyncStorage.getItem(REFRESH_KEY),
-      AsyncStorage.getItem(USER_KEY),
-    ]);
-    this.accessToken = token;
-    this.refreshToken = refresh;
-    this.user = userStr ? (JSON.parse(userStr) as User) : null;
-    if (this.accessToken) api.setToken(this.accessToken);
+    // EVERY operation must be try/caught — this runs at launch and any
+    // uncaught throw becomes an RCTExceptionsManager.reportException →
+    // fatal crash before any UI renders.
+    try {
+      const [token, refresh, userStr] = await Promise.all([
+        AsyncStorage.getItem(TOKEN_KEY).catch(() => null),
+        AsyncStorage.getItem(REFRESH_KEY).catch(() => null),
+        AsyncStorage.getItem(USER_KEY).catch(() => null),
+      ]);
+      this.accessToken = token;
+      this.refreshToken = refresh;
+      if (userStr) {
+        try {
+          this.user = JSON.parse(userStr) as User;
+        } catch {
+          // Corrupted user record. Treat as logged out + clear it.
+          this.user = null;
+          AsyncStorage.removeItem(USER_KEY).catch(() => {});
+        }
+      } else {
+        this.user = null;
+      }
+      if (this.accessToken) api.setToken(this.accessToken);
+    } catch {
+      // Storage layer failure → start with empty auth, do not crash.
+      this.accessToken = null;
+      this.refreshToken = null;
+      this.user = null;
+    }
   }
 
   async setSession(input: {
