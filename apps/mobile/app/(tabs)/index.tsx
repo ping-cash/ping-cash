@@ -14,11 +14,6 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { api } from '../../lib/api';
@@ -35,13 +30,6 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const user = authStore.user;
 
-  const balanceOpacity = useSharedValue(0);
-  const balanceY = useSharedValue(12);
-  const balanceAnim = useAnimatedStyle(() => ({
-    opacity: balanceOpacity.value,
-    transform: [{ translateY: balanceY.value }],
-  }));
-
   const load = async () => {
     try {
       const balance = await api.getBalance();
@@ -56,8 +44,6 @@ export default function HomeScreen() {
       setBalanceUsd('0.00');
     } finally {
       setLoading(false);
-      balanceOpacity.value = withSpring(1);
-      balanceY.value = withSpring(0);
     }
   };
 
@@ -130,15 +116,12 @@ export default function HomeScreen() {
                 </Heading>
               </View>
             </View>
-            <Animated.View
-              style={[
-                {
-                  flexDirection: 'row',
-                  alignItems: 'flex-end',
-                  marginTop: spacing.md,
-                },
-                balanceAnim,
-              ]}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-end',
+                marginTop: spacing.md,
+              }}
             >
               <Heading
                 variant="bodyLargeStrong"
@@ -155,7 +138,7 @@ export default function HomeScreen() {
               >
                 .{cents ?? '00'}
               </Heading>
-            </Animated.View>
+            </View>
             <View style={styles.pingPill}>
               <View style={styles.pingDot} />
               <Heading variant="bodySmall" color="secondary">
@@ -267,24 +250,19 @@ function ActionTile({
   onPress: () => void;
   accent: string;
 }) {
-  const scale = useSharedValue(1);
-  const anim = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
   return (
-    <Animated.View style={[styles.actionTileWrap, anim]}>
+    <View style={styles.actionTileWrap}>
       <Pressable
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          } catch {}
           onPress();
         }}
-        onPressIn={() => {
-          scale.value = withSpring(0.94, { damping: 14, stiffness: 240 });
-        }}
-        onPressOut={() => {
-          scale.value = withSpring(1, { damping: 14, stiffness: 240 });
-        }}
-        style={styles.actionTile}
+        style={({ pressed }) => [
+          styles.actionTile,
+          pressed && { opacity: 0.7 },
+        ]}
       >
         <View
           style={[
@@ -302,7 +280,7 @@ function ActionTile({
           {label}
         </Heading>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }
 

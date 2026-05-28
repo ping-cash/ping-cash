@@ -1,24 +1,21 @@
 /**
- * Ping primary Button — supports primary/secondary/ghost/whatsapp variants,
- * built-in haptic feedback on press, scale animation, brand-tinted shadow
- * on primary variant.
+ * Ping primary Button — primary/secondary/ghost/whatsapp/subtle variants.
+ * Native Pressable + opacity-on-press. No Reanimated wrapping to avoid
+ * Animated.createAnimatedComponent(Pressable) + New Architecture crash
+ * mode (Reanimated 3.16.x + newArchEnabled=true).
  */
 import { ReactNode } from 'react';
 import {
   Pressable,
   Text,
+  View,
   ViewStyle,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, spacing, typography, shadows } from '../../lib/theme';
+import { colors, radii, spacing, shadows } from '../../lib/theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'whatsapp' | 'subtle';
 
@@ -36,8 +33,6 @@ type Props = {
   children?: ReactNode;
 };
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export function Button({
   label,
   onPress,
@@ -50,24 +45,17 @@ export function Button({
   size = 'lg',
   style,
 }: Props) {
-  const scale = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.97, { damping: 15, stiffness: 250 });
-  };
-  const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 250 });
-  };
   const handlePress = () => {
     if (disabled || loading) return;
-    Haptics.impactAsync(
-      variant === 'primary' || variant === 'whatsapp'
-        ? Haptics.ImpactFeedbackStyle.Medium
-        : Haptics.ImpactFeedbackStyle.Light
-    );
+    try {
+      Haptics.impactAsync(
+        variant === 'primary' || variant === 'whatsapp'
+          ? Haptics.ImpactFeedbackStyle.Medium
+          : Haptics.ImpactFeedbackStyle.Light
+      );
+    } catch {
+      // Haptics on some devices/configs may throw — never block the action.
+    }
     onPress();
   };
 
@@ -75,34 +63,29 @@ export function Button({
   const sz = sizeStyle[size];
 
   return (
-    <AnimatedPressable
+    <Pressable
       onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       disabled={disabled || loading}
       accessible
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       testID={`btn-${label}`}
-      style={[
+      style={({ pressed }) => [
         styles.base,
         v.container,
         { paddingVertical: sz.padY, paddingHorizontal: sz.padX },
         fullWidth && styles.fullWidth,
         (disabled || loading) && styles.disabled,
         variant === 'primary' && shadows.brand,
-        animatedStyle,
+        pressed && { opacity: 0.85 },
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator
-          color={v.text.color as string}
-          size={size === 'sm' ? 'small' : 'small'}
-        />
+        <ActivityIndicator color={v.text.color as string} size="small" />
       ) : (
-        <>
+        <View style={styles.inner}>
           {icon && (
             <Ionicons
               name={icon}
@@ -120,9 +103,9 @@ export function Button({
               style={{ marginLeft: spacing.sm }}
             />
           )}
-        </>
+        </View>
       )}
-    </AnimatedPressable>
+    </Pressable>
   );
 }
 
@@ -132,6 +115,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.full,
+  },
+  inner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fullWidth: { alignSelf: 'stretch' },
   disabled: { opacity: 0.45 },

@@ -18,13 +18,6 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { api } from '../lib/api';
@@ -39,11 +32,6 @@ export default function SendScreen() {
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
-  const successScale = useSharedValue(0);
-  const successAnim = useAnimatedStyle(() => ({
-    transform: [{ scale: successScale.value }],
-    opacity: successScale.value,
-  }));
 
   const handleSend = async () => {
     if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
@@ -70,10 +58,6 @@ export default function SendScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (transfer.claimUrl) {
         setClaimUrl(transfer.claimUrl);
-        successScale.value = withSequence(
-          withTiming(1.15, { duration: 280 }),
-          withSpring(1, { damping: 14, stiffness: 220 })
-        );
       } else {
         Alert.alert('Sent', 'Check Activity for details', [
           { text: 'OK', onPress: () => router.back() },
@@ -112,9 +96,9 @@ export default function SendScreen() {
         <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
           <ScrollView contentContainerStyle={styles.successScroll}>
             {/* Success badge */}
-            <Animated.View style={[styles.successBadge, successAnim]}>
+            <View style={styles.successBadge}>
               <Ionicons name="checkmark" size={48} color={colors.brand} />
-            </Animated.View>
+            </View>
 
             <Heading variant="displaySmall" align="center">
               ${amount} on the way

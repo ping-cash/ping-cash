@@ -1,5 +1,6 @@
 /**
- * Ping text Input — large touch target, focused-state ring, label/helper.
+ * Ping text Input — no Reanimated (to avoid new-arch crash). Plain
+ * focus-state border swap via React state.
  */
 import { useState } from 'react';
 import {
@@ -10,11 +11,6 @@ import {
   TextInputProps,
   ViewStyle,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, spacing, typography } from '../../lib/theme';
 
@@ -37,18 +33,17 @@ export function Input({
   ...inputProps
 }: Props) {
   const [focused, setFocused] = useState(false);
-  const ring = useSharedValue(0);
-  const ringStyle = useAnimatedStyle(() => ({
-    borderColor: focused ? colors.brand : colors.borderMedium,
-    shadowOpacity: ring.value * 0.4,
-  }));
-
   const jumbo = size === 'jumbo';
+
   return (
     <View style={[styles.wrapper, containerStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <Animated.View
-        style={[styles.field, jumbo && styles.fieldJumbo, ringStyle]}
+      <View
+        style={[
+          styles.field,
+          jumbo && styles.fieldJumbo,
+          { borderColor: focused ? colors.brand : colors.borderMedium },
+        ]}
       >
         {leftIcon && (
           <Ionicons
@@ -62,18 +57,16 @@ export function Input({
           {...inputProps}
           onFocus={e => {
             setFocused(true);
-            ring.value = withTiming(1, { duration: 180 });
             inputProps.onFocus?.(e);
           }}
           onBlur={e => {
             setFocused(false);
-            ring.value = withTiming(0, { duration: 180 });
             inputProps.onBlur?.(e);
           }}
           placeholderTextColor={colors.textQuaternary}
           style={[styles.input, jumbo && styles.inputJumbo, inputProps.style]}
         />
-      </Animated.View>
+      </View>
       {error ? (
         <Text style={[styles.helper, styles.error]}>{error}</Text>
       ) : helper ? (
@@ -94,9 +87,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: 16,
-    shadowColor: colors.brand,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 0 },
   },
   fieldJumbo: {
     paddingVertical: 24,

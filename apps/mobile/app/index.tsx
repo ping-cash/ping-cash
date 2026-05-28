@@ -1,21 +1,16 @@
 /**
- * Landing screen — premium first impression. Animated logo + tagline,
- * gradient brand mark, big CTA, trust micro-copy at footer.
+ * Landing screen — premium first impression. STATIC layout (no
+ * Reanimated entry animations) — past version crashed on real iOS
+ * device launch with the new arch + reanimated 3.x combo.
  */
 import { useEffect } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSpring,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { authStore } from '../lib/auth-store';
-import { colors, radii, spacing, typography } from '../lib/theme';
+import { colors, radii, spacing } from '../lib/theme';
 import { Button } from '../components/ui/Button';
 import { Heading } from '../components/ui/Heading';
 
@@ -23,66 +18,40 @@ export default function LandingScreen() {
   const router = useRouter();
   const { height } = useWindowDimensions();
 
-  // Entry animation: keep elements VISIBLE from frame 1 (so the
-  // accessibility tree + Maestro see them) and only animate subtle
-  // translateY for polish. Opacity-from-zero animations were filtering
-  // children out of the accessibility tree.
-  const logoScale = useSharedValue(0.92);
-  const taglineY = useSharedValue(16);
-  const ctaY = useSharedValue(24);
-
   useEffect(() => {
-    logoScale.value = withSpring(1, { damping: 14, stiffness: 180 });
-    taglineY.value = withDelay(
-      120,
-      withSpring(0, { damping: 18, stiffness: 180 })
-    );
-    ctaY.value = withDelay(240, withSpring(0, { damping: 18, stiffness: 180 }));
     if (authStore.isAuthenticated()) {
       router.replace('/(tabs)');
     }
   }, []);
 
-  const logoAnim = useAnimatedStyle(() => ({
-    transform: [{ scale: logoScale.value }],
-  }));
-  const taglineAnim = useAnimatedStyle(() => ({
-    transform: [{ translateY: taglineY.value }],
-  }));
-  const ctaAnim = useAnimatedStyle(() => ({
-    transform: [{ translateY: ctaY.value }],
-  }));
-
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      {/* Soft brand-tinted orb glow at top */}
+      {/* Static brand-tinted orbs */}
       <View style={[styles.orb, { top: height * 0.05 }]} />
       <View style={[styles.orbAccent, { top: height * 0.25 }]} />
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.brandingArea}>
-          <Animated.View style={[styles.logoMark, logoAnim]}>
+          <View style={styles.logoMark}>
             <Ionicons name="paper-plane" size={56} color={colors.brand} />
-          </Animated.View>
-          <Animated.View style={logoAnim}>
-            <Heading variant="displayHuge" align="center">
-              Ping
-            </Heading>
-          </Animated.View>
-          <Animated.View style={[{ marginTop: spacing.lg }, taglineAnim]}>
+          </View>
+          <Heading variant="displayHuge" align="center">
+            Ping
+          </Heading>
+          <View style={{ marginTop: spacing.lg }}>
             <Heading variant="h2" color="secondary" align="center">
               Send money like{'\n'}a message
             </Heading>
-          </Animated.View>
-          <Animated.View style={[styles.featurePillsRow, taglineAnim]}>
+          </View>
+          <View style={styles.featurePillsRow}>
             <FeaturePill icon="flash" label="Instant" />
             <FeaturePill icon="globe-outline" label="Worldwide" />
             <FeaturePill icon="lock-closed-outline" label="Non-custodial" />
-          </Animated.View>
+          </View>
         </View>
 
-        <Animated.View style={[styles.actions, ctaAnim]}>
+        <View style={styles.actions}>
           <Button
             label="Create account"
             onPress={() => router.push('/signup')}
@@ -105,7 +74,7 @@ export default function LandingScreen() {
               </Heading>
             </View>
           </View>
-        </Animated.View>
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -139,8 +108,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand,
     opacity: 0.18,
     alignSelf: 'center',
-    transform: [{ scale: 1 }],
-    // simulated blur via transparency layers
   },
   orbAccent: {
     position: 'absolute',
