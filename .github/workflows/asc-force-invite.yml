@@ -1,0 +1,80 @@
+# Force an explicit TestFlight invitation email (POST /v1/betaTesterInvitations).
+# Apple normally holds the email until a build is uploaded; this endpoint
+# fires the invite NOW. Useful for getting the founder enrolled in TestFlight
+# before the first build lands (so the email + redeem code arrive sooner).
+
+name: ASC Force Invitation Email
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Tester email'
+        required: true
+      bundle_id:
+        description: 'App bundle ID'
+        required: true
+        default: 'cash.ping.app'
+
+jobs:
+  invite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          EMAIL: ${{ inputs.email }}
+          BUNDLE_ID: ${{ inputs.bundle_id }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, jwt, requests, json, sys
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except Exception:
+              key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}',
+               'Content-Type': 'application/json'}
+          base = 'https://api.appstoreconnect.apple.com'
+          bundle_id = os.environ['BUNDLE_ID']
+          email     = os.environ['EMAIL']
+
+          apps = requests.get(f'{base}/v1/apps?filter[bundleId]={bundle_id}', headers=h).json()
+          app_id = apps['data'][0]['id']
+          tester = requests.get(
+              f'{base}/v1/betaTesters?filter[apps]={app_id}&filter[email]={email}&limit=1',
+              headers=h).json()
+          if not tester.get('data'):
+              print(f'::error::No tester record for {email}; run asc-invite-tester first')
+              sys.exit(1)
+          tester_id = tester['data'][0]['id']
+          print(f'tester_id={tester_id}  app_id={app_id}')
+
+          body = {
+              'data': {
+                  'type': 'betaTesterInvitations',
+                  'relationships': {
+                      'app':        {'data': {'type': 'apps',        'id': app_id}},
+                      'betaTester': {'data': {'type': 'betaTesters', 'id': tester_id}},
+                  }
+              }
+          }
+          r = requests.post(f'{base}/v1/betaTesterInvitations',
+              headers=h, data=json.dumps(body), timeout=20)
+          print(f'force_invite status={r.status_code} body={r.text[:600]}')
+          if r.status_code in (200, 201):
+              print(f'SUCCESS — invite email queued for {email}')
+          elif r.status_code == 409:
+              print(f'Already invited / build not ready yet — email comes after first build assignment')
+          else:
+              print(f'::warning::Unexpected status {r.status_code}')
+          PYEOF
