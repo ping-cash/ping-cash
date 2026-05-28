@@ -1,0 +1,24 @@
+appId: cash.ping.app
+---
+# From landing → sign in via test-phone bypass.
+- tapOn: 'Create account'
+- extendedWaitUntil:
+    visible: 'phone number'
+    timeout: 8000
+- takeScreenshot: 02-signup
+# Use the deterministic Ofcom test prefix that auth-service bypasses.
+- tapOn:
+    id: 'phone-input'
+    optional: true
+- inputText: '+447700900001'
+- tapOn:
+    text: 'Send verification code'
+    waitToSettleTimeoutMs: 2000
+- extendedWaitUntil:
+    visible: 'Check your phone'
+    timeout: 15000
+- takeScreenshot: 03-verify
+- inputText: '123456'
+- tapOn:
+    text: 'Verify and continue'
+    waitToSettleTimeoutMs: 2000

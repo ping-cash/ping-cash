@@ -1,0 +1,26 @@
+appId: cash.ping.app
+---
+# After /auth/verify → dashboard should render.
+- extendedWaitUntil:
+    visible: 'Available balance'
+    timeout: 20000
+- takeScreenshot: 04-home
+- assertVisible: 'Send'
+- assertVisible: 'Receive'
+# Quick tab walk — each must render without crash.
+- tapOn: 'Activity'
+- extendedWaitUntil:
+    visible: 'activity'
+    timeout: 5000
+- takeScreenshot: 05-history
+- tapOn: 'Earn'
+- extendedWaitUntil:
+    visible: 'APY'
+    timeout: 5000
+- takeScreenshot: 06-vault
+- tapOn: 'Profile'
+- extendedWaitUntil:
+    visible: 'Sign out'
+    timeout: 5000
+- takeScreenshot: 07-profile
+- tapOn: 'Home'

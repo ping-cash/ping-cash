@@ -1,0 +1,10 @@
+appId: cash.ping.app
+---
+# Send tile → Send screen must render the jumbo amount entry.
+- tapOn: 'Send'
+- extendedWaitUntil:
+    visible: 'Send money'
+    timeout: 8000
+- takeScreenshot: 08-send-empty
+- assertVisible: "You're sending"
+- assertVisible: 'Send to'

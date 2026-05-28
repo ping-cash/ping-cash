@@ -1,5 +1,11 @@
 appId: cash.ping.app
 ---
-# v0.1 smoke — minimal gate: the app boots, the brand mark renders,
-# and no native crash occurs. Detailed flow coverage grows from here.
+# v0.2 smoke — walks the full sign-in corridor using the test-phone
+# bypass (+447700900XXX → code 123456 → real Privy wallet). Every
+# post-auth screen is asserted to render. If ANY screen breaks
+# (TypeError, RN bridge crash, layout exception), this catches it
+# BEFORE TestFlight upload.
 - runFlow: 01-launch.yaml
+- runFlow: 02-signin.yaml
+- runFlow: 03-tabs.yaml
+- runFlow: 04-send-screen.yaml
