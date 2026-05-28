@@ -236,6 +236,40 @@ jobs:
           echo "workspace=$WORKSPACE" >> $GITHUB_OUTPUT
           echo "Discovered scheme: $APP_SCHEME from workspace $WORKSPACE"
 
+      - name: Force SKIP_INSTALL=NO on the app target (pbxproj surgical patch)
+        # Xcode 26 emits an empty Products/Applications dir because the
+        # auto-generated project sets SKIP_INSTALL=YES on every target.
+        # The Podfile post_install hook above sets it on aggregate targets
+        # but NOT on the app's native target. Without this surgical patch
+        # the simulator build produces frameworks but no .app, and the
+        # archive ships an .ipa with empty Payload/Applications/.
+        run: |
+          python3 << 'PY'
+          import re, glob
+          for pbx in glob.glob('ios/*.xcodeproj/project.pbxproj'):
+              if 'Pods' in pbx: continue
+              data = open(pbx).read()
+              target_re = re.compile(r'([0-9A-F]{24})\s*/\*\s*[^*]+\s*\*/\s*=\s*\{\s*isa = PBXNativeTarget;[^}]*?productType = "com\.apple\.product-type\.application";', re.S)
+              app_targets = target_re.findall(data)
+              print(f'app targets: {app_targets}')
+              for tid in app_targets:
+                  m = re.search(rf'{tid}\s*/\*[^*]+\*/\s*=\s*\{{[^}}]*?buildConfigurationList = ([0-9A-F]{{24}})', data, re.S)
+                  if not m: continue
+                  list_id = m.group(1)
+                  m2 = re.search(rf'{list_id}\s*/\*[^*]+\*/\s*=\s*\{{[^}}]*?buildConfigurations = \(([^)]+)\)', data, re.S)
+                  if not m2: continue
+                  cfg_block = m2.group(1)
+                  release_id_match = re.search(r'([0-9A-F]{24})\s*/\*\s*Release\s*\*/', cfg_block)
+                  if not release_id_match: continue
+                  rel_id = release_id_match.group(1)
+                  pattern = re.compile(rf'({rel_id}\s*/\*[^*]+\*/\s*=\s*\{{\s*isa = XCBuildConfiguration;\s*buildSettings = \{{)', re.S)
+                  new = pattern.sub(r'\1\n\t\t\t\tSKIP_INSTALL = NO;\n\t\t\t\tINSTALL_PATH = "$(LOCAL_APPS_DIR)";', data, count=1)
+                  if new != data:
+                      data = new
+                      print(f'  patched target {tid} release config {rel_id}')
+              open(pbx, 'w').write(data)
+          PY
+
       - name: Build app for iOS Simulator (no signing)
         run: |
           set -euo pipefail
