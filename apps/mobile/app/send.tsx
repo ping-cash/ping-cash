@@ -1,26 +1,36 @@
 /**
- * Send money screen — phone-driven send flow.
- *
- * For Phase 1: simple form-based flow. Phase 2 will add contact-picker UI.
+ * Send money screen — jumbo amount entry → share screen with WhatsApp deep
+ * link and OS share-sheet. Confetti + haptic success on transfer creation.
  */
 import { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Share,
   Linking,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { api } from '../lib/api';
+import { colors, radii, spacing, typography, shadows } from '../lib/theme';
+import { Button } from '../components/ui/Button';
+import { Heading } from '../components/ui/Heading';
 
 export default function SendScreen() {
   const router = useRouter();
@@ -29,16 +39,23 @@ export default function SendScreen() {
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
+  const successScale = useSharedValue(0);
+  const successAnim = useAnimatedStyle(() => ({
+    transform: [{ scale: successScale.value }],
+    opacity: successScale.value,
+  }));
 
   const handleSend = async () => {
     if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
         'Invalid phone',
-        'Enter the recipient phone in international format'
+        'Enter the recipient phone in international format (e.g. +447700900001)'
       );
       return;
     }
     if (!/^\d+(\.\d{1,2})?$/.test(amount) || parseFloat(amount) <= 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Invalid amount', 'Enter a valid amount');
       return;
     }
@@ -50,14 +67,20 @@ export default function SendScreen() {
         currency: 'USDC',
         note: note || undefined,
       });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (transfer.claimUrl) {
         setClaimUrl(transfer.claimUrl);
+        successScale.value = withSequence(
+          withTiming(1.15, { duration: 280 }),
+          withSpring(1, { damping: 14, stiffness: 220 })
+        );
       } else {
         Alert.alert('Sent', 'Check Activity for details', [
           { text: 'OK', onPress: () => router.back() },
         ]);
       }
     } catch (err) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Send failed', (err as Error).message);
     } finally {
       setLoading(false);
@@ -66,6 +89,7 @@ export default function SendScreen() {
 
   const shareViaWhatsApp = async () => {
     if (!claimUrl) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const phoneDigits = phone.replace(/[^\d]/g, '');
     const message = `I sent you $${amount} on Ping${note ? ` (${note})` : ''}. Claim it here: ${claimUrl}`;
     const url = `whatsapp://send?phone=${phoneDigits}&text=${encodeURIComponent(message)}`;
@@ -76,213 +100,343 @@ export default function SendScreen() {
 
   const shareViaSheet = async () => {
     if (!claimUrl) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const message = `I sent you $${amount} on Ping${note ? ` (${note})` : ''}. Claim it here: ${claimUrl}`;
     await Share.share({ message, url: claimUrl });
   };
 
   if (claimUrl) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.successBadge}>
-            <Text style={styles.successAmount}>${amount}</Text>
-            <Text style={styles.successTo}>to {phone}</Text>
-          </View>
-          <Text style={styles.successHeader}>Send the claim link</Text>
-          <Text style={styles.successSub}>
-            Your recipient claims the money by opening this link. It expires in
-            7 days.
-          </Text>
+      <View style={styles.container}>
+        <StatusBar style="light" />
+        <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+          <ScrollView contentContainerStyle={styles.successScroll}>
+            {/* Success badge */}
+            <Animated.View style={[styles.successBadge, successAnim]}>
+              <Ionicons name="checkmark" size={48} color={colors.brand} />
+            </Animated.View>
 
-          <TouchableOpacity style={styles.waButton} onPress={shareViaWhatsApp}>
-            <Text style={styles.waButtonText}>Send via WhatsApp</Text>
-          </TouchableOpacity>
+            <Heading variant="displaySmall" align="center">
+              ${amount} on the way
+            </Heading>
+            <Heading
+              variant="bodyLarge"
+              color="secondary"
+              align="center"
+              style={{ marginTop: spacing.sm }}
+            >
+              to {phone}
+            </Heading>
 
-          <TouchableOpacity style={styles.shareButton} onPress={shareViaSheet}>
-            <Text style={styles.shareButtonText}>Share another way…</Text>
-          </TouchableOpacity>
+            <View style={styles.shareSection}>
+              <Heading
+                variant="label"
+                color="tertiary"
+                align="center"
+                style={{ marginBottom: spacing.md }}
+              >
+                Send them the claim link
+              </Heading>
+              <Button
+                label="Send via WhatsApp"
+                variant="whatsapp"
+                onPress={shareViaWhatsApp}
+                icon="logo-whatsapp"
+              />
+              <View style={{ height: spacing.sm }} />
+              <Button
+                label="Share another way…"
+                variant="secondary"
+                onPress={shareViaSheet}
+                icon="share-outline"
+              />
+            </View>
 
-          <View style={styles.linkBox}>
-            <Text style={styles.linkLabel}>Or copy the link</Text>
-            <Text selectable style={styles.linkValue}>
-              {claimUrl}
-            </Text>
-          </View>
+            <View style={styles.linkBox}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: spacing.sm,
+                }}
+              >
+                <Ionicons
+                  name="link"
+                  size={14}
+                  color={colors.textTertiary}
+                  style={{ marginRight: 6 }}
+                />
+                <Heading variant="labelSmall" color="tertiary">
+                  Claim link
+                </Heading>
+              </View>
+              <Heading
+                variant="bodySmall"
+                color="primary"
+                style={{
+                  fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+                }}
+                numberOfLines={2}
+              >
+                {claimUrl}
+              </Heading>
+            </View>
 
-          <TouchableOpacity
-            style={styles.doneButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.doneButtonText}>Done</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
+            <Pressable
+              onPress={() => router.back()}
+              style={styles.doneButton}
+              hitSlop={12}
+            >
+              <Heading variant="bodyStrong" color="tertiary">
+                Done
+              </Heading>
+            </Pressable>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.kb}
-      >
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.label}>Send to</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="+971501234567"
-            placeholderTextColor="#6B6B8C"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            editable={!loading}
-          />
-          <Text style={styles.helper}>
-            Phone number of your recipient (Ping or non-Ping)
-          </Text>
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.kb}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Pressable onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons
+                name="chevron-back"
+                size={24}
+                color={colors.textPrimary}
+              />
+            </Pressable>
+            <Heading variant="h3">Send money</Heading>
+            <View style={{ width: 44 }} />
+          </View>
 
-          <Text style={[styles.label, { marginTop: 24 }]}>Amount (USDC)</Text>
-          <View style={styles.amountRow}>
-            <Text style={styles.dollarSign}>$</Text>
-            <TextInput
-              style={styles.amountInput}
-              placeholder="0.00"
-              placeholderTextColor="#6B6B8C"
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-              editable={!loading}
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Amount entry — jumbo */}
+            <View style={styles.amountSection}>
+              <Heading variant="labelSmall" color="tertiary" align="center">
+                You're sending
+              </Heading>
+              <View style={styles.amountInputRow}>
+                <Heading variant="displayMedium" color="tertiary">
+                  $
+                </Heading>
+                <TextInput
+                  style={styles.amountInput}
+                  placeholder="0"
+                  placeholderTextColor={colors.textQuaternary}
+                  value={amount}
+                  onChangeText={t => {
+                    if (t.length > amount.length) Haptics.selectionAsync();
+                    setAmount(t);
+                  }}
+                  keyboardType="decimal-pad"
+                  editable={!loading}
+                  autoFocus
+                />
+              </View>
+              <View style={styles.feePill}>
+                <View style={styles.dot} />
+                <Heading variant="caption" color="secondary">
+                  FREE in-network · ~0.5% if cash-out
+                </Heading>
+              </View>
+            </View>
+
+            {/* Recipient field */}
+            <View style={styles.fieldGroup}>
+              <Heading variant="label" color="secondary">
+                Send to
+              </Heading>
+              <View style={styles.fieldRow}>
+                <Ionicons name="call" size={18} color={colors.textTertiary} />
+                <TextInput
+                  style={styles.fieldInput}
+                  placeholder="+447700900001"
+                  placeholderTextColor={colors.textQuaternary}
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  editable={!loading}
+                />
+              </View>
+              <Heading
+                variant="caption"
+                color="tertiary"
+                style={{ marginTop: 4 }}
+              >
+                Recipient's phone number — they don't need Ping yet.
+              </Heading>
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Heading variant="label" color="secondary">
+                What's it for?
+              </Heading>
+              <View style={styles.fieldRow}>
+                <Ionicons
+                  name="chatbubble-ellipses-outline"
+                  size={18}
+                  color={colors.textTertiary}
+                />
+                <TextInput
+                  style={styles.fieldInput}
+                  placeholder="optional note"
+                  placeholderTextColor={colors.textQuaternary}
+                  value={note}
+                  onChangeText={setNote}
+                  editable={!loading}
+                  maxLength={64}
+                />
+              </View>
+            </View>
+          </ScrollView>
+
+          <View style={styles.actionsBar}>
+            <Button
+              label={
+                amount && parseFloat(amount) > 0
+                  ? `Send $${amount}`
+                  : 'Enter an amount'
+              }
+              onPress={handleSend}
+              loading={loading}
+              disabled={!amount || parseFloat(amount) <= 0}
+              iconRight="arrow-forward"
             />
           </View>
-
-          <Text style={[styles.label, { marginTop: 24 }]}>Note (optional)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="What's this for?"
-            placeholderTextColor="#6B6B8C"
-            value={note}
-            onChangeText={setNote}
-            editable={!loading}
-            multiline
-          />
-
-          <View style={styles.feePreview}>
-            <Text style={styles.feeLabel}>Estimated fee</Text>
-            <Text style={styles.feeValue}>
-              FREE in-network · ~0.5% if cash-out
-            </Text>
-          </View>
-        </ScrollView>
-
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSend}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>Send ${amount || '0'}</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1A1A2E' },
+  container: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1 },
   kb: { flex: 1 },
-  scroll: { padding: 24 },
-  label: { fontSize: 14, color: '#A0A0C0', marginBottom: 8 },
-  input: {
-    backgroundColor: '#2A2A4A',
-    color: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderRadius: 12,
-    fontSize: 16,
-  },
-  helper: { color: '#6B6B8C', fontSize: 12, marginTop: 8 },
-  amountRow: {
+  header: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A4A',
-    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
   },
-  dollarSign: { color: '#A0A0C0', fontSize: 28, paddingLeft: 16 },
-  amountInput: { color: '#FFFFFF', fontSize: 28, flex: 1, padding: 16 },
-  feePreview: {
-    backgroundColor: '#10B98115',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 24,
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  feeLabel: { color: '#A0A0C0', fontSize: 13 },
-  feeValue: { color: '#10B981', fontSize: 14, marginTop: 4, fontWeight: '600' },
-  actions: { padding: 24 },
-  button: {
-    backgroundColor: '#10B981',
+  scroll: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxxl,
+  },
+  amountSection: {
+    alignItems: 'center',
+    paddingVertical: spacing.xxxl,
+  },
+  amountInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: spacing.sm,
+  },
+  amountInput: {
+    ...typography.displayHuge,
+    color: colors.textPrimary,
+    minWidth: 80,
+    textAlign: 'left',
+    padding: 0,
+  },
+  feePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.successMuted,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radii.full,
+    marginTop: spacing.lg,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: colors.brand,
+    marginRight: 8,
+  },
+  fieldGroup: {
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+  },
+  fieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.lg,
     paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+    gap: spacing.sm,
   },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
+  fieldInput: {
+    flex: 1,
+    ...typography.bodyLarge,
+    color: colors.textPrimary,
+    padding: 0,
+  },
+  actionsBar: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    backgroundColor: colors.bg,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
+  },
+  // Success screen
+  successScroll: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.lg,
+  },
   successBadge: {
+    width: 96,
+    height: 96,
+    borderRadius: 999,
+    backgroundColor: colors.brandMuted,
+    borderWidth: 2,
+    borderColor: colors.brand,
     alignItems: 'center',
-    paddingVertical: 32,
-    backgroundColor: '#10B98115',
-    borderRadius: 16,
-    marginBottom: 24,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: spacing.xl,
+    ...shadows.brand,
   },
-  successAmount: { color: '#10B981', fontSize: 48, fontWeight: '700' },
-  successTo: { color: '#A0A0C0', fontSize: 16, marginTop: 4 },
-  successHeader: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  successSub: {
-    color: '#A0A0C0',
-    fontSize: 14,
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  waButton: {
-    backgroundColor: '#25D366',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  waButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
-  shareButton: {
-    backgroundColor: '#2A2A4A',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  shareButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '500' },
+  shareSection: { marginTop: spacing.xxxl, gap: spacing.xs },
   linkBox: {
-    backgroundColor: '#2A2A4A',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-  },
-  linkLabel: { color: '#A0A0C0', fontSize: 12, marginBottom: 6 },
-  linkValue: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    padding: spacing.lg,
+    marginTop: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
   },
   doneButton: {
-    paddingVertical: 14,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
+    marginTop: spacing.md,
   },
-  doneButtonText: { color: '#6B6B8C', fontSize: 15 },
 });
