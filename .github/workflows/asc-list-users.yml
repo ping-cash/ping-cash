@@ -1,0 +1,31 @@
+name: ASC List Team Users
+on: { workflow_dispatch: {} }
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, jwt, requests
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except Exception: key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}'}
+          users = requests.get('https://api.appstoreconnect.apple.com/v1/users?limit=50', headers=h).json()
+          for u in users.get('data', []):
+              a = u['attributes']
+              print(f"  {a.get('username')} firstName={a.get('firstName')} lastName={a.get('lastName')} roles={a.get('roles')}")
+          PYEOF
