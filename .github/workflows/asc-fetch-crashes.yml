@@ -63,7 +63,7 @@ jobs:
               print(f'\n=== build version={v} id={bid} ===')
 
               # diagnosticSignatures relationship
-              sig_url = f'{base}/v1/builds/{bid}/diagnosticSignatures?filter[diagnosticType]=DISK_WRITES_DIAGNOSTIC,CRASH_DIAGNOSTIC,HANG_DIAGNOSTIC&limit=20'
+              sig_url = f'{base}/v1/builds/{bid}/diagnosticSignatures?filter[diagnosticType]=LAUNCHES,HANGS,DISK_WRITES&limit=20'
               try:
                   sig = requests.get(sig_url, headers=h, timeout=20).json()
               except Exception as e:
