@@ -1,0 +1,70 @@
+name: ASC Diagnose Build
+on: { workflow_dispatch: {} }
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, jwt, requests, json
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except Exception: key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}'}
+          base = 'https://api.appstoreconnect.apple.com'
+
+          apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
+          app_id = apps['data'][0]['id']
+          print(f'app_id={app_id}')
+
+          # 1. Build with relationships
+          builds = requests.get(
+              f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=1&include=betaGroups,betaBuildLocalizations,buildBetaDetail',
+              headers=h, timeout=20).json()
+          if builds.get('data'):
+              b = builds['data'][0]
+              print('\n--- BUILD attrs ---')
+              for k, v in b['attributes'].items():
+                  print(f'  {k}: {v}')
+              print('\n--- BUILD relationships (summary) ---')
+              for k, v in b.get('relationships', {}).items():
+                  data = v.get('data')
+                  if isinstance(data, list):
+                      print(f'  {k}: {len(data)} items')
+                  else:
+                      print(f'  {k}: {data}')
+              # Show included resources
+              print('\n--- INCLUDED resources ---')
+              for inc in builds.get('included', []):
+                  print(f'  {inc["type"]} {inc["id"]} :: {inc.get("attributes", {})}')
+
+          # 2. Beta groups for the app
+          print('\n--- BETA GROUPS ---')
+          groups = requests.get(f'{base}/v1/betaGroups?filter[app]={app_id}&include=betaTesters,builds', headers=h, timeout=20).json()
+          for g in groups.get('data', []):
+              print(f'  {g["attributes"]["name"]} id={g["id"]} hasAccessToAllBuilds={g["attributes"].get("hasAccessToAllBuilds")} isInternalGroup={g["attributes"].get("isInternalGroup")}')
+              rels = g.get('relationships', {})
+              builds_rel = rels.get('builds', {}).get('data', [])
+              testers_rel = rels.get('betaTesters', {}).get('data', [])
+              print(f'    builds: {len(builds_rel)}, testers: {len(testers_rel)}')
+
+          # 3. Tester check
+          print('\n--- TESTER STATUS ---')
+          testers = requests.get(f'{base}/v1/betaTesters?filter[apps]={app_id}', headers=h).json()
+          for t in testers.get('data', []):
+              a = t['attributes']
+              print(f'  {a.get("email")} state={a.get("state")} inviteType={a.get("inviteType")}')
+          PYEOF
