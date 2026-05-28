@@ -1,0 +1,67 @@
+name: ASC Fetch TestFlight Feedback Download
+on:
+  workflow_dispatch:
+    inputs:
+      download_url:
+        description: 'Full feedback download URL from App Store Connect'
+        required: true
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          URL: ${{ inputs.download_url }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, jwt, requests, sys
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except Exception:
+              key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}', 'Accept': '*/*'}
+          # Try with JWT bearer (works for some Apple endpoints)
+          r = requests.get(os.environ['URL'], headers=h, allow_redirects=True, timeout=60)
+          print(f'HTTP {r.status_code} ({len(r.content)} bytes), CT={r.headers.get("Content-Type")}')
+          if r.status_code != 200:
+              print('body:', r.text[:1000])
+              sys.exit(1)
+          open('tf-feedback.zip', 'wb').write(r.content)
+          import zipfile, os.path
+          with zipfile.ZipFile('tf-feedback.zip') as zf:
+              print('=== ZIP contents ===')
+              for n in zf.namelist(): print(' ', n)
+              zf.extractall('extracted')
+          import subprocess
+          print('=== extracted files ===')
+          subprocess.run(['ls', '-la', 'extracted'])
+          # Dump all text files
+          for root, dirs, files in os.walk('extracted'):
+              for f in files:
+                  p = os.path.join(root, f)
+                  if os.path.getsize(p) < 200_000:
+                      try:
+                          print(f'\n========== {p} ==========')
+                          print(open(p).read())
+                      except Exception as e:
+                          print(f'  {e}')
+          PYEOF
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tf-feedback
+          path: |
+            tf-feedback.zip
+            extracted/**
+          if-no-files-found: warn
