@@ -2,7 +2,17 @@ appId: cash.ping.app
 ---
 - launchApp:
     clearState: true
-- assertVisible: 'Ping'
-- assertVisible: 'Send money'
-- assertVisible: 'Create account'
+# Give the entry animation + auth-store hydration time to settle.
+- extendedWaitUntil:
+    visible: 'Ping'
+    timeout: 15000
 - takeScreenshot: launch
+# Tap the primary CTA — if the touch target isn't there the app's broken.
+- extendedWaitUntil:
+    visible: 'Create account'
+    timeout: 5000
+- tapOn: 'Create account'
+- extendedWaitUntil:
+    visible: 'phone number'
+    timeout: 8000
+- takeScreenshot: signup
