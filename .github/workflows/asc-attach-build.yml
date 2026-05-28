@@ -1,0 +1,54 @@
+name: ASC Attach Build to Internal Group
+on: { workflow_dispatch: {} }
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, jwt, requests, json
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except Exception: key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+          base = 'https://api.appstoreconnect.apple.com'
+          apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
+          app_id = apps['data'][0]['id']
+          # Find internal Founders
+          groups = requests.get(f'{base}/v1/betaGroups?filter[app]={app_id}', headers=h).json()
+          internal = next(g for g in groups['data']
+                          if g['attributes']['name'] == 'Founders' and g['attributes'].get('isInternalGroup'))
+          gid = internal['id']
+          # Latest build
+          builds = requests.get(f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=1', headers=h).json()
+          bid = builds['data'][0]['id']
+          print(f'gid={gid} bid={bid}')
+
+          # Check current build state
+          state = requests.get(f'{base}/v1/builds/{bid}/buildBetaDetail', headers=h).json()
+          print(f'buildBetaDetail: {json.dumps(state.get("data", {}).get("attributes", {}))}')
+
+          # Try POST to relationships endpoint
+          body = {'data': [{'type': 'builds', 'id': bid}]}
+          r = requests.post(f'{base}/v1/betaGroups/{gid}/relationships/builds',
+              headers=h, data=json.dumps(body), timeout=20)
+          print(f'attach status={r.status_code} body={r.text[:400]}')
+
+          # Re-check state
+          import time as _t; _t.sleep(2)
+          state2 = requests.get(f'{base}/v1/builds/{bid}/buildBetaDetail', headers=h).json()
+          print(f'buildBetaDetail after: {json.dumps(state2.get("data", {}).get("attributes", {}))}')
+          PYEOF
