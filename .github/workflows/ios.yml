@@ -24,7 +24,6 @@ env:
   PROFILE_NAME: 'Ping App Store'
   APP_IDENTIFIER: 'cash.ping.app'
   BETA_GROUP_NAME: 'Founders'
-  APP_SCHEME: 'cash' # matches app.json's slug → workspace basename
 
 jobs:
   build:
@@ -219,12 +218,15 @@ jobs:
           echo "Fresh profile UUID: $UUID"
           cp $RUNNER_TEMP/dist.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
 
-      - name: Build + archive (manual signing)
+      - name: Discover scheme + build + archive (manual signing)
         run: |
           cd ios
+          WORKSPACE=$(ls -d *.xcworkspace | head -1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Discovered scheme: $SCHEME from workspace $WORKSPACE"
           xcodebuild archive \
-            -workspace *.xcworkspace \
-            -scheme "${{ env.APP_SCHEME }}" \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
             -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath $RUNNER_TEMP/app.xcarchive \
