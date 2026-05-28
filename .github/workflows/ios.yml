@@ -322,14 +322,19 @@ jobs:
       - name: Install app on simulator + pre-grant permissions
         run: |
           set -euo pipefail
-          APP=$(find $RUNNER_TEMP/sim-build/Build/Products/Release-iphonesimulator -maxdepth 2 -name "*.app" -type d | head -1)
+          # Xcode 26 emits the .app as a symlink in
+          # Build/Products/Release-iphonesimulator/*.app pointing at the
+          # actual bundle in /tmp/<Scheme>.dst/Applications/. find -type d
+          # SKIPS symlinks, so use plain glob + readlink -f to resolve.
+          APP=$(ls -d $RUNNER_TEMP/sim-build/Build/Products/Release-iphonesimulator/*.app 2>/dev/null | head -1)
           if [ -z "$APP" ]; then
             echo "::error::No .app produced by simulator build"
-            find $RUNNER_TEMP/sim-build/Build/Products -maxdepth 3 -type d
+            find $RUNNER_TEMP/sim-build/Build/Products -maxdepth 3 -name "*.app"
             exit 1
           fi
-          echo "Installing $APP onto $SIM_UDID"
-          xcrun simctl install "$SIM_UDID" "$APP"
+          APP_RESOLVED=$(readlink -f "$APP" 2>/dev/null || echo "$APP")
+          echo "Installing $APP_RESOLVED (resolved from $APP) onto $SIM_UDID"
+          xcrun simctl install "$SIM_UDID" "$APP_RESOLVED"
           for perm in photos camera contacts microphone; do
             xcrun simctl privacy "$SIM_UDID" grant $perm ${{ env.APP_IDENTIFIER }} || true
           done
