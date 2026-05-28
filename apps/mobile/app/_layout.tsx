@@ -1,7 +1,10 @@
 /**
- * Root layout — Stack navigation. Every async at launch is now bulletproof
- * against the fatal RCTExceptionsManager.reportException path that crashed
- * Builds 13/19/22.
+ * Root layout. Error handlers are installed in entry.js BEFORE this module
+ * even loads — see lib/install-error-handlers.ts for the symbolicated
+ * crash chain that motivated the defense.
+ *
+ * This layout adds the second layer: a React ErrorBoundary that catches
+ * render/lifecycle errors so they don't bubble to RN's global handler.
  */
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -11,28 +14,7 @@ import { useEffect, useState } from 'react';
 import { LogBox } from 'react-native';
 import { authStore } from '../lib/auth-store';
 import { colors, typography } from '../lib/theme';
-
-// Last-resort: any unhandled promise rejection at JS layer is swallowed
-// here rather than propagated to RCTExceptionsManager (which fatals on
-// release builds). Logged only.
-const globalAny = global as unknown as {
-  HermesInternal?: { enablePromiseRejectionTracker?: (opts: object) => void };
-  onunhandledrejection?: (e: {
-    promise: Promise<unknown>;
-    reason: unknown;
-  }) => void;
-};
-if (
-  globalAny.HermesInternal?.enablePromiseRejectionTracker &&
-  typeof globalAny.HermesInternal.enablePromiseRejectionTracker === 'function'
-) {
-  globalAny.HermesInternal.enablePromiseRejectionTracker({
-    allRejections: true,
-    onUnhandled: (id: number, reason: unknown) => {
-      console.warn(`[unhandled rejection ${id}]`, reason);
-    },
-  });
-}
+import { RootErrorBoundary } from '../components/RootErrorBoundary';
 
 LogBox.ignoreAllLogs(true);
 
@@ -49,50 +31,60 @@ export default function RootLayout() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    authStore
-      .hydrate()
-      .catch(err => {
-        // Belt + braces — hydrate() is internally try/caught, but if any
-        // future path slips through we don't want to fatal.
+    let cancelled = false;
+    const run = async () => {
+      try {
+        await authStore.hydrate();
+      } catch (err) {
+        // hydrate() is internally try/caught, but belt+braces.
+        // eslint-disable-next-line no-console
         console.warn('[auth hydrate] swallowed:', err);
-      })
-      .finally(() => setHydrated(true));
+      } finally {
+        if (!cancelled) setHydrated(true);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (!hydrated) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: colors.bg },
-            headerTintColor: colors.textPrimary,
-            headerTitleStyle: { ...typography.h3 },
-            headerShadowVisible: false,
-            contentStyle: { backgroundColor: colors.bg },
-            animation: 'slide_from_right',
-          }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="signup" options={{ headerShown: false }} />
-          <Stack.Screen name="verify" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="send"
-            options={{
-              headerShown: false,
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
+    <RootErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: colors.bg },
+              headerTintColor: colors.textPrimary,
+              headerTitleStyle: { ...typography.h3 },
+              headerShadowVisible: false,
+              contentStyle: { backgroundColor: colors.bg },
+              animation: 'slide_from_right',
             }}
-          />
-          <Stack.Screen
-            name="transfer-detail"
-            options={{ title: 'Transfer details' }}
-          />
-        </Stack>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+          >
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="signup" options={{ headerShown: false }} />
+            <Stack.Screen name="verify" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="send"
+              options={{
+                headerShown: false,
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            />
+            <Stack.Screen
+              name="transfer-detail"
+              options={{ title: 'Transfer details' }}
+            />
+          </Stack>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </RootErrorBoundary>
   );
 }
