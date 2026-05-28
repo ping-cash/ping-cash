@@ -1,0 +1,46 @@
+name: ASC Promote Founders to Internal
+on: { workflow_dispatch: {} }
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, jwt, requests, json, sys
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except Exception: key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}',
+               'Content-Type': 'application/json'}
+          base = 'https://api.appstoreconnect.apple.com'
+
+          apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
+          app_id = apps['data'][0]['id']
+          groups = requests.get(f'{base}/v1/betaGroups?filter[app]={app_id}', headers=h).json()
+          founders = next(g for g in groups['data'] if g['attributes']['name'] == 'Founders')
+          gid = founders['id']
+          print(f'Founders id={gid}, current isInternalGroup={founders["attributes"].get("isInternalGroup")}')
+
+          body = {'data': {'type': 'betaGroups', 'id': gid,
+                           'attributes': {'isInternalGroup': True}}}
+          r = requests.patch(f'{base}/v1/betaGroups/{gid}',
+              headers=h, data=json.dumps(body), timeout=20)
+          print(f'patch status={r.status_code} body={r.text[:500]}')
+          if r.status_code != 200:
+              print('::error::patch failed'); sys.exit(1)
+          updated = r.json()
+          print(f'After patch: isInternalGroup={updated["data"]["attributes"].get("isInternalGroup")}')
+          PYEOF
