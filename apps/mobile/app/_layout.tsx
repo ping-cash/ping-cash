@@ -101,6 +101,18 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="profile/personal"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="profile/security"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="profile/notifications"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="transfer-detail"
               options={{ title: 'Transfer details' }}
             />

@@ -1,7 +1,14 @@
 /**
  * Profile / settings — gradient avatar, wallet address display, grouped sections.
  */
-import { View, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  Alert,
+  Linking,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -116,23 +123,79 @@ export default function ProfileScreen() {
           {/* Account section */}
           <SectionLabel>Account</SectionLabel>
           <View style={styles.section}>
-            <Row icon="person-outline" label="Personal details" />
-            <Row icon="key-outline" label="Security" />
-            <Row icon="notifications-outline" label="Notifications" />
+            <Row
+              icon="person-outline"
+              label="Personal details"
+              onPress={() => router.push('/profile/personal' as never)}
+            />
+            <Row
+              icon="key-outline"
+              label="Security"
+              onPress={() => router.push('/profile/security' as never)}
+            />
+            <Row
+              icon="notifications-outline"
+              label="Notifications"
+              onPress={() => router.push('/profile/notifications' as never)}
+            />
           </View>
 
           <SectionLabel>Preferences</SectionLabel>
           <View style={styles.section}>
-            <Row icon="globe-outline" label="Language" valueText="English" />
-            <Row icon="contrast-outline" label="Appearance" valueText="Dark" />
-            <Row icon="card-outline" label="Default currency" valueText="USD" />
+            <Row
+              icon="globe-outline"
+              label="Language"
+              valueText="English"
+              onPress={() =>
+                Alert.alert(
+                  'Language',
+                  'Multi-language ships after launch — English only for v1.'
+                )
+              }
+            />
+            <Row
+              icon="contrast-outline"
+              label="Appearance"
+              valueText="Dark"
+              onPress={() =>
+                Alert.alert(
+                  'Appearance',
+                  'Light mode ships in v1.1 — dark is the default brand mode.'
+                )
+              }
+            />
+            <Row
+              icon="card-outline"
+              label="Default currency"
+              valueText="USD"
+              onPress={() =>
+                Alert.alert(
+                  'Default currency',
+                  'Per-country defaults ship with TransFi production tier.'
+                )
+              }
+            />
           </View>
 
           <SectionLabel>Help</SectionLabel>
           <View style={styles.section}>
-            <Row icon="help-circle-outline" label="Help center" />
-            <Row icon="mail-outline" label="Contact support" />
-            <Row icon="information-circle-outline" label="About Ping" />
+            <Row
+              icon="help-circle-outline"
+              label="Help center"
+              onPress={() => Linking.openURL('https://ping.cash/help')}
+            />
+            <Row
+              icon="mail-outline"
+              label="Contact support"
+              onPress={() =>
+                Linking.openURL('mailto:support@ping.cash?subject=Ping%20app')
+              }
+            />
+            <Row
+              icon="information-circle-outline"
+              label="About Ping"
+              onPress={() => Linking.openURL('https://ping.cash/about')}
+            />
           </View>
 
           {/* Sign out */}
@@ -181,13 +244,21 @@ function Row({
   icon,
   label,
   valueText,
+  onPress,
 }: {
   icon: keyof typeof import('@expo/vector-icons/build/Ionicons').default.glyphMap;
   label: string;
   valueText?: string;
+  onPress?: () => void;
 }) {
   return (
-    <Pressable style={styles.rowItem} onPress={() => Haptics.selectionAsync()}>
+    <Pressable
+      style={styles.rowItem}
+      onPress={() => {
+        Haptics.selectionAsync();
+        onPress?.();
+      }}
+    >
       <Ionicons name={icon} size={20} color={colors.textSecondary} />
       <Heading variant="bodyLarge" style={{ flex: 1, marginLeft: spacing.md }}>
         {label}

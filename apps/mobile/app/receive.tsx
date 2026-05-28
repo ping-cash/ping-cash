@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import QRCode from 'react-native-qrcode-svg';
 import { authStore } from '../lib/auth-store';
 import { colors, radii, spacing } from '../lib/theme';
 import { Button } from '../components/ui/Button';
@@ -43,14 +44,21 @@ export default function ReceiveScreen() {
 
         <View style={styles.content}>
           <View style={styles.qrCard}>
-            <Ionicons name="qr-code" size={140} color={colors.brand} />
+            <View style={styles.qrInner}>
+              <QRCode
+                value={link}
+                size={200}
+                color={colors.bg}
+                backgroundColor="#FFFFFF"
+              />
+            </View>
             <Heading
               variant="bodySmall"
               color="tertiary"
               align="center"
               style={{ marginTop: spacing.md }}
             >
-              QR code coming in next release
+              Show this QR — they tap their phone camera at it to send you money
             </Heading>
           </View>
 
@@ -105,11 +113,16 @@ const styles = StyleSheet.create({
   qrCard: {
     backgroundColor: colors.surface,
     borderRadius: radii.xl,
-    paddingVertical: spacing.xxxl,
+    paddingVertical: spacing.xl,
     paddingHorizontal: spacing.xl,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.borderSubtle,
+  },
+  qrInner: {
+    backgroundColor: '#FFFFFF',
+    padding: spacing.lg,
+    borderRadius: radii.md,
   },
   phoneCard: {
     backgroundColor: colors.surface,
