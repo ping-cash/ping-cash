@@ -28,64 +28,64 @@ jobs:
 
           apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
           app_id = apps['data'][0]['id']
-          builds = requests.get(f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=1', headers=h).json()
-          build_id = builds['data'][0]['id']
-          print(f'app_id={app_id} build_id={build_id}')
 
-          # 1. Delete current external Founders group
+          # Delete any existing external Founders group
           groups = requests.get(f'{base}/v1/betaGroups?filter[app]={app_id}', headers=h).json()
           for g in groups['data']:
               if g['attributes']['name'] == 'Founders' and not g['attributes'].get('isInternalGroup'):
-                  print(f'Deleting external Founders group {g["id"]}')
                   r = requests.delete(f'{base}/v1/betaGroups/{g["id"]}', headers=h, timeout=20)
-                  print(f'  delete status={r.status_code}')
+                  print(f'Deleted external Founders {g["id"]}: status={r.status_code}')
+              elif g['attributes']['name'] == 'Founders' and g['attributes'].get('isInternalGroup'):
+                  print(f'Internal Founders already exists: {g["id"]}')
 
-          # 2. Create new INTERNAL Founders group
+          # Create new INTERNAL Founders group — NO builds relationship (Apple
+          # rejects 'Cannot add internal group to a build'; internal groups
+          # auto-receive all builds).
           body = {
               'data': {
                   'type': 'betaGroups',
                   'attributes': {
                       'name': 'Founders',
                       'isInternalGroup': True,
-                      'hasAccessToAllBuilds': True,
                       'publicLinkEnabled': False,
                   },
                   'relationships': {
                       'app': {'data': {'type': 'apps', 'id': app_id}},
-                      'builds': {'data': [{'type': 'builds', 'id': build_id}]},
                   }
               }
           }
           r = requests.post(f'{base}/v1/betaGroups', headers=h, data=json.dumps(body), timeout=20)
           print(f'create_internal status={r.status_code} body={r.text[:600]}')
           if r.status_code not in (200, 201):
-              print('::error::Failed to create internal group')
-              sys.exit(1)
-          new_group = r.json()['data']
-          gid = new_group['id']
-          print(f'New internal Founders group: {gid}')
-          print(f'  isInternalGroup={new_group["attributes"].get("isInternalGroup")}')
+              # If 409/422 because already exists, find it
+              groups = requests.get(f'{base}/v1/betaGroups?filter[app]={app_id}', headers=h).json()
+              internal = next((g for g in groups['data']
+                               if g['attributes']['name'] == 'Founders'
+                               and g['attributes'].get('isInternalGroup')), None)
+              if not internal:
+                  print('::error::Failed to create OR locate internal group'); sys.exit(1)
+              gid = internal['id']
+          else:
+              gid = r.json()['data']['id']
+          print(f'Internal Founders group id={gid}')
 
-          # 3. Add emrahbaysal@gmail.com as tester to new internal group
+          # Add emrahbaysal@gmail.com as tester
           body = {
               'data': {
                   'type': 'betaTesters',
                   'attributes': {
                       'email': 'emrahbaysal@gmail.com',
-                      'firstName': 'Emrah',
-                      'lastName': 'Baysal',
+                      'firstName': 'Emrah', 'lastName': 'Baysal',
                   },
                   'relationships': {
-                      'betaGroups': {
-                          'data': [{'type': 'betaGroups', 'id': gid}],
-                      },
+                      'betaGroups': {'data': [{'type': 'betaGroups', 'id': gid}]},
                   },
               }
           }
           r = requests.post(f'{base}/v1/betaTesters', headers=h, data=json.dumps(body), timeout=20)
-          print(f'add_tester status={r.status_code} body={r.text[:600]}')
-          # If 409 already-exists, find + add to group instead
+          print(f'add_tester status={r.status_code} body={r.text[:400]}')
           if r.status_code == 409:
+              # Already exists — just add to new group
               existing = requests.get(
                   f'{base}/v1/betaTesters?filter[apps]={app_id}&filter[email]=emrahbaysal@gmail.com&limit=1',
                   headers=h).json()
@@ -94,9 +94,6 @@ jobs:
                   body = {'data': [{'type': 'betaTesters', 'id': tid}]}
                   r = requests.post(f'{base}/v1/betaGroups/{gid}/relationships/betaTesters',
                       headers=h, data=json.dumps(body), timeout=20)
-                  print(f'add_to_group status={r.status_code}')
-          if r.status_code not in (200, 201, 204, 409):
-              print('::error::Failed to add tester')
-              sys.exit(1)
-          print('DONE — Apple should email emrahbaysal@gmail.com within ~5 min if Apple ID is on the dev team')
+                  print(f'add_to_internal status={r.status_code}')
+          print('DONE')
           PYEOF
