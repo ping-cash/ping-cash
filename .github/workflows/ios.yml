@@ -99,9 +99,9 @@ jobs:
       - name: Write App Store Connect API key
         run: |
           mkdir -p ~/private_keys
-          # The PRIVATE_KEY secret holds the PEM block directly (not base64).
+          # PRIVATE_KEY secret is base64-encoded (matches vcard convention).
           echo "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" \
-            > ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+            | base64 -d > ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
           chmod 600 ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
 
       - name: Create empty keychain (cert created by fastlane cert)
