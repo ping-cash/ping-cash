@@ -55,6 +55,7 @@ export function Input({
         )}
         <TextInput
           {...inputProps}
+          accessibilityLabel={inputProps.accessibilityLabel ?? label}
           onFocus={e => {
             setFocused(true);
             inputProps.onFocus?.(e);
