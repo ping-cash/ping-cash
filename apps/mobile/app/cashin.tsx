@@ -1,14 +1,27 @@
 /**
- * Cash-in / Add Money — shows the channels we will support and disabled
- * states for those not yet wired. Apple Pay + Stripe + MoonPay land in
- * sequential commits; for now this is a real screen, not a misroute.
+ * Cash-in / Add Money — currently devnet-mode. Real fiat on-ramps
+ * (Apple Pay, Stripe, MoonPay, ACH) are placeholders until production
+ * vendor signups complete. For now, surfacing a working path:
+ * show the user's wallet address + open Solana + Circle devnet
+ * faucets so they can fund their own wallet for testing.
  */
-import { View, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  Alert,
+  Linking,
+  Clipboard,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { authStore } from '../lib/auth-store';
 import { colors, radii, spacing } from '../lib/theme';
+import { Button } from '../components/ui/Button';
 import { Heading } from '../components/ui/Heading';
 
 type Method = {
@@ -20,12 +33,12 @@ type Method = {
   available: boolean;
 };
 
-const METHODS: Method[] = [
+const PROD_METHODS: Method[] = [
   {
     icon: 'logo-apple',
     iconColor: '#FFFFFF',
     title: 'Apple Pay',
-    subtitle: 'Add money instantly with the card already in your Wallet',
+    subtitle: 'Card from your Wallet — fastest',
     fee: '2.9% + $0.30',
     available: false,
   },
@@ -33,7 +46,7 @@ const METHODS: Method[] = [
     icon: 'card',
     iconColor: '#635BFF',
     title: 'Debit / credit card',
-    subtitle: 'Via Stripe — Visa, Mastercard, Amex',
+    subtitle: 'Visa, Mastercard, Amex via Stripe',
     fee: '2.9% + $0.30',
     available: false,
   },
@@ -49,7 +62,7 @@ const METHODS: Method[] = [
     icon: 'business',
     iconColor: '#10B981',
     title: 'Bank transfer (ACH)',
-    subtitle: 'US bank — 1-3 business days, lowest fees',
+    subtitle: '1-3 business days, lowest fees',
     fee: 'Free',
     available: false,
   },
@@ -57,6 +70,15 @@ const METHODS: Method[] = [
 
 export default function CashinScreen() {
   const router = useRouter();
+  const user = authStore.user;
+  const wallet = user?.walletAddress ?? '';
+
+  const copyAddress = async () => {
+    if (!wallet) return;
+    Clipboard.setString(wallet);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert('Copied', 'Wallet address copied to clipboard.');
+  };
 
   return (
     <View style={styles.container}>
@@ -64,32 +86,101 @@ export default function CashinScreen() {
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons
-              name="chevron-back"
-              size={24}
-              color={colors.textPrimary}
-            />
+            <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
           </Pressable>
           <Heading variant="h3">Add money</Heading>
           <View style={{ width: 44 }} />
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll}>
+          <View style={styles.testCard}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: spacing.md,
+              }}
+            >
+              <Ionicons name="flask" size={20} color={colors.accentAmber} />
+              <Heading
+                variant="bodyLargeStrong"
+                color="primary"
+                style={{ marginLeft: spacing.sm }}
+              >
+                Get devnet test funds
+              </Heading>
+            </View>
+            <Heading variant="bodySmall" color="secondary">
+              You're on the devnet build — production fiat rails activate after
+              legal-entity KYB. For testing, fund your wallet free in 3 steps:
+            </Heading>
+
+            <View style={styles.steps}>
+              <Step n={1} text="Copy your wallet address (below)" />
+              <Step
+                n={2}
+                text="Get 1 devnet SOL from faucet.solana.com — needed for tx fees"
+              />
+              <Step
+                n={3}
+                text="Get ~10 devnet USDC from faucet.circle.com — paste your address"
+              />
+            </View>
+
+            <View style={styles.walletBox}>
+              <View style={{ flex: 1 }}>
+                <Heading variant="labelSmall" color="tertiary">
+                  YOUR PING WALLET
+                </Heading>
+                <Heading
+                  variant="bodySmall"
+                  color="primary"
+                  style={styles.walletAddr}
+                  numberOfLines={1}
+                >
+                  {wallet || 'no wallet — sign in again'}
+                </Heading>
+              </View>
+              <Pressable
+                onPress={copyAddress}
+                style={styles.copyButton}
+                hitSlop={8}
+              >
+                <Ionicons name="copy-outline" size={18} color={colors.brand} />
+              </Pressable>
+            </View>
+
+            <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+              <Button
+                label="Open Solana faucet"
+                variant="secondary"
+                icon="open-outline"
+                onPress={() => Linking.openURL('https://faucet.solana.com/')}
+              />
+              <Button
+                label="Open Circle USDC faucet"
+                variant="secondary"
+                icon="open-outline"
+                onPress={() => Linking.openURL('https://faucet.circle.com/')}
+              />
+            </View>
+          </View>
+
           <Heading
-            variant="bodyLarge"
-            color="secondary"
-            style={{ marginBottom: spacing.xl }}
+            variant="labelSmall"
+            color="tertiary"
+            style={styles.sectionLabel}
           >
-            How would you like to fund your wallet?
+            PRODUCTION FUNDING (COMING SOON)
           </Heading>
 
-          {METHODS.map(m => (
+          {PROD_METHODS.map((m) => (
             <Pressable
               key={m.title}
               onPress={() =>
                 Alert.alert(
                   `${m.title} — coming soon`,
-                  `${m.title} is being wired in. Wave-2 release.`
+                  `${m.title} ships after vendor KYB + production tier upgrade.`
                 )
               }
               style={[styles.row, !m.available && styles.rowDisabled]}
@@ -127,20 +218,23 @@ export default function CashinScreen() {
               />
             </Pressable>
           ))}
-
-          <View style={styles.testnetBanner}>
-            <Ionicons name="flask" size={18} color={colors.accentAmber} />
-            <Heading
-              variant="bodySmall"
-              color="secondary"
-              style={{ flex: 1, marginLeft: spacing.sm }}
-            >
-              Devnet build — real money on-ramps activate after legal-entity
-              KYB. For testing now, ask any Ping user to send you devnet USDC.
-            </Heading>
-          </View>
         </ScrollView>
       </SafeAreaView>
+    </View>
+  );
+}
+
+function Step({ n, text }: { n: number; text: string }) {
+  return (
+    <View style={styles.step}>
+      <View style={styles.stepNum}>
+        <Heading variant="labelSmall" color="brand">
+          {n}
+        </Heading>
+      </View>
+      <Heading variant="bodySmall" color="secondary" style={{ flex: 1 }}>
+        {text}
+      </Heading>
     </View>
   );
 }
@@ -162,7 +256,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scroll: { paddingBottom: spacing.xxxl },
+  scroll: { paddingBottom: spacing.xxxl, paddingTop: spacing.md },
+  testCard: {
+    backgroundColor: colors.warningMuted,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+  },
+  steps: { marginTop: spacing.md, gap: spacing.sm },
+  step: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  stepNum: {
+    width: 22,
+    height: 22,
+    borderRadius: 999,
+    backgroundColor: colors.brandMuted,
+    borderWidth: 1,
+    borderColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  walletAddr: {
+    fontFamily: 'Menlo',
+    marginTop: 2,
+  },
+  copyButton: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.sm,
+    backgroundColor: colors.brandMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.sm,
+  },
+  sectionLabel: { marginTop: spacing.xxl, marginBottom: spacing.md },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -193,15 +330,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radii.full,
-  },
-  testnetBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.warningMuted,
-    borderWidth: 1,
-    borderColor: colors.warning,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
   },
 });
