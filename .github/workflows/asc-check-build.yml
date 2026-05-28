@@ -1,0 +1,37 @@
+# One-off: report the processing state of the latest build for cash.ping.app
+name: ASC Check Latest Build
+on: { workflow_dispatch: {} }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, jwt, requests
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except Exception: key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}'}
+          base = 'https://api.appstoreconnect.apple.com'
+          apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
+          app_id = apps['data'][0]['id']
+          builds = requests.get(
+              f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=3&include=preReleaseVersion',
+              headers=h, timeout=20).json()
+          for b in builds.get('data', []):
+              a = b['attributes']
+              print(f"  build={a.get('version')} state={a.get('processingState')} expired={a.get('expired')} uploadedDate={a.get('uploadedDate')}")
+          PYEOF
