@@ -28,28 +28,26 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  const [hydrated, setHydrated] = useState(false);
-
+  // Hydration runs in parallel with rendering — we never gate first render
+  // on it. Returning null before the Stack is mounted causes:
+  //   "Attempted to navigate before mounting the root Layout component"
+  // The Stack must be in the tree from frame 1 so navigation can resolve.
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       try {
         await authStore.hydrate();
       } catch (err) {
-        // hydrate() is internally try/caught, but belt+braces.
         // eslint-disable-next-line no-console
         console.warn('[auth hydrate] swallowed:', err);
-      } finally {
-        if (!cancelled) setHydrated(true);
       }
+      if (cancelled) return;
     };
     run();
     return () => {
       cancelled = true;
     };
   }, []);
-
-  if (!hydrated) return null;
 
   return (
     <RootErrorBoundary>
