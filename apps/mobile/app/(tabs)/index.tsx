@@ -147,30 +147,30 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Quick actions */}
+          {/* Quick actions — distinct, semantic icons (not all circles) */}
           <View style={styles.actionsRow}>
             <ActionTile
-              icon="arrow-up-circle"
+              icon="paper-plane"
               label="Send"
               onPress={() => router.push('/send')}
               accent={colors.brand}
             />
             <ActionTile
-              icon="arrow-down-circle"
+              icon="qr-code"
               label="Receive"
-              onPress={() => router.push('/(tabs)/history')}
+              onPress={() => router.push('/receive' as never)}
               accent={colors.accentBlue}
             />
             <ActionTile
-              icon="add-circle"
+              icon="wallet"
               label="Add money"
-              onPress={() => router.push('/(tabs)/profile')}
+              onPress={() => router.push('/cashin' as never)}
               accent={colors.accentPurple}
             />
             <ActionTile
-              icon="swap-horizontal"
+              icon="repeat"
               label="Swap"
-              onPress={() => router.push('/(tabs)/vault')}
+              onPress={() => router.push('/swap' as never)}
               accent={colors.accentPink}
             />
           </View>

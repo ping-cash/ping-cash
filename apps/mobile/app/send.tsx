@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as Contacts from 'expo-contacts';
 import { api } from '../lib/api';
 import { colors, radii, spacing, typography, shadows } from '../lib/theme';
 import { Button } from '../components/ui/Button';
@@ -32,6 +33,37 @@ export default function SendScreen() {
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
+  const [recipientName, setRecipientName] = useState<string | null>(null);
+
+  const handlePickContact = async () => {
+    try {
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Contacts permission needed',
+          'Allow contacts access in Settings to pick a recipient by name.'
+        );
+        return;
+      }
+      const contact = await Contacts.presentContactPickerAsync();
+      if (!contact) return;
+      const number = contact.phoneNumbers?.[0]?.number;
+      if (!number) {
+        Alert.alert('No phone number', `${contact.name} has no phone number.`);
+        return;
+      }
+      // Normalize: keep + and digits only
+      const normalized = number.replace(/[^\d+]/g, '');
+      const withPlus = normalized.startsWith('+')
+        ? normalized
+        : `+${normalized}`;
+      setPhone(withPlus);
+      setRecipientName(contact.name ?? null);
+      Haptics.selectionAsync();
+    } catch (err) {
+      Alert.alert('Could not open contacts', (err as Error).message);
+    }
+  };
 
   const handleSend = async () => {
     if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
@@ -52,7 +84,7 @@ export default function SendScreen() {
       const transfer = await api.createTransfer({
         recipientPhone: phone,
         amount,
-        currency: 'USDC',
+        currency: 'USD',
         note: note || undefined,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -240,9 +272,31 @@ export default function SendScreen() {
 
             {/* Recipient field */}
             <View style={styles.fieldGroup}>
-              <Heading variant="label" color="secondary">
-                Send to
-              </Heading>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Heading variant="label" color="secondary">
+                  Send to
+                </Heading>
+                <Pressable
+                  onPress={handlePickContact}
+                  style={styles.pickContactBtn}
+                  hitSlop={8}
+                >
+                  <Ionicons name="people" size={14} color={colors.brand} />
+                  <Heading
+                    variant="labelSmall"
+                    color="brand"
+                    style={{ marginLeft: 6 }}
+                  >
+                    Pick from contacts
+                  </Heading>
+                </Pressable>
+              </View>
               <View style={styles.fieldRow}>
                 <Ionicons name="call" size={18} color={colors.textTertiary} />
                 <TextInput
@@ -250,18 +304,31 @@ export default function SendScreen() {
                   placeholder="+447700900001"
                   placeholderTextColor={colors.textQuaternary}
                   value={phone}
-                  onChangeText={setPhone}
+                  onChangeText={t => {
+                    setPhone(t);
+                    setRecipientName(null);
+                  }}
                   keyboardType="phone-pad"
                   editable={!loading}
                 />
               </View>
-              <Heading
-                variant="caption"
-                color="tertiary"
-                style={{ marginTop: 4 }}
-              >
-                Recipient's phone number — they don't need Ping yet.
-              </Heading>
+              {recipientName ? (
+                <Heading
+                  variant="bodySmall"
+                  color="brand"
+                  style={{ marginTop: 4 }}
+                >
+                  → {recipientName}
+                </Heading>
+              ) : (
+                <Heading
+                  variant="caption"
+                  color="tertiary"
+                  style={{ marginTop: 4 }}
+                >
+                  Type a phone number or pick from contacts above.
+                </Heading>
+              )}
             </View>
 
             <View style={styles.fieldGroup}>
@@ -381,6 +448,14 @@ const styles = StyleSheet.create({
     ...typography.bodyLarge,
     color: colors.textPrimary,
     padding: 0,
+  },
+  pickContactBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.brandMuted,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radii.full,
   },
   actionsBar: {
     paddingHorizontal: spacing.xl,

@@ -4,7 +4,7 @@
  * device launch with the new arch + reanimated 3.x combo.
  */
 import { useEffect } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -33,9 +33,11 @@ export default function LandingScreen() {
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.brandingArea}>
-          <View style={styles.logoMark}>
-            <Ionicons name="paper-plane" size={56} color={colors.brand} />
-          </View>
+          <Image
+            source={require('../assets/ping-logo.png')}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
           <Heading variant="displayHuge" align="center">
             Ping
           </Heading>
@@ -123,15 +125,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoMark: {
-    width: 88,
-    height: 88,
-    borderRadius: 28,
-    backgroundColor: colors.brandMuted,
-    borderWidth: 1,
-    borderColor: colors.brand,
-    alignItems: 'center',
-    justifyContent: 'center',
+  brandLogo: {
+    width: 110,
+    height: 110,
     marginBottom: spacing.xl,
   },
   featurePillsRow: {
