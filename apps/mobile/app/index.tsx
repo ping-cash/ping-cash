@@ -1,159 +1,92 @@
 /**
- * Landing screen — premium first impression. STATIC layout (no
- * Reanimated entry animations) — past version crashed on real iOS
- * device launch with the new arch + reanimated 3.x combo.
+ * Landing screen — branding + sign-in CTA.
+ * After hydration, redirects to (tabs) if user is authenticated.
  */
 import { useEffect } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
 import { authStore } from '../lib/auth-store';
-import { colors, radii, spacing } from '../lib/theme';
-import { Button } from '../components/ui/Button';
-import { Heading } from '../components/ui/Heading';
 
 export default function LandingScreen() {
   const router = useRouter();
-  const { height } = useWindowDimensions();
 
   useEffect(() => {
     if (authStore.isAuthenticated()) {
       router.replace('/(tabs)');
     }
-  }, []);
+  }, [router]);
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      {/* Static brand-tinted orbs */}
-      <View style={[styles.orb, { top: height * 0.05 }]} />
-      <View style={[styles.orbAccent, { top: height * 0.25 }]} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.brandingArea}>
+        <Text style={styles.logo}>Ping</Text>
+        <Text style={styles.tagline}>Send money worldwide</Text>
+        <Text style={styles.subtagline}>Free between Ping users · 0.4% FX</Text>
+      </View>
 
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={styles.brandingArea}>
-          <View style={styles.logoMark}>
-            <Ionicons name="paper-plane" size={56} color={colors.brand} />
-          </View>
-          <Heading variant="displayHuge" align="center">
-            Ping
-          </Heading>
-          <View style={{ marginTop: spacing.lg }}>
-            <Heading variant="h2" color="secondary" align="center">
-              Send money like{'\n'}a message
-            </Heading>
-          </View>
-          <View style={styles.featurePillsRow}>
-            <FeaturePill icon="flash" label="Instant" />
-            <FeaturePill icon="globe-outline" label="Worldwide" />
-            <FeaturePill icon="lock-closed-outline" label="Non-custodial" />
-          </View>
-        </View>
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => router.push('/signup')}
+        >
+          <Text style={styles.primaryButtonText}>Get started</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => router.push('/signup')}
+        >
+          <Text style={styles.secondaryButtonText}>Sign in</Text>
+        </TouchableOpacity>
+      </View>
 
-        <View style={styles.actions}>
-          <Button
-            label="Create account"
-            onPress={() => router.push('/signup')}
-            iconRight="arrow-forward"
-          />
-          <Button
-            label="I already have an account"
-            variant="ghost"
-            onPress={() => router.push('/signup')}
-          />
-          <View style={styles.footer}>
-            <View style={styles.trustRow}>
-              <Ionicons
-                name="shield-checkmark"
-                size={12}
-                color={colors.textTertiary}
-              />
-              <Heading variant="caption" color="tertiary">
-                Built on Solana · Powered by USDC
-              </Heading>
-            </View>
-          </View>
-        </View>
-      </SafeAreaView>
-    </View>
-  );
-}
-
-function FeaturePill({
-  icon,
-  label,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-}) {
-  return (
-    <View style={styles.pill}>
-      <Ionicons name={icon} size={13} color={colors.brand} />
-      <Heading variant="labelSmall" color="secondary" style={{ marginLeft: 6 }}>
-        {label}
-      </Heading>
-    </View>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Non-custodial · Built on Solana · Powered by USDC
+        </Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  safe: { flex: 1, paddingHorizontal: spacing.xl },
-  orb: {
-    position: 'absolute',
-    width: 380,
-    height: 380,
-    borderRadius: 999,
-    backgroundColor: colors.brand,
-    opacity: 0.18,
-    alignSelf: 'center',
+  container: { flex: 1, backgroundColor: '#1A1A2E', padding: 24 },
+  brandingArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  logo: {
+    fontSize: 72,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -2,
   },
-  orbAccent: {
-    position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 999,
-    backgroundColor: colors.accentBlue,
-    opacity: 0.12,
-    right: -40,
+  tagline: {
+    fontSize: 22,
+    color: '#FFFFFF',
+    marginTop: 16,
+    textAlign: 'center',
   },
-  brandingArea: {
-    flex: 1,
-    justifyContent: 'center',
+  subtagline: {
+    fontSize: 14,
+    color: '#A0A0C0',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  actions: { gap: 12, marginBottom: 32 },
+  primaryButton: {
+    backgroundColor: '#10B981',
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
   },
-  logoMark: {
-    width: 88,
-    height: 88,
-    borderRadius: 28,
-    backgroundColor: colors.brandMuted,
+  primaryButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
+  secondaryButton: {
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.brand,
+    borderColor: '#FFFFFF',
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xl,
   },
-  featurePillsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xl,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    borderRadius: radii.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-  },
-  actions: { gap: spacing.md, paddingBottom: spacing.lg },
-  footer: { marginTop: spacing.lg, alignItems: 'center' },
-  trustRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
+  secondaryButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
+  footer: { paddingBottom: 24, alignItems: 'center' },
+  footerText: { color: '#6B6B8C', fontSize: 12 },
 });

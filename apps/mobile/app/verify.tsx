@@ -1,26 +1,23 @@
 /**
- * Verify screen — 6-digit OTP entry with iOS-style boxed digit cells.
+ * Verify screen — 6-digit OTP entry.
+ * Calls /auth/verify, stores tokens, navigates to home.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
+  Text,
   TextInput,
-  Pressable,
+  TouchableOpacity,
   StyleSheet,
   Alert,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { api } from '../lib/api';
 import { authStore } from '../lib/auth-store';
-import { colors, radii, spacing, typography } from '../lib/theme';
-import { Button } from '../components/ui/Button';
-import { Heading } from '../components/ui/Heading';
 
 export default function VerifyScreen() {
   const router = useRouter();
@@ -30,21 +27,17 @@ export default function VerifyScreen() {
   }>();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef<TextInput>(null);
-
-  useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 200);
-  }, []);
 
   const handleVerify = async () => {
     if (!/^\d{6}$/.test(code)) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Invalid code', 'Please enter the 6-digit code');
       return;
     }
     setLoading(true);
     try {
       const result = await api.verifyOtp(sessionId, code);
+      // Server returns { user: {...}, tokens: { accessToken, refreshToken }, isNewUser }
+      // Adapt to whichever shape we get
       const r = result as unknown as {
         user: {
           id: string;
@@ -57,6 +50,7 @@ export default function VerifyScreen() {
       };
       const accessToken = r.tokens?.accessToken ?? r.token ?? '';
       const refreshToken = r.tokens?.refreshToken ?? '';
+
       await authStore.setSession({
         accessToken,
         refreshToken,
@@ -69,165 +63,92 @@ export default function VerifyScreen() {
           createdAt: new Date().toISOString(),
         },
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     } catch (err) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Verification failed', (err as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateCode = (text: string) => {
-    const next = text.replace(/\D/g, '').slice(0, 6);
-    if (next.length > code.length) {
-      Haptics.selectionAsync();
-    }
-    setCode(next);
-  };
-
-  const digits = Array.from({ length: 6 }, (_, i) => code[i] ?? '');
-
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.kb}
-        >
-          <Pressable
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.kb}
+      >
+        <View style={styles.content}>
+          <Text style={styles.title}>Enter the code</Text>
+          <Text style={styles.subtitle}>We sent a 6-digit code to {phone}</Text>
+
+          <TextInput
+            style={styles.codeInput}
+            placeholder="000000"
+            placeholderTextColor="#6B6B8C"
+            value={code}
+            onChangeText={t => setCode(t.replace(/\D/g, '').slice(0, 6))}
+            keyboardType="number-pad"
+            autoFocus
+            editable={!loading}
+            maxLength={6}
+          />
+
+          <TouchableOpacity
             onPress={() => router.back()}
-            style={styles.backButton}
-            hitSlop={12}
+            style={styles.resendArea}
           >
-            <Ionicons
-              name="chevron-back"
-              size={24}
-              color={colors.textPrimary}
-            />
-          </Pressable>
-          <View style={styles.content}>
-            <Heading variant="displaySmall">Check your phone</Heading>
-            <Heading
-              variant="bodyLarge"
-              color="secondary"
-              style={{ marginTop: spacing.md }}
-            >
-              We texted a 6-digit code to{' '}
-              <Heading variant="bodyLargeStrong">{phone}</Heading>
-            </Heading>
+            <Text style={styles.resendText}>
+              Didn't get a code? Change number
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-            {/* 6 boxed digit cells */}
-            <Pressable
-              onPress={() => inputRef.current?.focus()}
-              style={styles.cellsRow}
-            >
-              {digits.map((d, i) => {
-                const isActive = code.length === i;
-                const isFilled = d !== '';
-                return (
-                  <View
-                    key={i}
-                    style={[
-                      styles.cell,
-                      isFilled && styles.cellFilled,
-                      isActive && styles.cellActive,
-                    ]}
-                  >
-                    <Heading variant="displaySmall" align="center">
-                      {d}
-                    </Heading>
-                  </View>
-                );
-              })}
-            </Pressable>
-            {/* Hidden actual input */}
-            <TextInput
-              ref={inputRef}
-              style={styles.hiddenInput}
-              value={code}
-              onChangeText={updateCode}
-              keyboardType="number-pad"
-              maxLength={6}
-              autoFocus
-              editable={!loading}
-              textContentType="oneTimeCode"
-              autoComplete="sms-otp"
-            />
-
-            <Pressable
-              onPress={() => router.back()}
-              style={{ marginTop: spacing.xl, alignSelf: 'center' }}
-              hitSlop={12}
-            >
-              <Heading variant="bodyStrong" color="brand">
-                Didn't get a code? Change number
-              </Heading>
-            </Pressable>
-          </View>
-
-          <View style={styles.actions}>
-            <Button
-              label="Verify and continue"
-              onPress={handleVerify}
-              loading={loading}
-              disabled={code.length !== 6}
-              iconRight="arrow-forward"
-            />
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              (loading || code.length !== 6) && styles.buttonDisabled,
+            ]}
+            onPress={handleVerify}
+            disabled={loading || code.length !== 6}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Verify</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
-const CELL_SIZE = 50;
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  safe: { flex: 1, paddingHorizontal: spacing.xl },
+  container: { flex: 1, backgroundColor: '#1A1A2E' },
   kb: { flex: 1 },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
+  content: { flex: 1, padding: 24, paddingTop: 60 },
+  title: { fontSize: 32, fontWeight: '800', color: '#FFFFFF', marginBottom: 8 },
+  subtitle: { fontSize: 16, color: '#A0A0C0', marginBottom: 40 },
+  codeInput: {
+    backgroundColor: '#2A2A4A',
+    color: '#FFFFFF',
+    paddingVertical: 24,
+    borderRadius: 12,
+    fontSize: 36,
+    textAlign: 'center',
+    letterSpacing: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  resendArea: { alignItems: 'center', marginTop: 24 },
+  resendText: { color: '#10B981', fontSize: 14 },
+  actions: { padding: 24 },
+  button: {
+    backgroundColor: '#10B981',
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.sm,
   },
-  content: { flex: 1, paddingTop: spacing.xxl },
-  cellsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xxxl,
-    alignSelf: 'center',
-  },
-  cell: {
-    width: CELL_SIZE,
-    height: CELL_SIZE + 16,
-    borderRadius: radii.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.borderSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cellFilled: {
-    borderColor: colors.brand,
-    backgroundColor: colors.brandFaint,
-  },
-  cellActive: {
-    borderColor: colors.brand,
-    backgroundColor: colors.surfaceElevated,
-  },
-  hiddenInput: {
-    position: 'absolute',
-    opacity: 0,
-    height: 1,
-    width: 1,
-    top: 100,
-  },
-  actions: { paddingBottom: spacing.lg },
+  buttonDisabled: { opacity: 0.5 },
+  buttonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
 });

@@ -1,198 +1,143 @@
 /**
- * Earn / Vault screen — APY hero, key stats, and configuration row.
+ * Earn Vault screen — shows yield earned + auto-stake controls.
+ *
+ * Per ADR 0012 (Earn Vault): non-custodial, auto-stake by default,
+ * 40/60 split (40% Ping / 60% user paid in $PING).
  */
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Switch,
+} from 'react-native';
 import { useState } from 'react';
-import { View, StyleSheet, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { colors, radii, spacing, shadows } from '../../lib/theme';
-import { Heading } from '../../components/ui/Heading';
 
 export default function VaultScreen() {
   const [autoStake, setAutoStake] = useState(true);
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {/* APY hero */}
-          <View style={styles.apyCard}>
-            <View style={styles.apyHeader}>
-              <View style={styles.iconBox}>
-                <Ionicons name="flash" size={20} color={colors.brand} />
-              </View>
-              <Heading variant="labelSmall" color="tertiary">
-                EARN RATE · APY
-              </Heading>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-end',
-                marginTop: spacing.lg,
-              }}
-            >
-              <Heading variant="displayLarge">5.0</Heading>
-              <Heading
-                variant="h1"
-                color="secondary"
-                style={{ marginBottom: 8 }}
-              >
-                %
-              </Heading>
-            </View>
-            <Heading
-              variant="body"
-              color="secondary"
-              style={{ marginTop: spacing.sm }}
-            >
-              Paid in $PING · Daily harvest · No lockup
-            </Heading>
-          </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Earn rate</Text>
+          <Text style={styles.cardValue}>5.0% APY</Text>
+          <Text style={styles.cardSub}>Paid in $PING · Daily harvest</Text>
+        </View>
 
-          {/* Stats grid */}
-          <View style={styles.statsRow}>
-            <Stat label="Your stake" value="$0.00" />
-            <Stat label="Earned (30d)" value="$0.00" tint={colors.brand} />
-            <Stat label="Total $PING" value="0" />
+        <View style={styles.statsRow}>
+          <View style={styles.statTile}>
+            <Text style={styles.statLabel}>Earned (lifetime)</Text>
+            <Text style={styles.statValue}>0 $PING</Text>
           </View>
+          <View style={styles.statTile}>
+            <Text style={styles.statLabel}>Earned (last 30d)</Text>
+            <Text style={styles.statValue}>0 $PING</Text>
+          </View>
+        </View>
 
-          {/* Auto-stake setting */}
-          <View style={styles.settingCard}>
-            <View
-              style={[
-                styles.iconBox,
-                {
-                  backgroundColor: autoStake
-                    ? colors.brandMuted
-                    : colors.surfaceElevated,
-                },
-              ]}
-            >
-              <Ionicons
-                name="infinite"
-                size={20}
-                color={autoStake ? colors.brand : colors.textTertiary}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Heading variant="bodyLargeStrong">Auto-stake</Heading>
-              <Heading variant="bodySmall" color="secondary">
-                Stake new deposits automatically
-              </Heading>
+        <View style={styles.settingsCard}>
+          <View style={styles.settingRow}>
+            <View style={styles.settingTextArea}>
+              <Text style={styles.settingTitle}>Auto-stake</Text>
+              <Text style={styles.settingSub}>
+                Incoming USDC is automatically staked. Spending is instant via
+                atomic unstake.
+              </Text>
             </View>
             <Switch
               value={autoStake}
-              onValueChange={v => {
-                Haptics.selectionAsync();
-                setAutoStake(v);
-              }}
-              trackColor={{ false: colors.surfaceElevated, true: colors.brand }}
+              onValueChange={setAutoStake}
+              trackColor={{ true: '#10B981', false: '#6B6B8C' }}
               thumbColor="#FFFFFF"
             />
           </View>
+        </View>
 
-          {/* Explainer */}
-          <View style={styles.explainCard}>
-            <Ionicons
-              name="information-circle"
-              size={20}
-              color={colors.accentBlue}
-            />
-            <Heading
-              variant="bodySmall"
-              color="secondary"
-              style={{ flex: 1, marginLeft: spacing.sm }}
-            >
-              Yield comes from real on-chain protocols. Non-custodial: you
-              control the keys via your MPC wallet. Per ADR 0012 the split is
-              40% Ping / 60% you, paid in $PING.
-            </Heading>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
-  );
-}
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle}>How Earn works</Text>
+          <Text style={styles.infoBullet}>
+            • Your USDC is deployed across Kamino, Marginfi, Aave, and Drift
+          </Text>
+          <Text style={styles.infoBullet}>
+            • You stay non-custodial — delegated authority can be revoked
+            anytime
+          </Text>
+          <Text style={styles.infoBullet}>
+            • Yield is auto-converted to $PING at the daily harvest (40% Ping /
+            60% you)
+          </Text>
+          <Text style={styles.infoBullet}>
+            • Spending unstakes atomically in ~1 second — no waiting period
+          </Text>
+        </View>
 
-function Stat({
-  label,
-  value,
-  tint,
-}: {
-  label: string;
-  value: string;
-  tint?: string;
-}) {
-  return (
-    <View style={styles.statCard}>
-      <Heading variant="labelSmall" color="tertiary">
-        {label}
-      </Heading>
-      <Heading
-        variant="h2"
-        style={{ marginTop: 4, color: tint ?? colors.textPrimary }}
-      >
-        {value}
-      </Heading>
-    </View>
+        <TouchableOpacity style={styles.viewDashboardLink}>
+          <Text style={styles.viewDashboardText}>
+            View public vault dashboard → vault.ping.cash
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  safe: { flex: 1 },
-  scroll: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxxl },
-  apyCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.xl,
-    borderWidth: 1,
-    borderColor: colors.brand,
-    ...shadows.brand,
-    marginTop: spacing.lg,
-  },
-  apyHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.sm,
-    backgroundColor: colors.brandMuted,
+  container: { flex: 1, backgroundColor: '#1A1A2E' },
+  scroll: { padding: 16 },
+  card: {
+    backgroundColor: '#2A2A4A',
+    padding: 24,
+    borderRadius: 16,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.lg,
+  cardLabel: { color: '#A0A0C0', fontSize: 14 },
+  cardValue: {
+    color: '#10B981',
+    fontSize: 48,
+    fontWeight: '800',
+    marginVertical: 4,
   },
-  statCard: {
+  cardSub: { color: '#A0A0C0', fontSize: 12 },
+  statsRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
+  statTile: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    backgroundColor: '#2A2A4A',
+    padding: 16,
+    borderRadius: 12,
   },
-  settingCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
+  statLabel: { color: '#A0A0C0', fontSize: 12 },
+  statValue: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 4,
   },
-  explainCard: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
+  settingsCard: {
+    backgroundColor: '#2A2A4A',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
   },
+  settingRow: { flexDirection: 'row', alignItems: 'center' },
+  settingTextArea: { flex: 1 },
+  settingTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  settingSub: { color: '#A0A0C0', fontSize: 13, marginTop: 4 },
+  infoCard: {
+    backgroundColor: '#2A2A4A',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  infoTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  infoBullet: { color: '#A0A0C0', fontSize: 13, lineHeight: 20 },
+  viewDashboardLink: { alignItems: 'center', marginTop: 24, padding: 16 },
+  viewDashboardText: { color: '#10B981', fontSize: 13 },
 });

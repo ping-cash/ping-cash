@@ -1,25 +1,19 @@
 /**
- * Activity feed — polished list rows with directional icons,
- * status pills, and grouped sections.
+ * Activity / Transfers history screen.
  */
 import { useEffect, useState } from 'react';
 import {
   View,
+  Text,
   FlatList,
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
-  Pressable,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { api, type Transfer } from '../../lib/api';
-import { colors, radii, spacing, typography } from '../../lib/theme';
-import { Heading } from '../../components/ui/Heading';
 
 export default function HistoryScreen() {
-  const router = useRouter();
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,174 +41,85 @@ export default function HistoryScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safe} edges={['top']}>
-          <ActivityIndicator
-            size="large"
-            color={colors.brand}
-            style={{ marginTop: 100 }}
-          />
-        </SafeAreaView>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator
+          size="large"
+          color="#10B981"
+          style={{ marginTop: 50 }}
+        />
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <FlatList
-          data={transfers}
-          keyExtractor={item => item.id}
-          contentContainerStyle={
-            transfers.length === 0 ? styles.emptyContainer : styles.list
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.brand}
-            />
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}>
-                <Ionicons name="time-outline" size={32} color={colors.brand} />
-              </View>
-              <Heading variant="h2" align="center">
-                No activity yet
-              </Heading>
-              <Heading
-                variant="body"
-                color="secondary"
-                align="center"
-                style={{ marginTop: spacing.sm, maxWidth: 280 }}
-              >
-                Once you send or receive money, your transfers will show up
-                here.
-              </Heading>
-              <Pressable
-                onPress={() => router.push('/send')}
-                style={styles.cta}
-              >
-                <Heading variant="bodyStrong" color="brand">
-                  Send your first transfer →
-                </Heading>
-              </Pressable>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <FlatList
+        data={transfers}
+        keyExtractor={item => item.id}
+        contentContainerStyle={
+          transfers.length === 0 ? styles.emptyContainer : { padding: 16 }
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#10B981"
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No activity yet</Text>
+            <Text style={styles.emptySub}>
+              Your sent and received transfers will appear here
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Text style={styles.recipient}>{item.recipientPhone}</Text>
+              <Text style={styles.status}>{item.status}</Text>
             </View>
-          }
-          renderItem={({ item }) => <ActivityRow item={item} />}
-          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
-        />
-      </SafeAreaView>
-    </View>
-  );
-}
-
-function ActivityRow({ item }: { item: Transfer }) {
-  // Direction inferred — assume "sent" for now (no sender flag in current type)
-  const direction: 'sent' | 'received' = 'sent';
-  const statusColor =
-    item.status === 'claimed'
-      ? colors.success
-      : item.status === 'failed'
-        ? colors.error
-        : colors.warning;
-  return (
-    <Pressable style={styles.row}>
-      <View
-        style={[
-          styles.icon,
-          {
-            backgroundColor:
-              direction === 'sent' ? colors.errorMuted : colors.successMuted,
-          },
-        ]}
-      >
-        <Ionicons
-          name={direction === 'sent' ? 'arrow-up' : 'arrow-down'}
-          size={20}
-          color={direction === 'sent' ? colors.error : colors.success}
-        />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Heading variant="bodyLargeStrong" numberOfLines={1}>
-          {direction === 'sent' ? 'To' : 'From'} {item.recipientPhone}
-        </Heading>
-        <View style={styles.statusRow}>
-          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-          <Heading variant="bodySmall" color="tertiary">
-            {item.status}
-          </Heading>
-        </View>
-      </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Heading
-          variant="bodyLargeStrong"
-          color={direction === 'sent' ? 'primary' : 'brand'}
-        >
-          {direction === 'sent' ? '-' : '+'}${item.amount}
-        </Heading>
-        {item.localAmount ? (
-          <Heading variant="caption" color="tertiary">
-            ≈ {item.localAmount} {item.localCurrency}
-          </Heading>
-        ) : null}
-      </View>
-    </Pressable>
+            <View style={styles.rowRight}>
+              <Text style={styles.amount}>
+                ${item.amount} {item.currency}
+              </Text>
+              {item.localAmount ? (
+                <Text style={styles.localAmount}>
+                  {item.localAmount} {item.localCurrency}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        )}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  safe: { flex: 1 },
-  list: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xxxl,
+  container: { flex: 1, backgroundColor: '#1A1A2E' },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyState: { padding: 32, alignItems: 'center' },
+  emptyTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '700' },
+  emptySub: {
+    color: '#A0A0C0',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
-  emptyContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  emptyState: { alignItems: 'center' },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: radii.xl,
-    backgroundColor: colors.brandMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xl,
-  },
-  cta: { marginTop: spacing.xl, padding: spacing.md },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#2A2A4A',
+    borderRadius: 12,
+    marginBottom: 8,
   },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 999,
-  },
+  rowLeft: { flex: 1 },
+  recipient: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  status: { color: '#A0A0C0', fontSize: 12, marginTop: 4 },
+  rowRight: { alignItems: 'flex-end' },
+  amount: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  localAmount: { color: '#10B981', fontSize: 12, marginTop: 4 },
 });

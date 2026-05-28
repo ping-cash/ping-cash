@@ -1,14 +1,9 @@
-/**
- * Root layout — Stack navigation with theme-aware status bar and
- * screen-level transition/presentation polish.
- */
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { authStore } from '../lib/auth-store';
-import { colors, typography } from '../lib/theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,29 +29,31 @@ export default function RootLayout() {
         <StatusBar style="light" />
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: colors.bg },
-            headerTintColor: colors.textPrimary,
-            headerTitleStyle: { ...typography.h3 },
-            headerShadowVisible: false,
-            contentStyle: { backgroundColor: colors.bg },
-            animation: 'slide_from_right',
+            headerStyle: { backgroundColor: '#1A1A2E' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: '600' },
           }}
         >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="signup" options={{ headerShown: false }} />
-          <Stack.Screen name="verify" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="index"
+            options={{ title: 'Ping', headerShown: false }}
+          />
+          <Stack.Screen
+            name="signup"
+            options={{ title: 'Get started', headerShown: false }}
+          />
+          <Stack.Screen
+            name="verify"
+            options={{ title: 'Verify phone', headerShown: false }}
+          />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
             name="send"
-            options={{
-              headerShown: false,
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
-            }}
+            options={{ title: 'Send money', presentation: 'modal' }}
           />
           <Stack.Screen
             name="transfer-detail"
-            options={{ title: 'Transfer details' }}
+            options={{ title: 'Transfer' }}
           />
         </Stack>
       </SafeAreaProvider>
