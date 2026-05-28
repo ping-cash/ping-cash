@@ -1,0 +1,172 @@
+# One-off bootstrap: register Ping's bundle ID + create the App Store Connect
+# app shell + create the "Founders" beta tester group. Idempotent — re-runs
+# safely skip already-existing resources.
+#
+# Run once via workflow_dispatch after ASC creds are in repo secrets.
+
+name: bootstrap-asc
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: 'Bundle ID to register'
+        required: true
+        default: 'cash.ping.app'
+      app_name:
+        description: 'App name in App Store Connect'
+        required: true
+        default: 'Ping'
+      primary_locale:
+        description: 'Primary App Store locale'
+        required: true
+        default: 'en-US'
+      beta_group:
+        description: 'Beta tester group to create'
+        required: true
+        default: 'Founders'
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID:    ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          BUNDLE_ID: ${{ inputs.bundle_id }}
+          APP_NAME: ${{ inputs.app_name }}
+          PRIMARY_LOCALE: ${{ inputs.primary_locale }}
+          BETA_GROUP: ${{ inputs.beta_group }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, json, sys
+          import jwt, requests
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          # The secret was stored as raw PEM (PRIVATE KEY block), not base64-of-PEM.
+          # Try base64-decode first; if that fails, use as-is.
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key:
+                  key = key_b64.encode()
+          except Exception:
+              key = key_b64.encode()
+          token = jwt.encode(
+              { 'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+                'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1' },
+              key, algorithm='ES256', headers={ 'kid': os.environ['KEY_ID'] })
+          h = { 'Authorization': f'Bearer {token}',
+                'Content-Type': 'application/json' }
+          base = 'https://api.appstoreconnect.apple.com'
+          bundle_id = os.environ['BUNDLE_ID']
+          app_name  = os.environ['APP_NAME']
+          locale    = os.environ['PRIMARY_LOCALE']
+          beta_grp  = os.environ['BETA_GROUP']
+
+          # Step 1: Register bundle ID (capabilities can be set later)
+          existing_bids = requests.get(
+              f'{base}/v1/bundleIds?filter[identifier]={bundle_id}',
+              headers=h, timeout=20).json()
+          bid_resource_id = None
+          if existing_bids.get('data'):
+              bid_resource_id = existing_bids['data'][0]['id']
+              print(f'  Bundle ID {bundle_id} already registered: {bid_resource_id}')
+          else:
+              body = {
+                  'data': {
+                      'type': 'bundleIds',
+                      'attributes': {
+                          'identifier': bundle_id,
+                          'name': app_name + ' iOS',
+                          'platform': 'IOS',
+                      }
+                  }
+              }
+              r = requests.post(f'{base}/v1/bundleIds', headers=h,
+                  data=json.dumps(body), timeout=20)
+              print(f'  POST /v1/bundleIds: {r.status_code}')
+              if r.status_code not in (200, 201):
+                  print('  body:', r.text); sys.exit(1)
+              bid_resource_id = r.json()['data']['id']
+              print(f'  registered bundle ID: {bid_resource_id}')
+
+          # Step 2: Create app in App Store Connect
+          existing_apps = requests.get(
+              f'{base}/v1/apps?filter[bundleId]={bundle_id}',
+              headers=h, timeout=20).json()
+          app_id = None
+          if existing_apps.get('data'):
+              app_id = existing_apps['data'][0]['id']
+              print(f'  App {bundle_id} already exists: {app_id}')
+          else:
+              # SKU is operator-defined; use the bundle id (Apple just wants
+              # something unique within the account).
+              body = {
+                  'data': {
+                      'type': 'apps',
+                      'attributes': {
+                          'bundleId': bundle_id,
+                          'name': app_name,
+                          'primaryLocale': locale,
+                          'sku': bundle_id,
+                      },
+                      'relationships': {
+                          'bundleId': {
+                              'data': { 'type': 'bundleIds',
+                                        'id': bid_resource_id }
+                          }
+                      }
+                  }
+              }
+              r = requests.post(f'{base}/v1/apps', headers=h,
+                  data=json.dumps(body), timeout=20)
+              print(f'  POST /v1/apps: {r.status_code}')
+              if r.status_code not in (200, 201):
+                  print('  body:', r.text); sys.exit(1)
+              app_id = r.json()['data']['id']
+              print(f'  created app: {app_id}')
+
+          # Step 3: Create beta group
+          existing_groups = requests.get(
+              f'{base}/v1/betaGroups?filter[app]={app_id}',
+              headers=h, timeout=20).json()
+          group_id = None
+          for g in existing_groups.get('data', []):
+              if g['attributes']['name'] == beta_grp:
+                  group_id = g['id']
+                  print(f'  Beta group "{beta_grp}" already exists: {group_id}')
+                  break
+          if group_id is None:
+              body = {
+                  'data': {
+                      'type': 'betaGroups',
+                      'attributes': {
+                          'name': beta_grp,
+                          'publicLinkEnabled': False,
+                          'hasAccessToAllBuilds': True,
+                      },
+                      'relationships': {
+                          'app': { 'data': { 'type': 'apps', 'id': app_id } }
+                      }
+                  }
+              }
+              r = requests.post(f'{base}/v1/betaGroups', headers=h,
+                  data=json.dumps(body), timeout=20)
+              print(f'  POST /v1/betaGroups: {r.status_code}')
+              if r.status_code not in (200, 201):
+                  print('  body:', r.text); sys.exit(1)
+              group_id = r.json()['data']['id']
+              print(f'  created beta group: {group_id}')
+
+          # Final summary
+          print()
+          print('=== BOOTSTRAP SUMMARY ===')
+          print(f'  bundle_id      = {bundle_id}')
+          print(f'  bundle_resource= {bid_resource_id}')
+          print(f'  app_id         = {app_id}')
+          print(f'  beta_group_id  = {group_id} ({beta_grp})')
+          PYEOF
