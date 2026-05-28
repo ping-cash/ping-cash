@@ -218,15 +218,154 @@ jobs:
           echo "Fresh profile UUID: $UUID"
           cp $RUNNER_TEMP/dist.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
 
-      - name: Discover scheme + build + archive (manual signing)
+      # ───────────────────────────────────────────────────────────
+      # SIMULATOR E2E GATE — runs BEFORE archive/upload.
+      # If the app crashes on launch or any Maestro flow fails, this
+      # job exits non-zero, archive + altool upload steps are skipped,
+      # and the broken build NEVER reaches Apple/TestFlight. Adopted
+      # verbatim from dynolabs-io/vcard's proven ios.yml after a
+      # founder-reported crash on the first revamp build (2026-05-28).
+      # ───────────────────────────────────────────────────────────
+      - name: Discover scheme
+        id: scheme
         run: |
           cd ios
           WORKSPACE=$(ls -d *.xcworkspace | head -1)
-          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          echo "Discovered scheme: $SCHEME from workspace $WORKSPACE"
+          APP_SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "scheme=$APP_SCHEME" >> $GITHUB_OUTPUT
+          echo "workspace=$WORKSPACE" >> $GITHUB_OUTPUT
+          echo "Discovered scheme: $APP_SCHEME from workspace $WORKSPACE"
+
+      - name: Build app for iOS Simulator (no signing)
+        run: |
+          set -euo pipefail
+          cd ios
+          DEST=$(xcrun simctl list devices available --json | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          for runtime, devs in d['devices'].items():
+              if 'iOS' not in runtime: continue
+              for x in devs:
+                  if 'iPhone' in x.get('name','') and x.get('isAvailable'):
+                      print(f\"platform=iOS Simulator,id={x['udid']}\"); sys.exit(0)
+          ")
+          echo "destination: $DEST"
+          xcodebuild build \
+            -workspace "${{ steps.scheme.outputs.workspace }}" \
+            -scheme "${{ steps.scheme.outputs.scheme }}" \
+            -configuration Release \
+            -destination "$DEST" \
+            -derivedDataPath $RUNNER_TEMP/sim-build \
+            -sdk iphonesimulator \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            ONLY_ACTIVE_ARCH=YES \
+            ARCHS=arm64
+
+      - name: Boot fresh iOS simulator
+        run: |
+          set -euo pipefail
+          DEVICE_TYPE=$(xcrun simctl list devicetypes -j | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          for t in d['devicetypes']:
+              if 'iPhone-16' in t['identifier'] or 'iPhone-15' in t['identifier']:
+                  print(t['identifier']); break
+          ")
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          ios = [r for r in d['runtimes'] if r.get('isAvailable') and 'iOS' in r.get('name','')]
+          ios.sort(key=lambda r: r['version'], reverse=True)
+          print(ios[0]['identifier'] if ios else '')
+          ")
+          UDID=$(xcrun simctl create "ping-test-$RANDOM" "$DEVICE_TYPE" "$RUNTIME")
+          echo "SIM_UDID=$UDID" >> $GITHUB_ENV
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Install app on simulator + pre-grant permissions
+        run: |
+          set -euo pipefail
+          APP=$(find $RUNNER_TEMP/sim-build/Build/Products/Release-iphonesimulator -maxdepth 2 -name "*.app" -type d | head -1)
+          if [ -z "$APP" ]; then
+            echo "::error::No .app produced by simulator build"
+            find $RUNNER_TEMP/sim-build/Build/Products -maxdepth 3 -type d
+            exit 1
+          fi
+          echo "Installing $APP onto $SIM_UDID"
+          xcrun simctl install "$SIM_UDID" "$APP"
+          for perm in photos camera contacts microphone; do
+            xcrun simctl privacy "$SIM_UDID" grant $perm ${{ env.APP_IDENTIFIER }} || true
+          done
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Run Maestro flows + crash detection
+        env:
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: '600000'
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.maestro/bin:$PATH"
+          maestro --version
+          # Stream simulator log so we can grep for native crash signatures
+          # even when Maestro itself reports the flow as passed.
+          xcrun simctl spawn "$SIM_UDID" log stream --predicate 'process == "Ping" OR process == "Pong" OR process == "cash"' \
+            > $RUNNER_TEMP/sim.log 2>&1 &
+          LOG_PID=$!
+          set +e
+          MAESTRO_SCREEN_DIR=$RUNNER_TEMP/maestro-screenshots
+          mkdir -p "$MAESTRO_SCREEN_DIR"
+          (
+            cd "$MAESTRO_SCREEN_DIR" && \
+            maestro --device "$SIM_UDID" test \
+              --format=junit \
+              --output="$RUNNER_TEMP/maestro-junit.xml" \
+              "$GITHUB_WORKSPACE/apps/mobile/.maestro/00-all.yaml"
+          )
+          MAESTRO_EXIT=$?
+          set -e
+          kill $LOG_PID 2>/dev/null || true
+          if [ -d ~/.maestro/tests ]; then
+            mkdir -p $RUNNER_TEMP/maestro-debug
+            cp -R ~/.maestro/tests $RUNNER_TEMP/maestro-debug/
+          fi
+          echo "=== Maestro screenshots captured ==="
+          ls -la "$MAESTRO_SCREEN_DIR" || true
+          # NATIVE-CRASH DETECTION — Maestro can pass even when a native
+          # bridge crash happens (the JS ErrorBoundary doesn't catch it).
+          if grep -qE "Terminating app due to uncaught exception|signal SIGABRT|EXC_BAD_ACCESS|libsystem_kernel\.dylib.*__pthread_kill|Fatal Exception" $RUNNER_TEMP/sim.log; then
+            echo "::error::Native crash detected in sim.log — see uploaded artifacts"
+            grep -nE "Terminating|SIGABRT|EXC_BAD_ACCESS|Fatal Exception" $RUNNER_TEMP/sim.log | head -40
+            exit 1
+          fi
+          exit $MAESTRO_EXIT
+
+      - name: Upload Maestro artifacts (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-results
+          path: |
+            ${{ runner.temp }}/maestro-junit.xml
+            ${{ runner.temp }}/maestro-debug/**
+            ${{ runner.temp }}/maestro-screenshots/**
+            ${{ runner.temp }}/sim.log
+          if-no-files-found: warn
+      # ───────────────────────────────────────────────────────────
+      # END E2E GATE — archive + upload only run if gate passed.
+      # ───────────────────────────────────────────────────────────
+
+      - name: Build + archive (manual signing)
+        run: |
+          cd ios
           xcodebuild archive \
-            -workspace "$WORKSPACE" \
-            -scheme "$SCHEME" \
+            -workspace "${{ steps.scheme.outputs.workspace }}" \
+            -scheme "${{ steps.scheme.outputs.scheme }}" \
             -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath $RUNNER_TEMP/app.xcarchive \

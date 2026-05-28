@@ -1,0 +1,8 @@
+appId: cash.ping.app
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'Ping'
+- assertVisible: 'Send money'
+- assertVisible: 'Create account'
+- takeScreenshot: launch

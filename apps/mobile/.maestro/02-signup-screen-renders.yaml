@@ -1,0 +1,6 @@
+appId: cash.ping.app
+---
+- tapOn: 'Create account'
+- assertVisible: "What's your"
+- assertVisible: 'phone number'
+- takeScreenshot: signup

@@ -1,0 +1,7 @@
+appId: cash.ping.app
+---
+# v0.1 smoke — minimal gate proving the app boots, renders landing,
+# can reach the signup/verify flow. If THIS fails, the build is broken
+# and TestFlight upload is skipped by ios.yml.
+- runFlow: 01-launch.yaml
+- runFlow: 02-signup-screen-renders.yaml
