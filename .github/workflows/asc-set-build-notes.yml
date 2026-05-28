@@ -1,0 +1,68 @@
+# Post a betaBuildLocalization ("What to Test" notes) so Apple marks the
+# build as installable for internal testers (Founders group).
+name: ASC Set Build Notes
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_id: { description: 'App bundle ID', required: true, default: 'cash.ping.app' }
+      whats_new: { description: 'What to Test notes', required: true, default: 'Initial Ping Cash build — sign in with phone (use +447700900XXX for test bypass + code 123456), send money via WhatsApp share, claim flow.' }
+jobs:
+  set-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          BUNDLE_ID: ${{ inputs.bundle_id }}
+          WHATS_NEW: ${{ inputs.whats_new }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, jwt, requests, json, sys
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except Exception: key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}',
+               'Content-Type': 'application/json'}
+          base = 'https://api.appstoreconnect.apple.com'
+          bundle_id = os.environ['BUNDLE_ID']
+          whats_new = os.environ['WHATS_NEW']
+
+          apps = requests.get(f'{base}/v1/apps?filter[bundleId]={bundle_id}', headers=h).json()
+          app_id = apps['data'][0]['id']
+          builds = requests.get(
+              f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=1',
+              headers=h, timeout=20).json()
+          build = builds['data'][0]
+          build_id = build['id']
+          print(f'app_id={app_id} build_id={build_id} state={build["attributes"]["processingState"]}')
+
+          body = {
+              'data': {
+                  'type': 'betaBuildLocalizations',
+                  'attributes': {
+                      'locale': 'en-US',
+                      'whatsNew': whats_new,
+                  },
+                  'relationships': {
+                      'build': {'data': {'type': 'builds', 'id': build_id}}
+                  }
+              }
+          }
+          r = requests.post(f'{base}/v1/betaBuildLocalizations',
+              headers=h, data=json.dumps(body), timeout=20)
+          print(f'set_notes status={r.status_code} body={r.text[:400]}')
+          if r.status_code not in (200, 201):
+              print('::error::Failed to set notes')
+              sys.exit(1)
+          print('SUCCESS — Apple will now send TestFlight invite emails to Founders group')
+          PYEOF
