@@ -96,11 +96,7 @@ export default function HomeScreen() {
               <Heading variant="caption" color="tertiary">
                 {greeting()}
               </Heading>
-              <Heading
-                variant="h2"
-                style={{ marginTop: 2 }}
-                numberOfLines={1}
-              >
+              <Heading variant="h2" style={{ marginTop: 2 }} numberOfLines={1}>
                 ····{firstName}
               </Heading>
             </View>
@@ -120,7 +116,11 @@ export default function HomeScreen() {
                 Available balance
               </Heading>
               <View style={styles.tierChip}>
-                <Ionicons name="ribbon-outline" size={11} color={colors.brand} />
+                <Ionicons
+                  name="ribbon-outline"
+                  size={11}
+                  color={colors.brand}
+                />
                 <Heading
                   variant="labelSmall"
                   color="brand"
@@ -132,16 +132,22 @@ export default function HomeScreen() {
             </View>
             <Animated.View
               style={[
-                { flexDirection: 'row', alignItems: 'flex-end', marginTop: spacing.md },
+                {
+                  flexDirection: 'row',
+                  alignItems: 'flex-end',
+                  marginTop: spacing.md,
+                },
                 balanceAnim,
               ]}
             >
-              <Heading variant="bodyLargeStrong" color="secondary" style={{ marginBottom: 12 }}>
+              <Heading
+                variant="bodyLargeStrong"
+                color="secondary"
+                style={{ marginBottom: 12 }}
+              >
                 $
               </Heading>
-              <Heading variant="displayHuge">
-                {loading ? '—' : dollars}
-              </Heading>
+              <Heading variant="displayHuge">{loading ? '—' : dollars}</Heading>
               <Heading
                 variant="h2"
                 color="tertiary"
@@ -226,7 +232,11 @@ export default function HomeScreen() {
 
           <View style={styles.emptyActivity}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="paper-plane-outline" size={28} color={colors.brand} />
+              <Ionicons
+                name="paper-plane-outline"
+                size={28}
+                color={colors.brand}
+              />
             </View>
             <Heading variant="h3" align="center">
               No transfers yet

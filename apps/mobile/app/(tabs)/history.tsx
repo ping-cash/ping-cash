@@ -64,7 +64,7 @@ export default function HistoryScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <FlatList
           data={transfers}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           contentContainerStyle={
             transfers.length === 0 ? styles.emptyContainer : styles.list
           }
@@ -78,11 +78,7 @@ export default function HistoryScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
-                <Ionicons
-                  name="time-outline"
-                  size={32}
-                  color={colors.brand}
-                />
+                <Ionicons name="time-outline" size={32} color={colors.brand} />
               </View>
               <Heading variant="h2" align="center">
                 No activity yet
@@ -145,9 +141,7 @@ function ActivityRow({ item }: { item: Transfer }) {
           {direction === 'sent' ? 'To' : 'From'} {item.recipientPhone}
         </Heading>
         <View style={styles.statusRow}>
-          <View
-            style={[styles.statusDot, { backgroundColor: statusColor }]}
-          />
+          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
           <Heading variant="bodySmall" color="tertiary">
             {item.status}
           </Heading>
@@ -173,8 +167,17 @@ function ActivityRow({ item }: { item: Transfer }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   safe: { flex: 1 },
-  list: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxxl },
-  emptyContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl },
+  list: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxxl,
+  },
+  emptyContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
   emptyState: { alignItems: 'center' },
   emptyIcon: {
     width: 72,

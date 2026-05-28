@@ -1,13 +1,7 @@
 /**
  * Profile / settings — gradient avatar, wallet address display, grouped sections.
  */
-import {
-  View,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,17 +48,23 @@ export default function ProfileScreen() {
               </Heading>
             </View>
             <View style={{ marginTop: spacing.lg, alignItems: 'center' }}>
-              <Heading variant="h1">
-                {user?.name ?? 'Ping member'}
-              </Heading>
-              <Heading variant="bodyLarge" color="secondary" style={{ marginTop: 4 }}>
+              <Heading variant="h1">{user?.name ?? 'Ping member'}</Heading>
+              <Heading
+                variant="bodyLarge"
+                color="secondary"
+                style={{ marginTop: 4 }}
+              >
                 {user?.phone ?? ''}
               </Heading>
             </View>
 
             {wallet ? (
               <Pressable style={styles.walletPill}>
-                <Ionicons name="wallet-outline" size={14} color={colors.brand} />
+                <Ionicons
+                  name="wallet-outline"
+                  size={14}
+                  color={colors.brand}
+                />
                 <Heading
                   variant="bodySmall"
                   color="secondary"
@@ -86,17 +86,30 @@ export default function ProfileScreen() {
           <View style={styles.kycCard}>
             <View style={styles.kycRow}>
               <View
-                style={[styles.kycIcon, { backgroundColor: colors.warningMuted }]}
+                style={[
+                  styles.kycIcon,
+                  { backgroundColor: colors.warningMuted },
+                ]}
               >
-                <Ionicons name="shield-outline" size={20} color={colors.warning} />
+                <Ionicons
+                  name="shield-outline"
+                  size={20}
+                  color={colors.warning}
+                />
               </View>
               <View style={{ flex: 1 }}>
-                <Heading variant="bodyLargeStrong">Verify your identity</Heading>
+                <Heading variant="bodyLargeStrong">
+                  Verify your identity
+                </Heading>
                 <Heading variant="bodySmall" color="secondary">
                   Unlock cash-out and higher limits
                 </Heading>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.textTertiary}
+              />
             </View>
           </View>
 
@@ -153,7 +166,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <Heading
       variant="labelSmall"
       color="tertiary"
-      style={{ marginTop: spacing.xl, marginBottom: spacing.sm, paddingHorizontal: spacing.xs }}
+      style={{
+        marginTop: spacing.xl,
+        marginBottom: spacing.sm,
+        paddingHorizontal: spacing.xs,
+      }}
     >
       {children}
     </Heading>
@@ -170,10 +187,7 @@ function Row({
   valueText?: string;
 }) {
   return (
-    <Pressable
-      style={styles.rowItem}
-      onPress={() => Haptics.selectionAsync()}
-    >
+    <Pressable style={styles.rowItem} onPress={() => Haptics.selectionAsync()}>
       <Ionicons name={icon} size={20} color={colors.textSecondary} />
       <Heading variant="bodyLarge" style={{ flex: 1, marginLeft: spacing.md }}>
         {label}

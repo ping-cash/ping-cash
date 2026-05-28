@@ -26,13 +26,27 @@ export default function VaultScreen() {
                 EARN RATE · APY
               </Heading>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: spacing.lg }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-end',
+                marginTop: spacing.lg,
+              }}
+            >
               <Heading variant="displayLarge">5.0</Heading>
-              <Heading variant="h1" color="secondary" style={{ marginBottom: 8 }}>
+              <Heading
+                variant="h1"
+                color="secondary"
+                style={{ marginBottom: 8 }}
+              >
                 %
               </Heading>
             </View>
-            <Heading variant="body" color="secondary" style={{ marginTop: spacing.sm }}>
+            <Heading
+              variant="body"
+              color="secondary"
+              style={{ marginTop: spacing.sm }}
+            >
               Paid in $PING · Daily harvest · No lockup
             </Heading>
           </View>
@@ -49,7 +63,11 @@ export default function VaultScreen() {
             <View
               style={[
                 styles.iconBox,
-                { backgroundColor: autoStake ? colors.brandMuted : colors.surfaceElevated },
+                {
+                  backgroundColor: autoStake
+                    ? colors.brandMuted
+                    : colors.surfaceElevated,
+                },
               ]}
             >
               <Ionicons
@@ -66,7 +84,7 @@ export default function VaultScreen() {
             </View>
             <Switch
               value={autoStake}
-              onValueChange={(v) => {
+              onValueChange={v => {
                 Haptics.selectionAsync();
                 setAutoStake(v);
               }}
@@ -77,15 +95,19 @@ export default function VaultScreen() {
 
           {/* Explainer */}
           <View style={styles.explainCard}>
-            <Ionicons name="information-circle" size={20} color={colors.accentBlue} />
+            <Ionicons
+              name="information-circle"
+              size={20}
+              color={colors.accentBlue}
+            />
             <Heading
               variant="bodySmall"
               color="secondary"
               style={{ flex: 1, marginLeft: spacing.sm }}
             >
-              Yield comes from real on-chain protocols. Non-custodial:
-              you control the keys via your MPC wallet. Per ADR 0012 the
-              split is 40% Ping / 60% you, paid in $PING.
+              Yield comes from real on-chain protocols. Non-custodial: you
+              control the keys via your MPC wallet. Per ADR 0012 the split is
+              40% Ping / 60% you, paid in $PING.
             </Heading>
           </View>
         </ScrollView>

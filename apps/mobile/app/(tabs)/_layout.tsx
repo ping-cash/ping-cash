@@ -7,7 +7,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, typography } from '../../lib/theme';
 
 const tabIcon =
-  (name: keyof typeof Ionicons.glyphMap, focusedName?: keyof typeof Ionicons.glyphMap) =>
+  (
+    name: keyof typeof Ionicons.glyphMap,
+    focusedName?: keyof typeof Ionicons.glyphMap
+  ) =>
   ({ color, focused }: { color: string; focused: boolean }) => (
     <Ionicons
       name={focused ? (focusedName ?? name) : name}
