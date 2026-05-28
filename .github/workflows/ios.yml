@@ -428,6 +428,14 @@ jobs:
           rm -rf Payload
           ls -la $RUNNER_TEMP/export/
 
+      - name: Upload dSYM artifact (for crash symbolication)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsym-${{ github.run_number }}
+          path: ${{ runner.temp }}/app.xcarchive/dSYMs/**
+          if-no-files-found: warn
+
       - name: Upload to TestFlight via altool
         run: |
           set -o pipefail
