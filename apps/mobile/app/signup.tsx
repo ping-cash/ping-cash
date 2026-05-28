@@ -93,6 +93,8 @@ export default function SignupScreen() {
                 editable={!loading}
                 leftIcon="call"
                 helper="Include the country code. We'll text you a 6-digit code."
+                testID="phone-input"
+                accessibilityLabel="Phone number"
               />
             </View>
           </View>
