@@ -1,0 +1,110 @@
+# Fetch TestFlight crash reports for a build via the ASC diagnostics API.
+# Outputs the symbolicated crash signature(s) + logs as workflow artifact.
+
+name: ASC Fetch Crash Reports
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: 'App bundle ID'
+        required: true
+        default: 'cash.ping.app'
+      build_version:
+        description: 'Build number to fetch crashes for (leave empty = latest)'
+        required: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          BUNDLE_ID: ${{ inputs.bundle_id }}
+          BUILD_VERSION: ${{ inputs.build_version }}
+        run: |
+          mkdir -p crash-reports
+          python3 - <<'PYEOF'
+          import os, base64, time, json, sys
+          import jwt, requests
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except Exception:
+              key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}'}
+          base = 'https://api.appstoreconnect.apple.com'
+          bundle_id = os.environ['BUNDLE_ID']
+          want_ver = os.environ.get('BUILD_VERSION') or ''
+
+          apps = requests.get(f'{base}/v1/apps?filter[bundleId]={bundle_id}', headers=h).json()
+          app_id = apps['data'][0]['id']
+          print(f'app_id={app_id}')
+
+          # Find the build
+          builds_q = f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=10'
+          if want_ver:
+              builds_q += f'&filter[version]={want_ver}'
+          builds = requests.get(builds_q, headers=h).json()
+          print(f'builds returned: {len(builds.get("data", []))}')
+          for b in builds.get('data', []):
+              v = b['attributes']['version']
+              bid = b['id']
+              print(f'\n=== build version={v} id={bid} ===')
+
+              # diagnosticSignatures relationship
+              sig_url = f'{base}/v1/builds/{bid}/diagnosticSignatures?filter[diagnosticType]=DISK_WRITES_DIAGNOSTIC,CRASH_DIAGNOSTIC,HANG_DIAGNOSTIC&limit=20'
+              try:
+                  sig = requests.get(sig_url, headers=h, timeout=20).json()
+              except Exception as e:
+                  print(f'  sig fetch error: {e}')
+                  continue
+
+              if 'errors' in sig:
+                  print(f'  errors: {json.dumps(sig["errors"], indent=2)[:400]}')
+                  continue
+
+              sigs = sig.get('data', [])
+              print(f'  found {len(sigs)} diagnostic signatures')
+              for s in sigs:
+                  attrs = s.get('attributes', {})
+                  print(f'    - type={attrs.get("diagnosticType")} weight={attrs.get("weight")} sig={attrs.get("signature", "")[:200]}')
+                  # Fetch logs for this signature
+                  log_url = f'{base}/v1/diagnosticSignatures/{s["id"]}/logs'
+                  try:
+                      logs = requests.get(log_url, headers=h, timeout=20).json()
+                  except Exception as e:
+                      print(f'      log fetch error: {e}'); continue
+                  for l in logs.get('data', []):
+                      la = l.get('attributes', {})
+                      url = la.get('url')
+                      if not url: continue
+                      print(f'      log {l["id"]}: downloading...')
+                      try:
+                          r = requests.get(url, timeout=30)
+                          name = f'crash-reports/build{v}-sig{s["id"][:8]}-log{l["id"][:8]}.crash'
+                          open(name, 'wb').write(r.content)
+                          print(f'        saved {name} ({len(r.content)} bytes)')
+                      except Exception as e:
+                          print(f'        download error: {e}')
+          PYEOF
+          echo ""
+          echo "=== Downloaded files ==="
+          ls -la crash-reports/ || true
+      - name: Upload crash reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-reports
+          path: crash-reports/**
+          if-no-files-found: warn
