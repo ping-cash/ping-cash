@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useStripe } from '@stripe/stripe-react-native';
+import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import { api } from '../lib/api';
 import { authStore } from '../lib/auth-store';
 import { colors, radii, spacing } from '../lib/theme';
@@ -47,6 +47,17 @@ const MOONPAY_PUBLISHABLE_KEY =
   'pk_test_DZpQuq2NTUW07boe33nQwFENaXxK';
 const MOONPAY_BASE =
   process.env.EXPO_PUBLIC_MOONPAY_BASE || 'https://buy-sandbox.moonpay.com';
+
+// Stripe publishable key — scoped to this screen now (#88 + iOS launch
+// hang fix). Wrapping the whole tree in StripeProvider made the launch
+// path depend on the Stripe SDK native-module init succeeding; on the
+// CI simulator the SDK assertion delayed JS bridge bring-up past Maestro's
+// 60s "Create account" timeout.
+const STRIPE_PUBLISHABLE_KEY =
+  process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+  'pk_test_TYooMQauvdEDq54NiTphI7jx';
+const PING_APPLE_MERCHANT_ID =
+  process.env.EXPO_PUBLIC_PING_APPLE_MERCHANT_ID || 'merchant.cash.ping.app';
 
 const PROD_METHODS: (Method & {
   stripeMethod?: StripeMethod;
@@ -91,6 +102,21 @@ const PROD_METHODS: (Method & {
 ];
 
 export default function CashinScreen() {
+  // StripeProvider must wrap any component that calls useStripe — but
+  // we keep it scoped to this screen so the rest of the app's launch
+  // path doesn't depend on Stripe SDK native init succeeding.
+  return (
+    <StripeProvider
+      publishableKey={STRIPE_PUBLISHABLE_KEY}
+      merchantIdentifier={PING_APPLE_MERCHANT_ID}
+      urlScheme="cash"
+    >
+      <CashinInner />
+    </StripeProvider>
+  );
+}
+
+function CashinInner() {
   const router = useRouter();
   const user = authStore.user;
   const wallet = user?.walletAddress ?? '';
