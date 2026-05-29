@@ -149,12 +149,19 @@ export default function SwapScreen() {
                 ? `Swap ${amount} ${FROM_CURRENCY}`
                 : 'Enter an amount'
             }
-            onPress={() =>
-              Alert.alert(
-                'Swap engine coming online',
-                'Pyth + Jupiter wires up next iteration. UI is in place.'
-              )
-            }
+            onPress={() => {
+              const headline = quote?.isLive
+                ? 'Confirm swap'
+                : 'Demo quote — broadcast disabled';
+              const body = quote
+                ? `${amount} USDC → ${quote.outputAmount} $PING ` +
+                  `via ${quote.route.join(' → ') || 'stub route'}.\n\n` +
+                  (quote.isLive
+                    ? 'Broadcast lands when $PING mainnet mint deploys.'
+                    : 'The route returned is indicative — sandbox/devnet has no live $PING liquidity.')
+                : 'Type an amount to fetch a live quote first.';
+              Alert.alert(headline, body);
+            }}
             disabled={numeric <= 0}
             iconRight="arrow-forward"
           />

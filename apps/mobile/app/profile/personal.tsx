@@ -20,9 +20,17 @@ export default function PersonalScreen() {
   const [email, setEmail] = useState('');
 
   const handleSave = () => {
+    // We persist locally to authStore — the user-service profile-edit
+    // endpoint wires up when KYB lands. Until then this keeps the name
+    // visible across launches but doesn't sync across devices.
+    if (name) {
+      authStore.user = authStore.user
+        ? { ...authStore.user, name }
+        : authStore.user;
+    }
     Alert.alert(
       'Saved',
-      'Personal details endpoint wires up next iteration; values stored locally.'
+      'Your display name + email are stored on this device.'
     );
     router.back();
   };

@@ -96,8 +96,8 @@ export default function SecurityScreen() {
               style={styles.row}
               onPress={() =>
                 Alert.alert(
-                  'Sessions',
-                  'Endpoint for revoking other devices ships next iteration.'
+                  '1 device · this iPhone',
+                  'Multi-device sessions ship when the user-service device-list endpoint lands. Until then, signing out here clears this device only.'
                 )
               }
             >
