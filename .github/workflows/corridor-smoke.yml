@@ -1,18 +1,19 @@
 name: Corridor smoke
 
 # Runs the 7-stage end-to-end Phase-1 walk against the live Sovereign at
-# https://ping.openova.io on every push to main + on a 6-hour schedule.
-# Fails if any stage's response shape regresses. Catches the cebuana-class
-# drift bug Monitor surfaced 2026-05-24 (see #59).
+# https://ping.openova.io on every push to main + hourly cron. Fails if any
+# stage's response shape regresses. Catches the cebuana-class drift bug
+# Monitor surfaced 2026-05-24 (see #59).
 #
 # This is the only CI workflow that DOES NOT need GHA runner billing to gate
-# image deploys — it's a pure-curl smoke test, runs in <30 seconds.
+# image deploys — it's a pure-curl smoke test, runs in <30 seconds. On a free
+# public-repo plan the 24 daily runs cost ~12 GHA-minutes/day total.
 
 on:
   push:
     branches: [main]
   schedule:
-    - cron: '0 */6 * * *' # every 6 hours
+    - cron: '0 * * * *' # hourly — closes #78 catch-regressions-before-founder gap
   workflow_dispatch:
 
 jobs:
