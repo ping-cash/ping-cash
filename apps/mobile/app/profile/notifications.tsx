@@ -1,8 +1,9 @@
 /**
  * Notification preferences — per-event toggles.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Switch } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -40,15 +41,44 @@ const PREFS: Pref[] = [
   },
 ];
 
+const PREFS_KEY = '@ping/notif_prefs';
+const DEFAULT_PREFS: Record<string, boolean> = {
+  received: true,
+  claimed: true,
+  cashout_complete: true,
+  security: true,
+  marketing: false,
+};
+
 export default function NotificationsScreen() {
   const router = useRouter();
-  const [state, setState] = useState<Record<string, boolean>>({
-    received: true,
-    claimed: true,
-    cashout_complete: true,
-    security: true,
-    marketing: false,
-  });
+  const [state, setState] = useState<Record<string, boolean>>(DEFAULT_PREFS);
+
+  // Hydrate from AsyncStorage on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(PREFS_KEY);
+        if (raw && !cancelled) {
+          const parsed = JSON.parse(raw) as Record<string, boolean>;
+          setState({ ...DEFAULT_PREFS, ...parsed });
+        }
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist on change (debounced not needed — switches don't toggle fast).
+  const setPref = (key: string, value: boolean) => {
+    setState(s => {
+      const next = { ...s, [key]: value };
+      AsyncStorage.setItem(PREFS_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -87,7 +117,7 @@ export default function NotificationsScreen() {
                   </View>
                   <Switch
                     value={!!state[p.key]}
-                    onValueChange={v => setState(s => ({ ...s, [p.key]: v }))}
+                    onValueChange={v => setPref(p.key, v)}
                     trackColor={{
                       false: colors.surfaceElevated,
                       true: colors.brand,
