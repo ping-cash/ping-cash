@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { colors, radii, spacing, shadows } from '../../lib/theme';
 import { Heading } from '../../components/ui/Heading';
+import { PingTokenMark } from '../../components/ui/PingTokenMark';
 
 export default function VaultScreen() {
   const [autoStake, setAutoStake] = useState(true);
@@ -42,20 +43,29 @@ export default function VaultScreen() {
                 %
               </Heading>
             </View>
-            <Heading
-              variant="body"
-              color="secondary"
-              style={{ marginTop: spacing.sm }}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: spacing.sm,
+                gap: 6,
+              }}
             >
-              Paid in $PING · Daily harvest · No lockup
-            </Heading>
+              <Heading variant="body" color="secondary">
+                Paid in
+              </Heading>
+              <PingTokenMark size={16} />
+              <Heading variant="body" color="secondary">
+                · Daily harvest · No lockup
+              </Heading>
+            </View>
           </View>
 
           {/* Stats grid */}
           <View style={styles.statsRow}>
             <Stat label="Your stake" value="$0.00" />
             <Stat label="Earned (30d)" value="$0.00" tint={colors.brand} />
-            <Stat label="Total $PING" value="0" />
+            <Stat label="Total" value="0" trailingMark="ping" />
           </View>
 
           {/* Auto-stake setting */}
@@ -107,7 +117,7 @@ export default function VaultScreen() {
             >
               Yield comes from real on-chain protocols. Non-custodial: you
               control the keys via your MPC wallet. Per ADR 0012 the split is
-              40% Ping / 60% you, paid in $PING.
+              40% Ping / 60% you, paid in the Ping token.
             </Heading>
           </View>
         </ScrollView>
@@ -120,22 +130,33 @@ function Stat({
   label,
   value,
   tint,
+  trailingMark,
 }: {
   label: string;
   value: string;
   tint?: string;
+  /** Optional small mark rendered next to the value — 'ping' shows the
+   *  $PING token glyph. Used for stats counting native-token balance. */
+  trailingMark?: 'ping';
 }) {
   return (
     <View style={styles.statCard}>
       <Heading variant="labelSmall" color="tertiary">
         {label}
       </Heading>
-      <Heading
-        variant="h2"
-        style={{ marginTop: 4, color: tint ?? colors.textPrimary }}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: 4,
+          gap: 6,
+        }}
       >
-        {value}
-      </Heading>
+        <Heading variant="h2" style={{ color: tint ?? colors.textPrimary }}>
+          {value}
+        </Heading>
+        {trailingMark === 'ping' ? <PingTokenMark size={16} /> : null}
+      </View>
     </View>
   );
 }
