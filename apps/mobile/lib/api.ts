@@ -176,6 +176,21 @@ class ApiClient {
     });
   }
 
+  // Swap quote (#89) — Pyth Hermes USD price anchor + Jupiter v6 route.
+  // Stub fallback when external APIs are unreachable; isLive flag tells
+  // the UI whether to mark the rate "indicative".
+  async getSwapQuote(
+    amountUsdc: string,
+    opts?: { toMint?: string; slippageBps?: number }
+  ): Promise<SwapQuote> {
+    const params = new URLSearchParams({ amountUsdc });
+    if (opts?.toMint) params.set('toMint', opts.toMint);
+    if (opts?.slippageBps !== undefined) {
+      params.set('slippageBps', String(opts.slippageBps));
+    }
+    return this.request(`/wallet/swap/quote?${params.toString()}`);
+  }
+
   // Convenience for the mobile "Send to wallet" flow. Calls buildSendIntent,
   // hands the serializedTransaction off to the Privy MPC SDK for signing,
   // then submits to Solana RPC. The signer + rpc params are injected so the
@@ -274,6 +289,20 @@ export interface CashinIntent {
   publishableKey: string;
   ephemeralKey?: string;
   customerId?: string;
+  isLive: boolean;
+}
+
+export interface SwapQuote {
+  inputMint: string;
+  outputMint: string;
+  inputAmount: string;
+  outputAmount: string;
+  rate: string;
+  inputPriceUsd: string | null;
+  outputPriceUsd: string | null;
+  route: string[];
+  feeBps: number;
+  slippageBps: number;
   isLive: boolean;
 }
 

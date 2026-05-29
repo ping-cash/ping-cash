@@ -3,25 +3,62 @@
  * UI scaffold only; the wire to Jupiter/Pyth swap quote API is a
  * follow-up task.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, StyleSheet, Pressable, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { api, type SwapQuote } from '../lib/api';
 import { colors, radii, spacing, typography } from '../lib/theme';
 import { Button } from '../components/ui/Button';
 import { Heading } from '../components/ui/Heading';
 import { PingTokenMark } from '../components/ui/PingTokenMark';
 
 const FROM_CURRENCY = 'USDC';
-const RATE = 0.085; // placeholder until /quote wires up
+const FALLBACK_RATE = 0.085;
+const DEBOUNCE_MS = 400;
 
 export default function SwapScreen() {
   const router = useRouter();
   const [amount, setAmount] = useState('');
+  const [quote, setQuote] = useState<SwapQuote | null>(null);
+  const [quoting, setQuoting] = useState(false);
   const numeric = parseFloat(amount) || 0;
-  const received = (numeric / RATE).toFixed(2);
+
+  // Debounced live quote fetch as the user types. Cancels in-flight
+  // requests so the user always sees the latest typed amount's quote,
+  // never a stale one from a previous keystroke.
+  useEffect(() => {
+    if (numeric <= 0) {
+      setQuote(null);
+      return;
+    }
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      setQuoting(true);
+      api
+        .getSwapQuote(amount)
+        .then(q => {
+          if (!cancelled) setQuote(q);
+        })
+        .catch(() => {
+          if (!cancelled) setQuote(null);
+        })
+        .finally(() => {
+          if (!cancelled) setQuoting(false);
+        });
+    }, DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [amount, numeric]);
+
+  const liveRate = quote ? parseFloat(quote.rate) : FALLBACK_RATE;
+  const received = quote
+    ? quote.outputAmount
+    : (numeric / FALLBACK_RATE).toFixed(2);
 
   return (
     <View style={styles.container}>
@@ -88,8 +125,20 @@ export default function SwapScreen() {
               {numeric > 0 ? received : '0'}
             </Heading>
             <Heading variant="caption" color="tertiary">
-              1 $PING ≈ ${RATE.toFixed(3)} (indicative)
+              {quoting
+                ? 'Quoting…'
+                : quote
+                  ? `1 USDC ≈ ${liveRate.toFixed(4)} $PING${quote.isLive ? '' : ' (indicative)'}`
+                  : `1 USDC ≈ ${(1 / FALLBACK_RATE).toFixed(4)} $PING (indicative)`}
             </Heading>
+            {quote && quote.route.length > 0 ? (
+              <Heading variant="caption" color="tertiary">
+                Route: {quote.route.join(' → ')}
+                {quote.slippageBps
+                  ? ` · slippage ${(quote.slippageBps / 100).toFixed(2)}%`
+                  : ''}
+              </Heading>
+            ) : null}
           </View>
         </View>
 

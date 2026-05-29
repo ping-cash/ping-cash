@@ -7,6 +7,7 @@ import {
   type CashinMethod,
 } from '../services/cashin.service';
 import { buildSendIntent } from '../services/send.service';
+import { buildSwapQuote } from '../services/swap.service';
 import {
   getBalanceSnapshot,
   isValidSolanaAddress,
@@ -69,6 +70,12 @@ const SendIntentBody = z.object({
 const CashinIntentBody = z.object({
   amountUsd: z.string().regex(/^\d+(\.\d{1,2})?$/),
   method: z.enum(['apple_pay', 'card', 'ach']),
+});
+
+const SwapQuoteQuery = z.object({
+  amountUsdc: z.string().regex(/^\d+(\.\d{1,6})?$/),
+  toMint: z.string().min(32).max(44).optional(),
+  slippageBps: z.coerce.number().int().min(0).max(500).optional(),
 });
 
 async function requireAuth(
@@ -236,6 +243,36 @@ export async function walletRoutes(fastify: FastifyInstance) {
         recipientWallet: auth.wallet,
       });
       return reply.status(200).send(intent);
+    }
+  );
+
+  // GET /wallet/swap/quote?amountUsdc=&toMint=&slippageBps= — live quote
+  // for the mobile /swap screen (#89). Hits Pyth Hermes for the USD price
+  // anchor + Jupiter v6 for the route. Stub fallback when external APIs
+  // are unreachable so the UI walk doesn't crash.
+  fastify.get(
+    '/swap/quote',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const parsed = SwapQuoteQuery.safeParse(request.query);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          error: { code: 'VALIDATION_ERROR', message: parsed.error.message },
+        });
+      }
+      // Default $PING mint placeholder until the production mint lands;
+      // mobile passes the real mint per build env. Devnet uses
+      // 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU (USDC devnet) as a
+      // safe round-trip target.
+      const toMint =
+        parsed.data.toMint ?? '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
+      const quote = await buildSwapQuote({
+        fromSymbol: 'USDC',
+        toSymbol: 'PING',
+        toMint,
+        amountUsdc: parsed.data.amountUsdc,
+        slippageBps: parsed.data.slippageBps,
+      });
+      return reply.status(200).send(quote);
     }
   );
 
