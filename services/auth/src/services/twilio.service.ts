@@ -28,7 +28,10 @@ function getClient() {
  *
  * In stub mode (no credentials), returns a fake SID and logs the would-be call.
  */
-function isTestPhone(phone: string): boolean {
+// Exported so the auth service can apply the same bypass to its per-IP
+// rate-limit. Test phones never route to real users so they must never
+// share a rate-limit bucket with production traffic.
+export function isTestPhone(phone: string): boolean {
   const list = (config.OTP_TEST_PHONES ?? []) as string[];
   // Each entry is matched as a prefix. So a single entry like
   // "+447700990" whitelists the entire UK Ofcom drama range

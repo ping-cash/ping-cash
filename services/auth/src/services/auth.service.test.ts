@@ -83,6 +83,9 @@ vi.mock('./twilio.service', () => ({
     .mockImplementation((_phone: string, code: string) =>
       Promise.resolve(code === '123456')
     ),
+  // Tests use real-looking phone numbers (not the +447700900 drama prefix)
+  // so the bypass is OFF by default — matches production behavior.
+  isTestPhone: vi.fn().mockReturnValue(false),
 }));
 
 vi.mock('./privy.service', () => ({

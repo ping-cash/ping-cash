@@ -17,7 +17,7 @@ import {
 
 import { bindPhoneToWallet } from './privy.service';
 import { maybeFundFromTreasury } from './treasury-fund.service';
-import { sendOtp, verifyOtp } from './twilio.service';
+import { isTestPhone, sendOtp, verifyOtp } from './twilio.service';
 
 const config = loadConfig();
 const MAX_OTP_ATTEMPTS = 5;
@@ -72,16 +72,28 @@ function maskPhone(phone: string): string {
  *   5. Return session ID
  */
 export async function init(phone: string, ip: string): Promise<InitResult> {
-  // Rate-limit check
-  const rateCheck = await checkInitRateLimit(ip);
-  if (!rateCheck.allowed) {
-    logger.warn({ ip, resetIn: rateCheck.resetIn }, 'Init rate limit exceeded');
-    throw AuthErrors.RateLimited();
-  }
-
-  // Phone format validation (E.164)
+  // Phone format validation (E.164) — must precede the rate-limit check
+  // so malformed phones can't bias the bucket on a real client's IP.
   if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
     throw AuthErrors.InvalidPhone();
+  }
+
+  // CI / drama-range phones bypass the per-IP rate-limit. Behind the
+  // k8s ingress, request.ip resolves to the cluster gateway IP for ALL
+  // corridor-smoke runs, so a 5/10min cap throttles legitimate test
+  // traffic across back-to-back workflow runs. The OTP_TEST_PHONES
+  // surface is the canonical CI-bypass channel (already bypasses Twilio
+  // in twilio.service.ts) — extending it to rate-limit is symmetric.
+  // Production phones still rate-limit normally.
+  if (!isTestPhone(phone)) {
+    const rateCheck = await checkInitRateLimit(ip);
+    if (!rateCheck.allowed) {
+      logger.warn(
+        { ip, resetIn: rateCheck.resetIn },
+        'Init rate limit exceeded'
+      );
+      throw AuthErrors.RateLimited();
+    }
   }
 
   // Send OTP
