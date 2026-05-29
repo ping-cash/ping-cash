@@ -10,6 +10,7 @@ export type TemplateId =
   | 'TRANSFER_RECEIVED' // → recipient: "You received $X from <sender>"
   | 'TRANSFER_SENT' // → sender: "Your $X to <recipient> is on the way"
   | 'CLAIM_REMINDER' // → recipient: "Don't forget to claim your $X — expires in Yh"
+  | 'SENDER_TRANSFER_CLAIMED' // → sender: "<recipient> claimed your $X" — #81 push
   | 'CASHOUT_COMPLETE' // → recipient: "₱X sent to your GCash"
   | 'CASHOUT_FAILED' // → recipient: "Cash-out failed; please retry"
   | 'WELCOME_STAKE_GRANTED' // → user: "You earned 1,200 $PING as your welcome stake"
@@ -68,6 +69,17 @@ const TEMPLATES: Record<
     push: p => ({
       title: `${p.amount} waiting`,
       body: `Tap to claim before it expires`,
+    }),
+  },
+  SENDER_TRANSFER_CLAIMED: {
+    whatsapp: p =>
+      `🎉 ${p.recipientName ?? p.recipientPhone} claimed your ${p.amount}.\n\n` +
+      `They received ${p.localAmount ?? p.amount} ${p.localCurrency ?? 'USD'} via ${p.method ?? 'their selected method'}.`,
+    sms: p =>
+      `Ping: ${p.recipientName ?? p.recipientPhone} just claimed your ${p.amount}.`,
+    push: p => ({
+      title: `${p.recipientName ?? 'Your recipient'} claimed your ${p.amount}`,
+      body: p.method ? `Sent to their ${p.method}` : `Tap to see the transfer`,
     }),
   },
   CASHOUT_COMPLETE: {
