@@ -137,6 +137,7 @@ export function ClaimFlow({ code }: { code: string }) {
   if (stage === 'view') {
     return (
       <>
+        <ProgressDots step={1} />
         <div className="claim-card">
           <p className="claim-from">
             {claim.sender.name ?? 'Someone'} sent you
@@ -150,9 +151,22 @@ export function ClaimFlow({ code }: { code: string }) {
             </p>
           ) : null}
           <p className="claim-expires">
-            Expires in {Math.floor(claim.expiresIn / 3600)}h{' '}
+            <span className="expiry-dot" /> Expires in{' '}
+            {Math.floor(claim.expiresIn / 3600)}h{' '}
             {Math.floor((claim.expiresIn % 3600) / 60)}m
           </p>
+        </div>
+
+        <div className="trust-pills">
+          <span className="trust-pill">
+            <span className="trust-icon">⚡</span> Instant
+          </span>
+          <span className="trust-pill">
+            <span className="trust-icon">🔒</span> Secure
+          </span>
+          <span className="trust-pill">
+            <span className="trust-icon">💸</span> No fees to claim
+          </span>
         </div>
 
         <div className="section-spacing">
@@ -172,6 +186,7 @@ export function ClaimFlow({ code }: { code: string }) {
   if (stage === 'otp') {
     return (
       <>
+        <ProgressDots step={2} />
         <div className="claim-card">
           <p>Enter the code we sent to {claim.recipientPhoneMasked}</p>
         </div>
@@ -199,6 +214,17 @@ export function ClaimFlow({ code }: { code: string }) {
             {busy ? 'Verifying...' : 'Verify'}
           </button>
           {error ? <p className="error">{error}</p> : null}
+          <p className="helper center">
+            Didn&apos;t get a code?{' '}
+            <button
+              type="button"
+              className="link-button"
+              onClick={handleRequestOtp}
+              disabled={busy}
+            >
+              Send it again
+            </button>
+          </p>
         </div>
       </>
     );
@@ -208,26 +234,35 @@ export function ClaimFlow({ code }: { code: string }) {
   if (stage === 'methods') {
     return (
       <>
+        <ProgressDots step={3} />
         <div className="claim-card">
           <p>Choose how you want to receive</p>
-          <p style={{ color: 'var(--accent)', fontSize: 20, marginTop: 8 }}>
+          <p
+            style={{
+              color: 'var(--accent)',
+              fontSize: 28,
+              fontWeight: 700,
+              marginTop: 8,
+            }}
+          >
             ${claim.amount.value} {claim.amount.currency}
           </p>
         </div>
 
         <div className="method-list">
           {methods.map(m => (
-            <div
+            <button
               key={m.method}
+              type="button"
               className="method-card"
               onClick={() => handleSelectMethod(m.method)}
             >
               <div>
-                <div className="method-name">{m.method}</div>
+                <div className="method-name">{methodLabel(m.method)}</div>
                 <div className="method-meta">{m.estimatedTime}</div>
               </div>
               <div className="method-fee">{m.fee}</div>
-            </div>
+            </button>
           ))}
         </div>
       </>
@@ -238,10 +273,13 @@ export function ClaimFlow({ code }: { code: string }) {
   if (stage === 'account') {
     return (
       <>
+        <ProgressDots step={4} />
         <div className="claim-card">
           <p>
             Send to your{' '}
-            <strong style={{ color: 'var(--accent)' }}>{selectedMethod}</strong>
+            <strong style={{ color: 'var(--accent)' }}>
+              {methodLabel(selectedMethod ?? '')}
+            </strong>
           </p>
         </div>
 
@@ -284,14 +322,22 @@ export function ClaimFlow({ code }: { code: string }) {
   // Stage: success
   return (
     <>
-      <div className="claim-card">
-        <h2 style={{ marginBottom: 16, fontSize: 28 }}>✓ Sent!</h2>
+      <ProgressDots step={5} />
+      <div className="claim-card success-card">
+        <div className="success-check" aria-hidden>
+          ✓
+        </div>
+        <h2 style={{ marginBottom: 8, fontSize: 28 }}>You&apos;re paid</h2>
         <p style={{ marginBottom: 16 }}>
           {claim.amount.localValue ?? claim.amount.value}{' '}
           {claim.amount.localCurrency ?? claim.amount.currency} is on its way to
-          your {selectedMethod}.
+          your {methodLabel(selectedMethod ?? '')}.
         </p>
-        <p className="helper">Reference: {reference}</p>
+        {reference ? (
+          <p className="helper">
+            Reference: <code>{reference}</code>
+          </p>
+        ) : null}
       </div>
 
       <div className="section-spacing">
@@ -308,6 +354,55 @@ export function ClaimFlow({ code }: { code: string }) {
       </div>
     </>
   );
+}
+
+function ProgressDots({ step }: { step: 1 | 2 | 3 | 4 | 5 }) {
+  const total = 5;
+  return (
+    <div
+      className="progress-dots"
+      aria-label={`Step ${step} of ${total}`}
+      role="progressbar"
+      aria-valuenow={step}
+      aria-valuemin={1}
+      aria-valuemax={total}
+    >
+      {Array.from({ length: total }, (_, i) => (
+        <span
+          key={i}
+          className={
+            i + 1 < step
+              ? 'progress-dot done'
+              : i + 1 === step
+                ? 'progress-dot active'
+                : 'progress-dot'
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
+function methodLabel(method: string): string {
+  // Friendly capitalized labels — "gcash" → "GCash", "bdo-bank" → "BDO Bank".
+  if (!method) return '';
+  const specials: Record<string, string> = {
+    gcash: 'GCash',
+    maya: 'Maya',
+    upi: 'UPI',
+    'bdo-bank': 'BDO Bank',
+    'cebuana-cash-pickup': 'Cebuana Cash Pickup',
+    jazzcash: 'JazzCash',
+    easypaisa: 'EasyPaisa',
+    bkash: 'bKash',
+    nagad: 'Nagad',
+    'm-pesa': 'M-Pesa',
+  };
+  if (specials[method]) return specials[method];
+  return method
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function getAccountPlaceholder(method: string): string {
