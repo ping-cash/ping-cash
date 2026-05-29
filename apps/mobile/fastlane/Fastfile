@@ -36,8 +36,7 @@ platform :ios do
       language: "en-US",
       app_version: "1.0",
       sku: "cash.ping.app.1",
-      platforms: ["IOS"],
-      itc_users: nil,
+      platform: "ios",                  # lowercase singular per fastlane 2.235
       itc_team_id: ENV["ITC_TEAM_ID"],
       team_id: ENV["APPLE_TEAM_ID"],
       app_review_information: {
