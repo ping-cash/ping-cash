@@ -2,14 +2,8 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
-// #71: receiver-sdk replaces pyth-sdk-solana. solana-program 2.x
-// compatibility removes the AccountInfo type split.
-use pyth_solana_receiver_sdk::price_update::{
-    get_feed_id_from_hex, PriceUpdateV2,
-};
-
-const PYTH_FEED_ID_USDC_USD: &str =
-    "eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a";
+#[cfg(feature = "pyth-real")]
+use pyth_sdk_solana::state::SolanaPriceAccount;
 
 // ============================================================================
 // ⚠️  DO NOT DEPLOY THIS PROGRAM TO MAINNET — per ADR 0018 + #22 EPIC gates.
@@ -366,19 +360,25 @@ pub mod pomm {
     /// where alpha = 200 = 2%. With hourly cadence, ~50-tick half-life
     /// ≈ 7 days (ADR 0009 "7-day EMA" mandate).
     pub fn update_ema(ctx: Context<UpdateEma>) -> Result<()> {
-        let clock = Clock::get()?;
-        let now = clock.unix_timestamp;
-        // #71: receiver-sdk Pyth read. Real Pyth on every build (no
-        // cfg-gate); audit-readiness checks preserved verbatim.
+        let now = Clock::get()?.unix_timestamp;
+        // DEVNET (default) — mock $0.10/PING as Q64.64. Same rationale as
+        // internal-swap's read_pyth_ping_per_usdc_x64: avoid the anchor
+        // 0.30.1 ↔ pyth-sdk-solana 0.10.x AccountInfo type split for
+        // devnet validation. Mainnet build adds `pyth-real` feature.
+        #[cfg(not(feature = "pyth-real"))]
+        let pyth_x64: u128 = (1u128 << 64) / 10;
+
+        #[cfg(feature = "pyth-real")]
         let pyth_x64 = {
-            let feed_id = get_feed_id_from_hex(PYTH_FEED_ID_USDC_USD)
-                .map_err(|_| error!(PommError::OracleAccountInvalid))?;
-            let price = ctx
-                .accounts
-                .pyth_price_update
-                .get_price_no_older_than(&clock, MAX_PYTH_STALENESS_SEC as u64, &feed_id)
-                .map_err(|_| error!(PommError::OracleStaleOrInvalid))?;
+            let price_feed = SolanaPriceAccount::account_info_to_feed(
+                &ctx.accounts.pyth_price_account,
+            )
+            .map_err(|_| error!(PommError::OracleAccountInvalid))?;
+            let price = price_feed
+                .get_price_no_older_than(now, MAX_PYTH_STALENESS_SEC as u64)
+                .ok_or(error!(PommError::OracleStaleOrInvalid))?;
             require!(price.price > 0, PommError::OracleStaleOrInvalid);
+            // Pre-audit CRIT confidence-interval check.
             let abs_price = price.price as u64;
             let conf_bps = (price.conf as u128)
                 .checked_mul(10_000)
@@ -391,7 +391,7 @@ pub mod pomm {
             );
             let mantissa = price.price as u128;
             let q64_64_one: u128 = 1u128 << 64;
-            let abs_expo = price.exponent.unsigned_abs() as u32;
+            let abs_expo = price.expo.unsigned_abs() as u32;
             let scale = 10u128
                 .checked_pow(abs_expo)
                 .ok_or(PommError::MathOverflow)?;
@@ -757,10 +757,9 @@ pub struct UpdateEma<'info> {
     /// USDC mint — seed binding.
     #[account(address = treasury.usdc_mint @ PommError::WrongUsdcMint)]
     pub usdc_mint: InterfaceAccount<'info, Mint>,
-    /// Pyth PriceUpdateV2 account for $PING/USDC (USDC/USD proxy until
-    /// $PING TGE + Pyth listing per ADR 0009). Receiver-sdk derives the
-    /// account-owner check (pyth-solana-receiver program id).
-    pub pyth_price_update: Account<'info, PriceUpdateV2>,
+    /// Pyth price account for $PING/USDC. CHECK: validated inside update_ema
+    /// via SolanaPriceAccount::account_info_to_feed.
+    pub pyth_price_account: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -931,7 +930,7 @@ pub enum PommError {
     CollectFeesDisabledUntilRebuild,
     #[msg("mint_lp_position disabled in scaffold; full rebuild per ADR 0009 (Pyth oracle + on-chain EMA + Raydium CLMM CPI) required first")]
     DeployToClmmDisabledUntilRebuild,
-    #[msg("Pyth price update account could not be parsed as PriceUpdateV2")]
+    #[msg("Pyth price account could not be parsed as a SolanaPriceAccount")]
     OracleAccountInvalid,
     #[msg("Pyth price is stale (>MAX_PYTH_STALENESS_SEC since last update) or non-positive")]
     OracleStaleOrInvalid,

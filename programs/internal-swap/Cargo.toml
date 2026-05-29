@@ -18,16 +18,21 @@ idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 # L-01 ADR 0018 guard (mirrors ping-token): mainnet-ready requires audit-passed
 mainnet-ready = []
 audit-passed = []
-# #71: pyth-real feature gate REMOVED. anchor 0.31.1 + solana-program
-# 2.x align with pyth-solana-receiver-sdk 1.0.1 (receiver-pattern, post-
-# pull-oracle Pyth SDK) — real Pyth on every build, no cfg-gate.
+# #71 partial — anchor 0.31.x toolchain bump landed but removing the
+# pyth-real cfg-gate needs an upstream Pyth fix: both
+# pyth-sdk-solana 0.10.6 (Pubkey Borsh derives dropped in solana-program
+# 2.x) and pyth-solana-receiver-sdk 1.0.1 (pythnet-sdk PriceFeedMessage
+# Borsh trait split) fail to compile against solana-program 2.x. Mock
+# devnet path stays functional for #70.
+pyth-real = ["dep:pyth-sdk-solana"]
 
 [dependencies]
 anchor-lang = "0.31.1"
 anchor-spl = { version = "0.31.1", features = ["token_2022"] }
 solana-program = "~2.1"
-# #71 + #62 H-04: Pyth price-feed via the receiver SDK. anchor-lang
-# 0.31.1 + pyth-solana-receiver-sdk 1.0.1 share the same solana-program
-# 2.x AccountInfo type, so no cfg-gate or type bridge needed.
-pyth-solana-receiver-sdk = "=1.0.1"
+# Per #62 rebuild scope (ADR 0009 H-04): Pyth price-feed verification.
+# Re-gated optional behind `pyth-real` while we wait on upstream Pyth
+# Borsh/Pubkey fix. Devnet defaults OFF → mock path; mainnet build
+# enables the feature alongside audit-passed per ADR 0018.
+pyth-sdk-solana = { version = "=0.10.6", optional = true }
 

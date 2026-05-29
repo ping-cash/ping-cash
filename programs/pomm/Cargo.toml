@@ -18,13 +18,13 @@ idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 # L-01 ADR 0018 guard (mirrors ping-token): mainnet-ready requires audit-passed
 mainnet-ready = []
 audit-passed = []
-# #71: pyth-real feature gate REMOVED. anchor 0.31.1 + solana-program
-# 2.x align with pyth-solana-receiver-sdk 1.0.1.
+# #71 partial — anchor 0.31.x toolchain bump landed but removing the
+# pyth-real cfg-gate needs upstream Pyth fix (same as internal-swap).
+pyth-real = ["dep:pyth-sdk-solana"]
 
 [dependencies]
 anchor-lang = "0.31.1"
 anchor-spl = { version = "0.31.1", features = ["token_2022"] }
 solana-program = "~2.1"
-# #71 + #62 C-03: Pyth on-chain EMA via receiver SDK.
-pyth-solana-receiver-sdk = "=1.0.1"
+pyth-sdk-solana = { version = "=0.10.6", optional = true }
 
