@@ -11,6 +11,7 @@
 import { loadConfig } from '@ping/config';
 
 import { logger } from '../utils/logger';
+import { screenAddressAgainstSdn } from './ofac-screener.service';
 
 const config = loadConfig();
 
@@ -47,6 +48,30 @@ export async function screenWallet(
 ): Promise<ScreeningOutcome> {
   const apiKey = config.CHAINALYSIS_API_KEY;
   const now = Math.floor(Date.now() / 1000);
+
+  // Path B (#75): consult the self-built OFAC SDN cache FIRST. Hits
+  // here are statutorily definitive — block immediately without
+  // burning a Chainalysis API call. Misses fall through to the
+  // Chainalysis path below for defense-in-depth (Chainalysis can
+  // flag wallets via clustering that aren't yet on the SDN list).
+  try {
+    const ofacHit = await screenAddressAgainstSdn(input.walletAddress);
+    if (ofacHit.matched) {
+      return {
+        result: 'hit',
+        listsHit: ['OFAC_SDN', ...(ofacHit.programs ?? [])],
+        riskScore: 100,
+        source: 'ofac-direct',
+        checkedAt: now,
+        details: { listingDate: ofacHit.listingDate },
+      };
+    }
+  } catch (err) {
+    logger.warn(
+      { err: (err as Error).message },
+      'OFAC SDN lookup failed — falling through to Chainalysis/stub'
+    );
+  }
 
   if (!apiKey) {
     // Stub mode: simulate clean for most addresses; flag if matches known test sanction prefix
