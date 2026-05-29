@@ -16,11 +16,12 @@ on:
   workflow_dispatch:
     inputs:
       lane:
-        description: 'fastlane lane to run (metadata, screenshots, submit)'
+        description: 'fastlane lane to run (produce_app first if app missing in ASC, then metadata → screenshots → submit)'
         required: true
         default: 'metadata'
         type: choice
         options:
+          - produce_app
           - metadata
           - screenshots
           - submit
