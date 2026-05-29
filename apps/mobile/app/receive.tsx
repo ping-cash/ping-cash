@@ -65,12 +65,18 @@ export default function ReceiveScreen() {
   const router = useRouter();
   const user = authStore.user;
   const phone = user?.phone ?? '';
-  const link = `https://app.ping.cash/c/${encodeURIComponent(phone)}`;
+  // QR encodes the phone directly so any QR scanner (Ping or generic)
+  // reads the recipient number. /c/<code> is reserved for claim-code
+  // links — a phone there 404s. The shareable text link points at a
+  // landing page the sender's Ping app intercepts (or the marketing
+  // site falls back to web-claim's "download Ping to send to <X>").
+  const qrPayload = phone;
+  const shareLink = `https://ping.cash/send?to=${encodeURIComponent(phone)}`;
 
   const handleShare = async () => {
     await Share.share({
-      message: `Send me money on Ping: ${link}`,
-      url: link,
+      message: `Send me money on Ping: ${shareLink}`,
+      url: shareLink,
     });
   };
 
@@ -93,7 +99,7 @@ export default function ReceiveScreen() {
         <View style={styles.content}>
           <View style={styles.qrCard}>
             <View style={styles.qrInner}>
-              <LazyQRCode value={link} />
+              <LazyQRCode value={qrPayload} />
             </View>
             <Heading
               variant="bodySmall"
