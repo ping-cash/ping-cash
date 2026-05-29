@@ -1,14 +1,20 @@
 appId: cash.ping.app
 ---
-# After /auth/verify the dashboard hydrates. We wait on the brand
-# greeting (always present) rather than the dynamic Balance label so
-# this flow works whether the wallet endpoint returns or stubs.
+# After /auth/verify the dashboard hydrates. Wait on the Send button's
+# auto-generated testID — text-find on the "Good morning/afternoon/etc."
+# greeting was unreliable on iOS Maestro (iOS Build f1fccbd 2026-05-29:
+# screen rendered with "Good afternoon" + $5 USDC balance visible in the
+# capture, but Maestro's AX tree query for the 'Good' substring timed
+# out at 25s). testID-bound assertions (Button component auto-sets
+# resource-id={`btn-${label}`}) are deterministic on the accessibility
+# tree regardless of font/color/role nuances.
 - extendedWaitUntil:
-    visible: 'Good'
+    visible:
+      id: 'btn-Send'
     timeout: 25000
 - takeScreenshot: 04-home
-- assertVisible: 'Send'
-- assertVisible: 'Add money'
+- assertVisible:
+    id: 'btn-Add money'
 # Quick tab walk — each must render without crash. Use the tab-bar
 # accessibility labels which expo-router sets from the screen title.
 - tapOn: 'Activity'
