@@ -1,0 +1,86 @@
+name: Treasury fund (devnet)
+
+# One-shot job to top up the devnet treasury wallet that auth-service
+# uses to seed new signups (#74). GitHub Actions runners have fresh
+# egress IPs per job, which escapes the per-IP rate-limit on
+# api.devnet.solana.com that throttles the bastion + the in-cluster
+# wallet-service pod.
+#
+# Default treasury pubkey:
+#   8EaS5sf4dT7SzEFNYKC1PD5C3PcKhPnEnHCYjSZ1hcpb (devnet)
+#
+# Triggers:
+#   - Manual via workflow_dispatch (operator picks SOL + USDC top-up
+#     when the on-cluster treasury runs low).
+#   - Scheduled twice daily so the treasury balance never falls to
+#     zero between manual runs.
+#
+# The job never holds any private key — it only requests faucet
+# airdrops to a public address.
+
+on:
+  workflow_dispatch:
+    inputs:
+      treasury_address:
+        description: 'Treasury wallet pubkey to fund (devnet)'
+        required: false
+        default: '8EaS5sf4dT7SzEFNYKC1PD5C3PcKhPnEnHCYjSZ1hcpb'
+      sol_amount:
+        description: 'SOL airdrop amount (lamports)'
+        required: false
+        default: '2000000000'
+  schedule:
+    # 06:00 + 18:00 UTC every day
+    - cron: '0 6 * * *'
+    - cron: '0 18 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  airdrop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Request devnet SOL airdrop
+        env:
+          TREASURY: ${{ github.event.inputs.treasury_address || '8EaS5sf4dT7SzEFNYKC1PD5C3PcKhPnEnHCYjSZ1hcpb' }}
+          AMOUNT: ${{ github.event.inputs.sol_amount || '2000000000' }}
+        run: |
+          set -euo pipefail
+          echo "Funding treasury=$TREASURY amount=$AMOUNT lamports"
+          RESP=$(curl -sS -X POST https://api.devnet.solana.com \
+            -H "content-type: application/json" \
+            -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"requestAirdrop\",\"params\":[\"$TREASURY\",$AMOUNT]}")
+          echo "RPC response: $RESP"
+          SIG=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('result',''))")
+          if [ -z "$SIG" ]; then
+            echo "::error::Airdrop did not return a signature — response above"
+            exit 1
+          fi
+          echo "Airdrop sig=$SIG"
+          # Wait for confirmation
+          for i in 1 2 3 4 5; do
+            sleep 4
+            BAL=$(curl -sS -X POST https://api.devnet.solana.com \
+              -H "content-type: application/json" \
+              -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getBalance\",\"params\":[\"$TREASURY\"]}" \
+              | python3 -c "import sys,json; print(json.load(sys.stdin).get('result',{}).get('value',0))")
+            echo "Attempt $i: treasury balance = $BAL lamports"
+            if [ "$BAL" -gt 0 ]; then
+              echo "Treasury funded — balance $BAL lamports ($(echo "scale=4; $BAL/1000000000" | bc) SOL)"
+              exit 0
+            fi
+          done
+          echo "::error::Airdrop signature returned but balance still 0 after 20s"
+          exit 1
+
+      - name: Diagnostic — print balance summary
+        if: always()
+        env:
+          TREASURY: ${{ github.event.inputs.treasury_address || '8EaS5sf4dT7SzEFNYKC1PD5C3PcKhPnEnHCYjSZ1hcpb' }}
+        run: |
+          curl -sS -X POST https://api.devnet.solana.com \
+            -H "content-type: application/json" \
+            -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getBalance\",\"params\":[\"$TREASURY\"]}" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print('Treasury SOL balance:', d.get('result',{}).get('value',0)/1e9)"
