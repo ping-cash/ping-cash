@@ -141,7 +141,7 @@ class ApiClient {
   // Wallet
   // ==========================================
 
-  async getBalance(): Promise<{ balance: string; currency: string }> {
+  async getBalance(): Promise<BalanceSnapshot> {
     return this.request('/wallet/balance');
   }
 
@@ -243,6 +243,14 @@ export interface User {
   kycTier: number;
   walletAddress: string;
   createdAt: string;
+}
+
+export interface BalanceSnapshot {
+  walletAddress: string;
+  USDC: string;
+  vUSDC: string;
+  PING: string;
+  totalUsdValue: string;
 }
 
 export interface Transfer {

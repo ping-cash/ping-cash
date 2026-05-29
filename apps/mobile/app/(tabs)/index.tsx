@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { api } from '../../lib/api';
+import { api, type Transfer } from '../../lib/api';
 import { authStore } from '../../lib/auth-store';
 import { colors, radii, spacing, typography, shadows } from '../../lib/theme';
 import { Heading } from '../../components/ui/Heading';
@@ -24,28 +24,39 @@ import { Heading } from '../../components/ui/Heading';
 export default function HomeScreen() {
   const router = useRouter();
   const [balanceUsd, setBalanceUsd] = useState<string>('0.00');
+  const [usdc, setUsdc] = useState<string>('0');
   const [pingBalance, setPingBalance] = useState<string>('0');
   const [tier] = useState<string>('bronze');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [recent, setRecent] = useState<Transfer[]>([]);
   const user = authStore.user;
 
   const load = async () => {
     try {
-      const balance = await api.getBalance();
-      const b = balance as unknown as {
-        totalUsdValue?: string;
-        balance?: string;
-        PING?: string;
-      };
-      setBalanceUsd(b.totalUsdValue ?? b.balance ?? '0.00');
-      setPingBalance(b.PING ?? '0');
-    } catch {
-      setBalanceUsd('0.00');
+      const [balance, history] = await Promise.all([
+        api.getBalance().catch(() => null),
+        api
+          .listTransfers({ limit: 3 })
+          .catch(() => ({ transfers: [] as Transfer[], total: 0 })),
+      ]);
+      if (balance) {
+        const usd = formatDecimal(balance.totalUsdValue ?? '0', 2);
+        setBalanceUsd(usd);
+        setUsdc(formatDecimal(balance.USDC ?? '0', 2));
+        setPingBalance(balance.PING ?? '0');
+      }
+      setRecent(history?.transfers ?? []);
     } finally {
       setLoading(false);
     }
   };
+
+  function formatDecimal(s: string, places: number): string {
+    if (!s) return '0.' + '0'.repeat(places);
+    const [w, f = ''] = s.split('.');
+    return `${w || '0'}.${(f + '0'.repeat(places)).slice(0, places)}`;
+  }
 
   useEffect(() => {
     load();
@@ -139,11 +150,21 @@ export default function HomeScreen() {
                 .{cents ?? '00'}
               </Heading>
             </View>
-            <View style={styles.pingPill}>
-              <View style={styles.pingDot} />
-              <Heading variant="bodySmall" color="secondary">
-                {pingBalance} $PING
-              </Heading>
+            <View style={styles.subBalanceRow}>
+              <View style={styles.subBalanceChip}>
+                <View
+                  style={[styles.assetDot, { backgroundColor: '#2775CA' }]}
+                />
+                <Heading variant="bodySmall" color="secondary">
+                  {usdc} USDC
+                </Heading>
+              </View>
+              <View style={styles.subBalanceChip}>
+                <View style={styles.pingDot} />
+                <Heading variant="bodySmall" color="secondary">
+                  {pingBalance} $PING
+                </Heading>
+              </View>
             </View>
           </View>
 
@@ -213,26 +234,71 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.emptyActivity}>
-            <View style={styles.emptyIcon}>
-              <Ionicons
-                name="paper-plane-outline"
-                size={28}
-                color={colors.brand}
-              />
+          {recent.length === 0 ? (
+            <View style={styles.emptyActivity}>
+              <View style={styles.emptyIcon}>
+                <Ionicons
+                  name="paper-plane-outline"
+                  size={28}
+                  color={colors.brand}
+                />
+              </View>
+              <Heading variant="h3" align="center">
+                No transfers yet
+              </Heading>
+              <Heading
+                variant="body"
+                color="secondary"
+                align="center"
+                style={{ marginTop: spacing.xs, paddingHorizontal: spacing.xl }}
+              >
+                Tap Send to make your first transfer — it takes 12 seconds.
+              </Heading>
             </View>
-            <Heading variant="h3" align="center">
-              No transfers yet
-            </Heading>
-            <Heading
-              variant="body"
-              color="secondary"
-              align="center"
-              style={{ marginTop: spacing.xs, paddingHorizontal: spacing.xl }}
-            >
-              Tap Send to make your first transfer — it takes 12 seconds.
-            </Heading>
-          </View>
+          ) : (
+            <View style={styles.activityCard}>
+              {recent.map((t, i) => (
+                <View key={t.id}>
+                  {i > 0 && <View style={styles.activityDivider} />}
+                  <Pressable
+                    style={styles.activityRow}
+                    onPress={() =>
+                      router.push(`/transfer-detail?id=${t.id}` as never)
+                    }
+                  >
+                    <View
+                      style={[
+                        styles.activityIcon,
+                        {
+                          backgroundColor:
+                            t.status === 'failed'
+                              ? colors.errorMuted
+                              : colors.brandMuted,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="arrow-up"
+                        size={18}
+                        color={
+                          t.status === 'failed' ? colors.error : colors.brand
+                        }
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Heading variant="bodyLargeStrong" numberOfLines={1}>
+                        To {t.recipientPhone}
+                      </Heading>
+                      <Heading variant="bodySmall" color="tertiary">
+                        {t.status}
+                      </Heading>
+                    </View>
+                    <Heading variant="bodyLargeStrong">-${t.amount}</Heading>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -334,21 +400,32 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: radii.full,
   },
-  pingPill: {
+  subBalanceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    flexWrap: 'wrap',
+  },
+  subBalanceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.surfaceElevated,
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: radii.full,
-    marginTop: spacing.md,
   },
   pingDot: {
     width: 6,
     height: 6,
     borderRadius: 999,
     backgroundColor: colors.brand,
+    marginRight: 8,
+  },
+  assetDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 999,
     marginRight: 8,
   },
   actionsRow: {
@@ -416,5 +493,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
+  },
+  activityCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  activityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  activityIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityDivider: {
+    height: 0.5,
+    backgroundColor: colors.borderSubtle,
+    marginLeft: spacing.lg + 36 + spacing.md,
   },
 });
