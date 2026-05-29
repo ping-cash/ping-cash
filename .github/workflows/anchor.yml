@@ -63,5 +63,16 @@ jobs:
       - name: anchor build
         run: anchor build
 
+      - name: Generate ephemeral localnet keypair for anchor test
+        run: |
+          # anchor test starts a local validator + needs ~/.config/solana/id.json
+          # to sign deploy tx + integration test calls. GHA runner has no
+          # default solana keypair; generate one inline. The keypair is
+          # ephemeral (job-scoped) — no secret material persists.
+          mkdir -p ~/.config/solana
+          solana-keygen new --no-bip39-passphrase --silent \
+            --outfile ~/.config/solana/id.json --force
+          solana-keygen pubkey ~/.config/solana/id.json
+
       - name: anchor test
         run: anchor test --skip-build
