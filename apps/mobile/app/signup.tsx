@@ -95,6 +95,8 @@ export default function SignupScreen() {
                 helper="Include the country code. We'll text you a 6-digit code."
                 testID="phone-input"
                 accessibilityLabel="Phone number"
+                returnKeyType="send"
+                onSubmitEditing={handleSubmit}
               />
             </View>
           </View>

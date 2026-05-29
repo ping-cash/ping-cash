@@ -36,15 +36,16 @@ export default function VerifyScreen() {
     setTimeout(() => inputRef.current?.focus(), 200);
   }, []);
 
-  const handleVerify = async () => {
-    if (!/^\d{6}$/.test(code)) {
+  const handleVerify = async (codeOverride?: string) => {
+    const submitted = codeOverride ?? code;
+    if (!/^\d{6}$/.test(submitted)) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Invalid code', 'Please enter the 6-digit code');
       return;
     }
     setLoading(true);
     try {
-      const result = await api.verifyOtp(sessionId, code);
+      const result = await api.verifyOtp(sessionId, submitted);
       const r = result as unknown as {
         user: {
           id: string;
@@ -85,6 +86,14 @@ export default function VerifyScreen() {
       Haptics.selectionAsync();
     }
     setCode(next);
+    // 3-tap onboarding: when the 6th digit lands, auto-submit so the
+    // user doesn't have to tap "Verify and continue". iOS SMS one-tap
+    // autofill drops 6 digits in one event → user goes home with zero
+    // additional taps. Manual typing also auto-progresses the moment
+    // the last digit is entered.
+    if (next.length === 6 && !loading) {
+      void handleVerify(next);
+    }
   };
 
   const digits = Array.from({ length: 6 }, (_, i) => code[i] ?? '');
