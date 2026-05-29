@@ -47,3 +47,13 @@ jobs:
         env:
           NODE_PATH: ./services/wallet/node_modules
         run: node scripts/walk-send-intent.mjs
+
+      # #70 Phase-2: verify the 4 anchor programs are deployed on devnet.
+      # Until anchor deploy lands, this job is allowed to fail without
+      # blocking the overall smoke (continue-on-error). When deploy lands,
+      # the failure becomes a real regression signal.
+      - name: Walk Phase-2 anchor programs on devnet
+        continue-on-error: true
+        env:
+          NODE_PATH: ./services/wallet/node_modules
+        run: node scripts/walk-devnet-programs.mjs
