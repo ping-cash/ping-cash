@@ -38,7 +38,20 @@ type Method = {
 
 type StripeMethod = 'apple_pay' | 'card' | 'ach';
 
-const PROD_METHODS: (Method & { stripeMethod?: StripeMethod })[] = [
+// MoonPay sandbox publishable key — public per https://dev.moonpay.com/docs.
+// Safe to ship in default; the real key swap is an EXPO_PUBLIC env var at
+// app build, mirroring the Stripe pattern. Sandbox returns no-real-money
+// receipts; production cuts USDC straight to the wallet address.
+const MOONPAY_PUBLISHABLE_KEY =
+  process.env.EXPO_PUBLIC_MOONPAY_PUBLISHABLE_KEY ||
+  'pk_test_DZpQuq2NTUW07boe33nQwFENaXxK';
+const MOONPAY_BASE =
+  process.env.EXPO_PUBLIC_MOONPAY_BASE || 'https://buy-sandbox.moonpay.com';
+
+const PROD_METHODS: (Method & {
+  stripeMethod?: StripeMethod;
+  moonpay?: boolean;
+})[] = [
   {
     icon: 'logo-apple',
     iconColor: '#FFFFFF',
@@ -63,7 +76,8 @@ const PROD_METHODS: (Method & { stripeMethod?: StripeMethod })[] = [
     title: 'Crypto on-ramp',
     subtitle: 'USDC, BTC, ETH via MoonPay',
     fee: '~1.5%',
-    available: false,
+    available: true,
+    moonpay: true,
   },
   {
     icon: 'business',
@@ -88,6 +102,35 @@ export default function CashinScreen() {
     Clipboard.setString(wallet);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert('Copied', 'Wallet address copied to clipboard.');
+  };
+
+  const handleMoonpay = async () => {
+    if (!wallet) {
+      Alert.alert(
+        'Sign in first',
+        'We need your Ping wallet address to route the on-ramp purchase.'
+      );
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // MoonPay widget params per https://dev.moonpay.com/docs/ramps-sdk-buy-params.
+    // The walletAddress param routes USDC straight to the user's Ping wallet
+    // after the purchase clears. currencyCode=usdc_sol → USDC on Solana.
+    const params = new URLSearchParams({
+      apiKey: MOONPAY_PUBLISHABLE_KEY,
+      currencyCode: 'usdc_sol',
+      walletAddress: wallet,
+      colorCode: '#10B981',
+      theme: 'dark',
+      baseCurrencyCode: 'usd',
+      baseCurrencyAmount: '50',
+    });
+    const url = `${MOONPAY_BASE}?${params.toString()}`;
+    try {
+      await Linking.openURL(url);
+    } catch (err) {
+      Alert.alert('Could not open MoonPay', (err as Error).message);
+    }
   };
 
   const handleStripeMethod = async (method: StripeMethod) => {
@@ -236,6 +279,8 @@ export default function CashinScreen() {
               onPress={() => {
                 if (m.stripeMethod) {
                   void handleStripeMethod(m.stripeMethod);
+                } else if (m.moonpay) {
+                  void handleMoonpay();
                 } else {
                   Alert.alert(
                     `${m.title} — coming soon`,
