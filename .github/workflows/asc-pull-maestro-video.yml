@@ -1,4 +1,4 @@
-name: Pull Maestro walk video → comment on issue
+name: Attach Maestro walk video to issue
 
 # When iOS Build N passes Maestro + lands TestFlight, this workflow can be
 # triggered manually with a run-id + issue-number to attach the
