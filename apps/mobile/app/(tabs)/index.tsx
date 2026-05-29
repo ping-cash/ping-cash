@@ -337,6 +337,10 @@ function ActionTile({
           } catch {}
           onPress();
         }}
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        testID={`btn-${label}`}
         style={({ pressed }) => [
           styles.actionTile,
           pressed && { opacity: 0.7 },
