@@ -8,6 +8,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -67,7 +68,16 @@ export default function SignupScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.kb}
         >
-          <View style={styles.content}>
+          {/* Content scrolls under the keyboard so the input + helper
+              stay visible above it. The Send button is OUTSIDE the
+              ScrollView so it sticks to the bottom and never gets
+              covered by the keyboard. */}
+          <ScrollView
+            style={styles.kb}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            contentInsetAdjustmentBehavior="always"
+          >
             <View style={styles.logoBadge}>
               <Ionicons name="paper-plane" size={28} color={colors.brand} />
             </View>
@@ -99,7 +109,7 @@ export default function SignupScreen() {
                 onSubmitEditing={handleSubmit}
               />
             </View>
-          </View>
+          </ScrollView>
 
           <View style={styles.actions}>
             <Button
@@ -107,6 +117,7 @@ export default function SignupScreen() {
               onPress={handleSubmit}
               loading={loading}
               iconRight="arrow-forward"
+              testID="btn-Send verification code"
             />
             <Heading
               variant="caption"
@@ -127,7 +138,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   safe: { flex: 1, paddingHorizontal: spacing.xl },
   kb: { flex: 1 },
-  content: { flex: 1, paddingTop: spacing.xxxl },
+  content: { flexGrow: 1, paddingTop: spacing.xxxl, paddingBottom: spacing.lg },
   logoBadge: {
     width: 56,
     height: 56,

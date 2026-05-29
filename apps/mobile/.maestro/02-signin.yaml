@@ -13,10 +13,12 @@ appId: cash.ping.app
     id: 'phone-input'
 - inputText: '447700900789'
 # Dismiss the keyboard before tapping the action button — the keyboard
-# may cover "Send verification code" on smaller sim heights.
+# may cover "Send verification code" on smaller sim heights. The signup
+# layout was also refactored to ScrollView so the input stays visible
+# above the keyboard and the Send button stays sticky at bottom.
 - hideKeyboard
 - tapOn:
-    text: 'Send verification code'
+    id: 'btn-Send verification code'
 - extendedWaitUntil:
     visible: 'Check your phone'
     timeout: 15000
@@ -33,7 +35,7 @@ appId: cash.ping.app
 - runFlow:
     when:
       visible:
-        text: 'Verify and continue'
+        id: 'btn-Verify and continue'
     commands:
       - tapOn:
-          text: 'Verify and continue'
+          id: 'btn-Verify and continue'

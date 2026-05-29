@@ -10,6 +10,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -117,7 +118,12 @@ export default function VerifyScreen() {
               color={colors.textPrimary}
             />
           </Pressable>
-          <View style={styles.content}>
+          <ScrollView
+            style={styles.kb}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            contentInsetAdjustmentBehavior="always"
+          >
             <Heading variant="displaySmall">Check your phone</Heading>
             <Heading
               variant="bodyLarge"
@@ -175,7 +181,7 @@ export default function VerifyScreen() {
                 Didn't get a code? Change number
               </Heading>
             </Pressable>
-          </View>
+          </ScrollView>
 
           <View style={styles.actions}>
             <Button
@@ -184,6 +190,7 @@ export default function VerifyScreen() {
               loading={loading}
               disabled={code.length !== 6}
               iconRight="arrow-forward"
+              testID="btn-Verify and continue"
             />
           </View>
         </KeyboardAvoidingView>
@@ -206,7 +213,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: spacing.sm,
   },
-  content: { flex: 1, paddingTop: spacing.xxl },
+  content: { flexGrow: 1, paddingTop: spacing.xxl, paddingBottom: spacing.lg },
   cellsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
