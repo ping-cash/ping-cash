@@ -26,9 +26,9 @@ on:
         required: false
         default: '8EaS5sf4dT7SzEFNYKC1PD5C3PcKhPnEnHCYjSZ1hcpb'
       sol_amount:
-        description: 'SOL airdrop amount (lamports)'
+        description: 'SOL airdrop amount (lamports). Devnet caps at 1 SOL.'
         required: false
-        default: '2000000000'
+        default: '1000000000'
   schedule:
     # 06:00 + 18:00 UTC every day
     - cron: '0 6 * * *'
