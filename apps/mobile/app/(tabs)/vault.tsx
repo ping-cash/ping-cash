@@ -1,8 +1,14 @@
 /**
  * Earn / Vault screen — APY hero, key stats, and configuration row.
  */
-import { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Switch } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Switch,
+  RefreshControl,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -14,22 +20,35 @@ import { PingTokenMark } from '../../components/ui/PingTokenMark';
 export default function VaultScreen() {
   const [autoStake, setAutoStake] = useState(true);
   const [vault, setVault] = useState<VaultPosition | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const v = await api.getVaultPosition();
+      setVault(v);
+    } catch {
+      // Stub-safe: vault endpoint may 404 on a fresh signup; UI falls
+      // back to zero values rather than blocking the tab.
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const v = await api.getVaultPosition();
-        if (!cancelled) setVault(v);
-      } catch {
-        // Stub-safe: vault endpoint may 404 on a fresh signup; UI falls
-        // back to zero values rather than blocking the tab.
-      }
+      await load();
+      if (cancelled) return;
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   const apy = vault?.apyDisplay ?? '5.0';
   const staked = vault?.vUsdcBalance ?? '0';
@@ -38,7 +57,16 @@ export default function VaultScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.brand}
+            />
+          }
+        >
           {/* APY hero */}
           <View style={styles.apyCard}>
             <View style={styles.apyHeader}>
