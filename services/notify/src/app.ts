@@ -20,6 +20,26 @@ export async function buildApp() {
   await app.register(cors, { origin: true, credentials: true });
   await app.register(rateLimit, { max: 500, timeWindow: '1 minute' });
 
+  // Override the default JSON content-type parser so we can capture the
+  // raw bytes alongside the parsed body — required for Stripe webhook
+  // signature verification (HMAC over the exact bytes Stripe signed).
+  // Existing routes still receive the parsed JSON via request.body
+  // unchanged; the only addition is request.rawBody for handlers that
+  // need it. Behaviour mirrors fastify-raw-body without the extra dep.
+  app.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    function (req, body, done) {
+      try {
+        const parsed = body ? JSON.parse(body as string) : {};
+        (req as typeof req & { rawBody?: string }).rawBody = body as string;
+        done(null, parsed);
+      } catch (err) {
+        done(err as Error, undefined);
+      }
+    }
+  );
+
   app.setErrorHandler(errorHandler as never);
   app.addHook('onRequest', async request => {
     request.log.info(

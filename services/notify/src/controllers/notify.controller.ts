@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 
@@ -8,6 +10,60 @@ import {
   savePushToken,
 } from '../services/push-token-store.service';
 import { listTemplates } from '../services/templates.service';
+
+/**
+ * Verify Stripe's `Stripe-Signature` header per
+ * https://stripe.com/docs/webhooks/signatures. Header shape:
+ *   t=<unix-ts>,v1=<hmac-sha256-hex(t.rawBody, whsec)>[,v0=...]
+ * Returns true when at least one v1 entry matches.
+ * Replay protection: timestamp must be within ±5 min of now.
+ *
+ * When STRIPE_WEBHOOK_SECRET is unset we return true (dev-mode bypass)
+ * so the webhook still functions end-to-end before founder lands the
+ * whsec_ in the cluster Secret. This narrows to verified-only at the
+ * moment STRIPE_WEBHOOK_SECRET appears.
+ */
+export function verifyStripeSignature(
+  rawBody: string,
+  sigHeader: string | undefined,
+  secret: string | undefined,
+  nowSeconds: number = Math.floor(Date.now() / 1000)
+): boolean {
+  if (!secret) return true; // dev-mode bypass — see comment above
+  if (!sigHeader) return false;
+
+  let timestamp: string | null = null;
+  const sigsV1: string[] = [];
+  for (const part of sigHeader.split(',')) {
+    const eq = part.indexOf('=');
+    if (eq <= 0) continue;
+    const k = part.slice(0, eq).trim();
+    const v = part.slice(eq + 1).trim();
+    if (k === 't') timestamp = v;
+    else if (k === 'v1') sigsV1.push(v);
+  }
+  if (!timestamp || sigsV1.length === 0) return false;
+
+  const ts = Number(timestamp);
+  if (!Number.isFinite(ts) || Math.abs(nowSeconds - ts) > 300) return false;
+
+  const expected = createHmac('sha256', secret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest();
+  for (const candidate of sigsV1) {
+    if (candidate.length !== expected.length * 2) continue;
+    let given: Buffer;
+    try {
+      given = Buffer.from(candidate, 'hex');
+    } catch {
+      continue;
+    }
+    if (given.length === expected.length && timingSafeEqual(given, expected)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 const DispatchBody = z.object({
   recipientPhone: z
@@ -184,6 +240,30 @@ export async function notifyRoutes(fastify: FastifyInstance) {
   fastify.post(
     '/webhooks/stripe',
     async (request: FastifyRequest, reply: FastifyReply) => {
+      const rawBody =
+        (request as FastifyRequest & { rawBody?: string }).rawBody ?? '';
+      const sigHeader = request.headers['stripe-signature'];
+      const secret = process.env.STRIPE_WEBHOOK_SECRET;
+
+      if (
+        !verifyStripeSignature(
+          rawBody,
+          typeof sigHeader === 'string' ? sigHeader : undefined,
+          secret
+        )
+      ) {
+        request.log.warn(
+          { hasSigHeader: !!sigHeader, hasSecret: !!secret },
+          'Stripe webhook signature verification failed'
+        );
+        return reply.status(400).send({
+          error: {
+            code: 'INVALID_SIGNATURE',
+            message: 'Stripe signature mismatch',
+          },
+        });
+      }
+
       const parsed = StripeWebhookBody.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({
