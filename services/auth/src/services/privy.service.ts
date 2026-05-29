@@ -1,5 +1,8 @@
+import { createHash } from 'node:crypto';
+
 import { loadConfig } from '@ping/config';
 import { PrivyClient } from '@privy-io/server-auth';
+import { Keypair } from '@solana/web3.js';
 
 import { AuthErrors } from '../utils/errors';
 import { logger } from '../utils/logger';
@@ -9,15 +12,23 @@ import { isTestPhone } from './twilio.service';
 const config = loadConfig();
 
 /**
- * Deterministic 32-byte synthetic Solana-shaped address for test phones.
- * Same phone → same address across runs, so corridor smoke + Maestro can
- * exercise the full wallet flow without consuming a Privy user-cap slot.
- * 32-char hex padded base58-shaped is fine for our wiring — the address
- * never holds real funds, never appears on-chain.
+ * Deterministic ed25519 Solana wallet for test phones. Same phone →
+ * same wallet across runs, so corridor smoke + Maestro can exercise
+ * the full wallet/balance + send/claim flows against a REAL base58
+ * pubkey without consuming a Privy user-cap slot. The wallet sits on
+ * devnet with no funds — every Solana RPC call against it succeeds
+ * (returns zero balance) instead of throwing INVALID_ADDRESS for a
+ * synthetic non-base58 string.
+ *
+ * Seed = sha256("ping-test-wallet-v1:" + phone). The "-v1" tag lets
+ * us rotate test-wallet identity without changing the phone prefix
+ * if a leaked seed ever needs to be revoked.
  */
 function stubAddressForTestPhone(phone: string): string {
-  const hex = Buffer.from(phone).toString('hex').padEnd(64, '0').slice(0, 64);
-  return `Stub${hex.slice(0, 40)}`;
+  const seed = createHash('sha256')
+    .update('ping-test-wallet-v1:' + phone)
+    .digest();
+  return Keypair.fromSeed(seed.slice(0, 32)).publicKey.toBase58();
 }
 
 let _client: PrivyClient | null = null;
