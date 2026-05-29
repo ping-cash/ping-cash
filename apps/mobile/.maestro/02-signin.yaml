@@ -5,16 +5,30 @@ appId: cash.ping.app
     visible: 'phone number'
     timeout: 8000
 - takeScreenshot: 02-signup
-# Hard-target the phone input now that it has a testID.
+# Hard-target the phone input now that it has a testID. The input
+# default value is '+' (signup.tsx useState('+')), so we only need
+# to type the digits — Maestro's iOS phone-pad keyboard can't type
+# the literal '+' so we let the React state default it for us.
 - tapOn:
     id: 'phone-input'
-- inputText: '+447700900001'
+- inputText: '447700900789'
 - tapOn:
     text: 'Send verification code'
 - extendedWaitUntil:
     visible: 'Check your phone'
     timeout: 15000
 - takeScreenshot: 03-verify
+# OTP test code: OTP_TEST_PHONES bypass accepts 123456 for
+# +447700900* numbers (per auth.service.ts isTestPhone bypass).
 - inputText: '123456'
-- tapOn:
-    text: 'Verify and continue'
+# Auto-submit handler triggers when the 6th digit lands
+# (8dcf14b 3-tap onboarding fix), so we just need to wait for the
+# dashboard. The button tap is also a safe no-op if auto-submit
+# already fired — keep it for robustness across builds.
+- runFlow:
+    when:
+      visible:
+        text: 'Verify and continue'
+    commands:
+      - tapOn:
+          text: 'Verify and continue'

@@ -1,8 +1,20 @@
 appId: cash.ping.app
 ---
-# v0.3 smoke — launch-only gate. Maestro's iOS phone-pad keyboard
-# can't reliably type '+' so the sign-in flow fails for instrumentation
-# reasons, not app reasons. The crash detection grep on sim.log still
-# runs and catches actual native crashes. Sign-in/tabs/send coverage
-# will be re-added via testID-bound tapOn (no inputText typing of '+').
+# Full e2e walk. Each sub-flow is runnable standalone (for debugging)
+# AND chained here for CI's smoke gate + #83 corridor demo videos.
+#
+# Phone-pad '+' typing limitation: signup.tsx phone input uses
+# useState('+') so the field already starts with '+'; Maestro only
+# needs to type the digits.
+#
+# Test phone: +447700900789 — UK Ofcom drama range, bypasses Twilio +
+# rate-limit + Privy importUser (see auth.service.ts isTestPhone),
+# deterministic stub wallet from sha256("ping-test-wallet-v1:" + phone).
+#
+# Crash detection grep on sim.log runs in the iOS workflow after Maestro
+# completes — even when assertions pass, a native crash mid-walk fails
+# the build.
 - runFlow: 01-launch.yaml
+- runFlow: 02-signin.yaml
+- runFlow: 03-tabs.yaml
+- runFlow: 04-send-screen.yaml

@@ -362,6 +362,14 @@ jobs:
           xcrun simctl spawn "$SIM_UDID" log stream --predicate 'process == "Ping" OR process == "Pong" OR process == "cash"' \
             > $RUNNER_TEMP/sim.log 2>&1 &
           LOG_PID=$!
+          # Record the full Maestro walk as a video — used by #83 demo
+          # video pipeline + handy for debugging unexpected failures.
+          # H.264 keeps the file small enough for GitHub Actions artifacts.
+          xcrun simctl io "$SIM_UDID" recordVideo --codec=h264 --force \
+            "$RUNNER_TEMP/maestro-walk.mp4" >/dev/null 2>&1 &
+          VIDEO_PID=$!
+          # Give the recorder a beat to attach.
+          sleep 2
           set +e
           MAESTRO_SCREEN_DIR=$RUNNER_TEMP/maestro-screenshots
           mkdir -p "$MAESTRO_SCREEN_DIR"
@@ -374,6 +382,11 @@ jobs:
           )
           MAESTRO_EXIT=$?
           set -e
+          # SIGINT to recordVideo writes a valid MP4 header on the way out;
+          # SIGKILL would leave a truncated file. Give it 2s to flush.
+          kill -INT $VIDEO_PID 2>/dev/null || true
+          sleep 2
+          kill -9 $VIDEO_PID 2>/dev/null || true
           kill $LOG_PID 2>/dev/null || true
           if [ -d ~/.maestro/tests ]; then
             mkdir -p $RUNNER_TEMP/maestro-debug
@@ -399,6 +412,8 @@ jobs:
             ${{ runner.temp }}/maestro-junit.xml
             ${{ runner.temp }}/maestro-debug/**
             ${{ runner.temp }}/maestro-screenshots/**
+            ${{ runner.temp }}/maestro-walk.mp4
+            ${{ runner.temp }}/sim.log
             ${{ runner.temp }}/sim.log
           if-no-files-found: warn
       # ───────────────────────────────────────────────────────────
