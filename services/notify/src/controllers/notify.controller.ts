@@ -55,6 +55,39 @@ const MoonpayWebhookBody = z.object({
     .passthrough(),
 });
 
+// Stripe webhook payload — emits `payment_intent.succeeded` after the
+// user finishes the PaymentSheet. On success we credit USDC on-chain
+// from treasury to the user's wallet (devnet now, mainnet at cutover).
+// PaymentIntent.metadata carries `userId` + `walletAddress` set by
+// wallet-service buildCashinIntent so we can look the recipient up
+// without an extra DB hit.
+const StripeWebhookBody = z
+  .object({
+    type: z.string(),
+    data: z
+      .object({
+        object: z
+          .object({
+            id: z.string(),
+            amount_received: z.number().optional(),
+            currency: z.string().optional(),
+            metadata: z
+              .object({
+                // cashin.service.ts uses these specific keys when it
+                // creates the PaymentIntent; webhook must read the same.
+                pingUserId: z.string().optional(),
+                pingWallet: z.string().optional(),
+                pingMethod: z.string().optional(),
+              })
+              .passthrough()
+              .optional(),
+          })
+          .passthrough(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
 export async function notifyRoutes(fastify: FastifyInstance) {
   // POST /notify/dispatch — multi-channel send
   fastify.post(
@@ -138,6 +171,108 @@ export async function notifyRoutes(fastify: FastifyInstance) {
       );
       // Always 200 so MoonPay doesn't retry; we've taken delivery.
       return reply.status(200).send({ received: true });
+    }
+  );
+
+  // POST /notify/webhooks/stripe — Stripe webhook endpoint configured at
+  // https://dashboard.stripe.com/test/webhooks (founder action, separate
+  // from API keys). On `payment_intent.succeeded` we credit the buyer's
+  // wallet on-chain by calling wallet-service /internal/fund-new-wallet
+  // with the recipient address from PaymentIntent.metadata. STRIPE_WEBHOOK_SECRET
+  // signature verification is a follow-up — until that lands we trust the
+  // payload + rely on the internal cluster network as the trust boundary.
+  fastify.post(
+    '/webhooks/stripe',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const parsed = StripeWebhookBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          error: { code: 'VALIDATION_ERROR', message: parsed.error.message },
+        });
+      }
+      const evt = parsed.data;
+      const pi = evt.data.object;
+      const meta = pi.metadata ?? {};
+
+      // Only act on payment_intent.succeeded. Other events (failed,
+      // canceled, requires_action) are accepted with 200 so Stripe
+      // doesn't retry; treasury credit only happens on success.
+      if (evt.type !== 'payment_intent.succeeded') {
+        request.log.info(
+          { type: evt.type, paymentIntent: pi.id },
+          'Stripe webhook received (non-credit event)'
+        );
+        return reply.status(200).send({ received: true });
+      }
+
+      const recipient = meta.pingWallet;
+      if (!recipient) {
+        request.log.warn(
+          { paymentIntent: pi.id, metadata: meta },
+          'Stripe payment_intent.succeeded missing pingWallet metadata'
+        );
+        return reply.status(200).send({
+          received: true,
+          credited: false,
+          reason: 'no-wallet-in-metadata',
+        });
+      }
+
+      // Fire-and-forget call to wallet-service /internal/fund-new-wallet.
+      // The shared INTERNAL_SERVICE_SECRET is the cluster's auth boundary
+      // for service-to-service RPCs.
+      const internalSecret = process.env.INTERNAL_SERVICE_SECRET ?? '';
+      const walletSvc =
+        process.env.WALLET_SERVICE_URL ??
+        'http://wallet-service.ping.svc.cluster.local';
+
+      try {
+        const res = await fetch(
+          `${walletSvc}/wallet/internal/fund-new-wallet`,
+          {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'x-internal-secret': internalSecret,
+            },
+            body: JSON.stringify({ recipientAddress: recipient }),
+          }
+        );
+        const json = (await res.json()) as {
+          funded?: boolean;
+          txSignature?: string;
+          reason?: string;
+        };
+        request.log.info(
+          {
+            paymentIntent: pi.id,
+            recipient,
+            userId: meta.pingUserId ?? null,
+            method: meta.pingMethod ?? null,
+            funded: json.funded,
+            txSignature: json.txSignature ?? null,
+            reason: json.reason ?? null,
+          },
+          'Stripe → on-chain credit dispatched'
+        );
+        return reply.status(200).send({
+          received: true,
+          credited: !!json.funded,
+          txSignature: json.txSignature ?? null,
+        });
+      } catch (err) {
+        request.log.error(
+          { paymentIntent: pi.id, recipient, err: (err as Error).message },
+          'Stripe → on-chain credit failed'
+        );
+        // Always 200 so Stripe doesn't retry — the operator can manually
+        // settle via /wallet/internal/fund-new-wallet if needed.
+        return reply.status(200).send({
+          received: true,
+          credited: false,
+          reason: (err as Error).message,
+        });
+      }
     }
   );
 
