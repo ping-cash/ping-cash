@@ -1,7 +1,7 @@
+import { loadConfig } from '@ping/config';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 
-import { loadConfig } from '@ping/config';
 
 import { buildSendIntent } from '../services/send.service';
 import {

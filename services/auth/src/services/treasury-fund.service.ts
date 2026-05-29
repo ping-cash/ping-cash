@@ -29,12 +29,14 @@ export function maybeFundFromTreasury(walletAddress: string): void {
 }
 
 async function fundOnce(walletAddress: string): Promise<void> {
+  const secret = config.INTERNAL_SERVICE_SECRET;
+  if (!secret) return;
   const url = `${config.WALLET_SERVICE_URL}/wallet/internal/fund-new-wallet`;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-internal-secret': config.INTERNAL_SERVICE_SECRET!,
+      'x-internal-secret': secret,
     },
     body: JSON.stringify({ recipientAddress: walletAddress }),
   });
