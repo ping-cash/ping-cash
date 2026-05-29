@@ -30,9 +30,9 @@ jobs:
           toolchain: 1.89.0
           components: rustfmt, clippy
 
-      - name: Install Solana CLI (3.1.14 — bundled cargo supports edition2024 needed by hybrid-array 0.4 transitive dep via spl-program-error 0.6)
+      - name: Install Solana CLI (2.2.16 — bundled cargo supports edition2024 needed by hybrid-array 0.4 transitive dep via spl-program-error 0.6)
         run: |
-          sh -c "$(curl -sSfL https://release.anza.xyz/v3.1.14/install)"
+          sh -c "$(curl -sSfL https://release.anza.xyz/v2.2.16/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
       - name: Install Anchor (0.31.1 — #71 toolchain bump)
