@@ -153,12 +153,20 @@ jobs:
               pem, algorithm='ES256', headers={'kid': os.environ['ASC_KEY_ID'], 'typ': 'JWT'})
           if isinstance(tok, bytes): tok = tok.decode()
           hdrs = {'Authorization': f'Bearer {tok}', 'Accept': 'application/json'}
-          # Cert list
+          # Cert list — match ALL distribution-class certs. Apple has shipped
+          # multiple Distribution cert types over the years (DISTRIBUTION,
+          # IOS_DISTRIBUTION, APPLE_DISTRIBUTION since 2022). If a cert
+          # gets server-revoked under a type our filter misses, fastlane
+          # cert "Found"s it and signs with a revoked cert → xcodebuild
+          # archive fails (Build 7d49e1f, 04a96a1, etc. on 'serial
+          # 31E9AAA58286FED9A83427B1E72FB7B9 is not valid for code
+          # signing'). Substring match against 'DISTRIBUTION' catches
+          # every distribution variant; DEVELOPMENT certs stay untouched.
           req = urllib.request.Request('https://api.appstoreconnect.apple.com/v1/certificates?limit=200', headers=hdrs)
           data = json.load(urllib.request.urlopen(req))
           certs = [c for c in data.get('data', [])
-                   if c['attributes'].get('certificateType') in {'DISTRIBUTION', 'IOS_DISTRIBUTION'}]
-          print(f'existing distribution certs: {len(certs)}')
+                   if 'DISTRIBUTION' in (c['attributes'].get('certificateType') or '').upper()]
+          print(f'existing distribution-class certs (any type containing DISTRIBUTION): {len(certs)}')
           for c in certs:
               a = c.get('attributes', {})
               print(f"  - id={c['id']} type={a.get('certificateType')} expires={a.get('expirationDate')}")
@@ -191,6 +199,17 @@ jobs:
                   headers=hdrs, method='DELETE')).read()
               except urllib.error.HTTPError as e: print(f'  HTTP {e.code}')
           PY
+          # Flush any local fastlane cert cache from previous runner
+          # snapshots (GHA runners are theoretically fresh but the
+          # ~/Library/MobileDevice/Provisioning Profiles/ dir is
+          # sometimes pre-populated by the image). The flush prevents
+          # fastlane cert from reusing a stale cached .cer that
+          # references a server-revoked serial.
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/ ~/.fastlane 2>/dev/null || true
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
+          # Pass --skip_set_partition_list so fastlane doesn't choke on
+          # re-imports + --force_generate so it doesn't reuse a cert
+          # name that points to a revoked serial.
           fastlane cert \
             --api_key_path "$API_JSON" \
             --team_id ${{ secrets.APPLE_TEAM_ID }} \
