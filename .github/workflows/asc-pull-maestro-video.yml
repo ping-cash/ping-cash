@@ -67,17 +67,21 @@ jobs:
       - name: Post the video link as an issue comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.inputs.run_id }}
+          ISSUE_NUMBER: ${{ github.event.inputs.issue_number }}
         run: |
           set -euo pipefail
           REPO="${{ github.repository }}"
-          URL="https://raw.githubusercontent.com/$REPO/main/docs/walks/maestro-walk-${{ github.event.inputs.run_id }}.mp4"
-          gh issue comment ${{ github.event.inputs.issue_number }} \
-            --repo "$REPO" \
-            --body "## Maestro walk video — iOS run ${{ github.event.inputs.run_id }}
+          URL="https://raw.githubusercontent.com/$REPO/main/docs/walks/maestro-walk-${RUN_ID}.mp4"
+          BODY_FILE="$RUNNER_TEMP/issue-body.md"
+          cat > "$BODY_FILE" <<EOF
+          ## Maestro walk video — iOS run ${RUN_ID}
 
-The Maestro e2e walk (01-launch → 02-signin → 03-tabs → 04-send-screen) recorded as a single MP4 via \`xcrun simctl io recordVideo\`. Captures landing → signup → OTP → dashboard → tabs → send modal in one continuous run.
+          The Maestro e2e walk (01-launch → 02-signin → 03-tabs → 04-send-screen) recorded as a single MP4 via \`xcrun simctl io recordVideo\`. Captures landing → signup → OTP → dashboard → tabs → send modal in one continuous run.
 
-**Video:** [maestro-walk-${{ github.event.inputs.run_id }}.mp4]($URL)
+          **Video:** [maestro-walk-${RUN_ID}.mp4]($URL)
 
-Source iOS run: https://github.com/$REPO/actions/runs/${{ github.event.inputs.run_id }}
-"
+          Source iOS run: https://github.com/$REPO/actions/runs/${RUN_ID}
+          EOF
+          sed -i 's/^          //' "$BODY_FILE"
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file "$BODY_FILE"
