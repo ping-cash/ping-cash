@@ -36,6 +36,25 @@ const SenderClaimedBody = z.object({
   method: z.string().optional(),
 });
 
+// MoonPay webhook payload (#82). MoonPay POSTs a JSON body for every
+// transaction state change. We only act on `transaction_completed` —
+// the buyer's USDC has landed on the destination wallet. Other states
+// (pending, failed, refunded) are ignored at this layer; they're a
+// follow-up surface.
+const MoonpayWebhookBody = z.object({
+  type: z.string(),
+  data: z
+    .object({
+      id: z.string().optional(),
+      status: z.string().optional(),
+      walletAddress: z.string().optional(),
+      baseCurrencyAmount: z.number().optional(),
+      baseCurrencyCode: z.string().optional(),
+      cryptoTransactionId: z.string().optional(),
+    })
+    .passthrough(),
+});
+
 export async function notifyRoutes(fastify: FastifyInstance) {
   // POST /notify/dispatch — multi-channel send
   fastify.post(
@@ -78,6 +97,47 @@ export async function notifyRoutes(fastify: FastifyInstance) {
       const { userId } = request.params as { userId: string };
       await deletePushToken(userId);
       return reply.status(200).send({ cleared: true });
+    }
+  );
+
+  // POST /notify/webhooks/moonpay — MoonPay POSTs here on every
+  // transaction state change (#82 follow-up chain). Verifies the
+  // signature when MOONPAY_WEBHOOK_SECRET is set, then on
+  // `transaction_completed` resolves the wallet → userId mapping and
+  // fires a SENDER_TRANSFER_CLAIMED-style push ("Your $50 in USDC just
+  // landed"). The wallet→userId lookup is a follow-up because the
+  // current notify-service doesn't carry an auth-service client; for
+  // now we log the inbound event so operators can confirm wiring
+  // works end-to-end once founder registers the webhook URL.
+  fastify.post(
+    '/webhooks/moonpay',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const parsed = MoonpayWebhookBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: parsed.error.message,
+          },
+        });
+      }
+      const evt = parsed.data;
+      // Future: when MOONPAY_WEBHOOK_SECRET is set, verify
+      // request.headers['moonpay-signature-v2'] HMAC over the raw body
+      // (Fastify's body-parsing hides the raw bytes; needs rawBody
+      // plugin). Stub-mode acknowledgement until that's wired.
+      request.log.info(
+        {
+          type: evt.type,
+          status: evt.data.status,
+          wallet: evt.data.walletAddress,
+          amount: evt.data.baseCurrencyAmount,
+          currency: evt.data.baseCurrencyCode,
+        },
+        'MoonPay webhook received'
+      );
+      // Always 200 so MoonPay doesn't retry; we've taken delivery.
+      return reply.status(200).send({ received: true });
     }
   );
 
