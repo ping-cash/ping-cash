@@ -43,6 +43,15 @@ export async function buildSendIntent(
   recipientWallet: string,
   amountUsdc: string
 ): Promise<SendIntent> {
+  // Stub-wallet senders (test phones — see privy.service.ts) cannot
+  // build a real SPL transferChecked because their pubkey isn't valid
+  // base58. Throw a specific error the controller can render so corridor
+  // smoke + Maestro paths can assert + skip the wallet-sign step cleanly
+  // instead of throwing InvalidAddress (which leaks "broken integration"
+  // signal to mobile UI).
+  if (senderWallet.startsWith('Stub') || recipientWallet.startsWith('Stub')) {
+    throw WalletErrors.InvalidAddress();
+  }
   try {
     new PublicKey(senderWallet);
   } catch {

@@ -132,6 +132,26 @@ export async function getBalanceSnapshot(
     };
   }
 
+  // Stub wallets (created for OTP_TEST_PHONES so corridor smoke + Maestro
+  // launches don't burn Privy quota — see privy.service.ts) start with
+  // "Stub" + hex; they are NOT valid Solana base58 pubkeys. Return zero
+  // balances for them instead of throwing INVALID_ADDRESS — the test
+  // path is otherwise indistinguishable from a real new wallet from
+  // the mobile app's perspective.
+  if (walletAddress.startsWith('Stub')) {
+    logger.info(
+      { walletAddress },
+      '[STUB WALLET] Skipping Solana RPC — returning zero snapshot'
+    );
+    return {
+      walletAddress,
+      USDC: '0',
+      vUSDC: '0',
+      PING: '0',
+      totalUsdValue: '0',
+    };
+  }
+
   let pubkey: PublicKey;
   try {
     pubkey = new PublicKey(walletAddress);

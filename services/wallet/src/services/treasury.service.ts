@@ -89,6 +89,13 @@ export async function fundNewWallet(
     return { funded: false, reason: 'no-treasury-key' };
   }
 
+  // Stub wallets (test phones) can't receive an on-chain SPL transfer —
+  // they have no valid base58 pubkey. Skip the fund tx silently so the
+  // corridor smoke flow completes; tag the reason so observers know.
+  if (recipientAddress.startsWith('Stub')) {
+    return { funded: false, reason: 'stub-wallet-not-fundable' };
+  }
+
   let recipient: PublicKey;
   try {
     recipient = new PublicKey(recipientAddress);
