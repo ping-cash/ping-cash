@@ -21,9 +21,56 @@ import { Button } from '../components/ui/Button';
 import { Heading } from '../components/ui/Heading';
 import { Input } from '../components/ui/Input';
 
+// Locale → ITU country dialing code prefill. Saves the user 2-3 taps
+// on the phone-pad. Falls back to '+' if the locale isn't mapped.
+const LOCALE_TO_DIAL: Record<string, string> = {
+  US: '+1',
+  CA: '+1',
+  GB: '+44',
+  TR: '+90',
+  AE: '+971',
+  SA: '+966',
+  IN: '+91',
+  PK: '+92',
+  BD: '+880',
+  PH: '+63',
+  KE: '+254',
+  NG: '+234',
+  ID: '+62',
+  MX: '+52',
+  BR: '+55',
+  DE: '+49',
+  FR: '+33',
+  IT: '+39',
+  ES: '+34',
+  AU: '+61',
+  NZ: '+64',
+  JP: '+81',
+  KR: '+82',
+  CN: '+86',
+  HK: '+852',
+  SG: '+65',
+  MY: '+60',
+  TH: '+66',
+  VN: '+84',
+};
+
+function defaultPhonePrefix(): string {
+  try {
+    const Localization = require('expo-localization') as
+      | typeof import('expo-localization')
+      | undefined;
+    const region = Localization?.getLocales?.()[0]?.regionCode ?? '';
+    if (region && LOCALE_TO_DIAL[region.toUpperCase()]) {
+      return LOCALE_TO_DIAL[region.toUpperCase()];
+    }
+  } catch {}
+  return '+';
+}
+
 export default function SignupScreen() {
   const router = useRouter();
-  const [phone, setPhone] = useState('+');
+  const [phone, setPhone] = useState(defaultPhonePrefix());
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {

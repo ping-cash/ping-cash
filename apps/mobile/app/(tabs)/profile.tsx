@@ -216,12 +216,29 @@ export default function ProfileScreen() {
             align="center"
             style={{ marginTop: spacing.xl }}
           >
-            Ping v0.1.0 · built on Solana
+            Ping {appVersionString()} · built on Solana
           </Heading>
         </ScrollView>
       </SafeAreaView>
     </View>
   );
+}
+
+function appVersionString(): string {
+  try {
+    const Constants =
+      require('expo-constants') as typeof import('expo-constants');
+    const v =
+      Constants.default?.expoConfig?.version ??
+      Constants.default?.manifest?.version ??
+      Constants.default?.manifest2?.extra?.expoClient?.version;
+    const build =
+      Constants.default?.expoConfig?.ios?.buildNumber ??
+      Constants.default?.expoConfig?.android?.versionCode;
+    return v ? `v${v}${build ? ` (${build})` : ''}` : 'v0.1.0';
+  } catch {
+    return 'v0.1.0';
+  }
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {

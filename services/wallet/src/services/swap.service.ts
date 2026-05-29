@@ -183,6 +183,31 @@ export async function buildSwapQuote(args: {
   const outputNum = parseFloat(outputAmount);
   const rate = inputNum > 0 ? (outputNum / inputNum).toFixed(6) : '0';
 
+  // MEV-tilt sanity check: if Pyth says USDC ≈ $1 and Jupiter's effective
+  // USD value differs by >5%, the route is likely MEV-tilted (sandwich or
+  // stale pool quote). We don't block — just downgrade isLive to false +
+  // tag the reason so the client UI labels the rate (indicative) and
+  // operators can audit. Real PING price feeds would tighten this further.
+  let isLive = true;
+  let drift: number | null = null;
+  if (usdcPrice && usdcPrice > 0 && inputNum > 0 && outputNum > 0) {
+    const impliedUsdcPerOutput = inputNum / outputNum; // USDC per output token
+    // The check assumes output is USD-pegged for the sanity bound; for
+    // non-USD-pegged outputs (like $PING) we'd need an outputPriceUsd
+    // feed (filed as follow-up). For now we flag any drift >5% on
+    // USDC→USDC round-trips as MEV-suspect.
+    if (inputMint === outputMint) {
+      drift = Math.abs(1 - impliedUsdcPerOutput);
+      if (drift > 0.05) {
+        logger.warn(
+          { drift, inputAmount, outputAmount },
+          'MEV-tilt: Jupiter quote >5% off Pyth USDC anchor — flagging non-live'
+        );
+        isLive = false;
+      }
+    }
+  }
+
   return {
     inputMint,
     outputMint,
@@ -194,6 +219,6 @@ export async function buildSwapQuote(args: {
     route,
     feeBps: jupiter.platformFee?.feeBps ?? 0,
     slippageBps,
-    isLive: true,
+    isLive,
   };
 }
