@@ -30,9 +30,17 @@ jobs:
           toolchain: 1.89.0
           components: rustfmt, clippy
 
-      - name: Install Solana CLI (2.2.16 — bundled cargo supports edition2024 needed by hybrid-array 0.4 transitive dep via spl-program-error 0.6)
+      - name: Install Solana CLI (3.1.14 — bundled cargo 1.85+ supports edition2024 needed by hybrid-array 0.4 transitive dep via spl-program-error 0.6)
         run: |
-          sh -c "$(curl -sSfL https://release.anza.xyz/v2.2.16/install)"
+          # Worker tried 3.1.14 earlier (commit 206a1cd) but hit borsh-trait
+          # split caused by pyth-solana-receiver-sdk@1.0.1 in dep graph.
+          # 1495384 reverted pyth-receiver → split should no longer exist.
+          # 7379217 stepped solana down to 2.2.16 which DOES NOT fix
+          # edition2024 (cargo 1.84). Step back up to 3.1.14 to clear it.
+          # Note: anchor's `cargo build-sbf` uses solana's bundled cargo,
+          # not the rustup-installed 1.89.0 — so the solana CLI version
+          # IS the cargo version for SBF compilation.
+          sh -c "$(curl -sSfL https://release.anza.xyz/v3.1.14/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
       - name: Install Anchor (0.31.1 — #71 toolchain bump)
