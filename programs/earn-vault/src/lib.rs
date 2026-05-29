@@ -38,6 +38,12 @@ compile_error!(
     "earn-vault: mainnet-ready feature requires audit-passed feature \
      (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
 );
+// #70: devnet program id (programs/.devnet-keys/earn-vault-devnet-keypair.json).
+// Mainnet placeholder kept under the mainnet-ready feature gate — its
+// private key is unknowable so a deploy attempt to mainnet fails.
+#[cfg(not(feature = "mainnet-ready"))]
+declare_id!("6rXJFpiHnSZ5ro5iYxQzzckX2kSEAqDbk3t3z3cBAUBG");
+#[cfg(feature = "mainnet-ready")]
 declare_id!("EarnVau1tProgr4mPubKeyP1aceooo1111111111111");
 
 /// Squads V4 multisig program ID (mainnet) + vault PDA derivation.
