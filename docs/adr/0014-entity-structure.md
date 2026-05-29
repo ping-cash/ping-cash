@@ -1,7 +1,17 @@
 # ADR 0014: Entity Structure — Turkey + Oman + Cayman Foundation
 
-**Status:** Accepted
-**Date:** 2026-05-23
+**Status:** Partially superseded 2026-05-29 — Cayman Foundation struck; Wyoming-DAO option also struck. See [`docs/MAINNET-READINESS.md §8`](../MAINNET-READINESS.md) for the live operating-entity matrix.
+**Date:** 2026-05-23 (original); update note 2026-05-29
+
+## Update 2026-05-29 — Cayman struck
+
+Founder direction 2026-05-29 ("stop talking about cayman it will never happen"): Cayman is removed from BOTH the operating entity and the Phase-2 token-Foundation options. Wyoming-DAO also struck. Operating-entity choice is narrowed to {Oman, UAE FZE, Turkey-with-Stripe-caveat}; Phase-2 token-Foundation jurisdiction is reopened (Switzerland Stiftung / Liechtenstein / BVI / Singapore / Panama — TBD with counsel closer to TGE).
+
+Tech-lead recommendation: **Oman LLC or Sole Prop** as operating entity (matches residence, cheapest steady-state, Stripe Oman went live 2024). Filed as `ping-cash` issue for founder + counsel decision.
+
+The body below documents the original 2026-05-23 three-entity recommendation (Turkey + Oman + Cayman Foundation). Treat the Cayman Foundation and Wyoming-DAO sections as HISTORICAL — they describe the path considered but no longer pursued. The Turkey + Oman analysis remains relevant (with the Turkey-Stripe caveat noted in MAINNET-READINESS §8).
+
+---
 
 ## Context
 
