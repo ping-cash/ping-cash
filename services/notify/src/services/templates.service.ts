@@ -78,7 +78,7 @@ const TEMPLATES: Record<
     sms: p =>
       `Ping: ${p.recipientName ?? p.recipientPhone} just claimed your ${p.amount}.`,
     push: p => ({
-      title: `${p.recipientName ?? 'Your recipient'} claimed your ${p.amount}`,
+      title: `${p.recipientName ?? p.recipientPhone ?? 'Your recipient'} claimed your ${p.amount}`,
       body: p.method ? `Sent to their ${p.method}` : `Tap to see the transfer`,
     }),
   },

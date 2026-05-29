@@ -68,4 +68,32 @@ describe('templates.service', () => {
       /Unknown template/
     );
   });
+
+  it('renders SENDER_TRANSFER_CLAIMED (#81) for push with recipient name', () => {
+    const result = renderTemplate('SENDER_TRANSFER_CLAIMED', 'push', {
+      amount: '$50',
+      recipientName: 'Joe',
+      method: 'GCash',
+    });
+    expect(result.title).toContain('Joe');
+    expect(result.title).toContain('$50');
+    expect(result.body).toContain('GCash');
+  });
+
+  it('renders SENDER_TRANSFER_CLAIMED for SMS with recipient name', () => {
+    const result = renderTemplate('SENDER_TRANSFER_CLAIMED', 'sms', {
+      amount: '$50',
+      recipientName: 'Joe',
+    });
+    expect(result.body).toContain('Joe');
+    expect(result.body).toContain('$50');
+  });
+
+  it('SENDER_TRANSFER_CLAIMED falls back to recipientPhone when no name', () => {
+    const result = renderTemplate('SENDER_TRANSFER_CLAIMED', 'push', {
+      amount: '$50',
+      recipientPhone: '+44770090012',
+    });
+    expect(result.title).toContain('+44770090012');
+  });
 });
