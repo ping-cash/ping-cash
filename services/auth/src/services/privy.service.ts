@@ -4,7 +4,21 @@ import { PrivyClient } from '@privy-io/server-auth';
 import { AuthErrors } from '../utils/errors';
 import { logger } from '../utils/logger';
 
+import { isTestPhone } from './twilio.service';
+
 const config = loadConfig();
+
+/**
+ * Deterministic 32-byte synthetic Solana-shaped address for test phones.
+ * Same phone → same address across runs, so corridor smoke + Maestro can
+ * exercise the full wallet flow without consuming a Privy user-cap slot.
+ * 32-char hex padded base58-shaped is fine for our wiring — the address
+ * never holds real funds, never appears on-chain.
+ */
+function stubAddressForTestPhone(phone: string): string {
+  const hex = Buffer.from(phone).toString('hex').padEnd(64, '0').slice(0, 64);
+  return `Stub${hex.slice(0, 40)}`;
+}
 
 let _client: PrivyClient | null = null;
 
@@ -39,10 +53,28 @@ export interface PrivyUserBindResult {
 export async function bindPhoneToWallet(
   phone: string
 ): Promise<PrivyUserBindResult> {
+  // Test phones (+447700900 Ofcom drama range — see OTP_TEST_PHONES)
+  // bypass Privy entirely so corridor smoke + Maestro launches don't
+  // consume the Privy user-cap quota. Symmetric with twilio.service.ts
+  // bypassing OTP send/verify for these prefixes. Production phones
+  // still go through the full Privy MPC flow below.
+  if (isTestPhone(phone)) {
+    const stubAddr = stubAddressForTestPhone(phone);
+    logger.info(
+      { phone, stubAddr },
+      '[TEST PHONE] Bypassing Privy importUser — deterministic stub wallet'
+    );
+    return {
+      privyUserId: `did:test:${Buffer.from(phone).toString('hex').slice(0, 32)}`,
+      walletAddress: stubAddr,
+      isNewUser: true,
+    };
+  }
+
   const client = getClient();
 
   if (!client) {
-    const stubAddr = `Stub${Buffer.from(phone).toString('hex').slice(0, 40)}`;
+    const stubAddr = stubAddressForTestPhone(phone);
     logger.info(
       { phone, stubAddr },
       '[STUB MODE] Would create/fetch Privy wallet'
