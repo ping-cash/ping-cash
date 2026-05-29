@@ -14,6 +14,7 @@
  * (6 decimals for USDC mainnet mint). Recipient ATA is included as a CreateAtaIfNeeded
  * idempotent instruction so brand-new wallets can receive on first send.
  */
+import { loadConfig } from '@ping/config';
 import type { SendIntent } from '@ping/types';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -27,7 +28,12 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import { WalletErrors } from '../utils/errors';
 import { logger } from '../utils/logger';
 
-const USDC_MINT_MAINNET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+// The USDC mint is environment-driven so devnet (Circle's
+// 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU) and mainnet
+// (EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v) share the same code
+// path. Hardcoding mainnet would silently break devnet send-intents:
+// the client would sign a transaction against an ATA that doesn't
+// exist on the connected network and the broadcast would fail.
 const USDC_DECIMALS = 6;
 
 export type { SendIntent };
@@ -53,9 +59,10 @@ export async function buildSendIntent(
     'Building USDC send intent (Phase 1 — client signs via Privy MPC)'
   );
 
+  const config = loadConfig();
   const sender = new PublicKey(senderWallet);
   const recipient = new PublicKey(recipientWallet);
-  const mint = new PublicKey(USDC_MINT_MAINNET);
+  const mint = new PublicKey(config.SOLANA_USDC_MINT);
   const senderAta = getAssociatedTokenAddressSync(mint, sender);
   const recipientAta = getAssociatedTokenAddressSync(mint, recipient);
   const amountAtomic = BigInt(
@@ -92,7 +99,7 @@ export async function buildSendIntent(
     serializedTransaction: tx.serializeMessage().toString('base64'),
     expiresInSeconds: 60,
     meta: {
-      mint: USDC_MINT_MAINNET,
+      mint: config.SOLANA_USDC_MINT,
       program: TOKEN_PROGRAM_ID.toBase58(),
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID.toBase58(),
       senderAta: senderAta.toBase58(),
