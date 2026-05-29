@@ -82,9 +82,21 @@ const envSchema = z.object({
   // $PING + Earn Vault mints (Phase 2)
   PING_TOKEN_MINT: z.string().optional(),
   V_USDC_MINT: z.string().optional(),
-  EARN_VAULT_PROGRAM_ID: z.string().optional(),
-  POMM_PROGRAM_ID: z.string().optional(),
-  INTERNAL_SWAP_PROGRAM_ID: z.string().optional(),
+  // #70: anchor program IDs for Phase-2 programs. Defaults match the
+  // devnet keypairs in programs/.devnet-keys/. Mainnet IDs replace these
+  // post-Squads-ceremony per #15/#23/#24.
+  PING_TOKEN_PROGRAM_ID: z
+    .string()
+    .default('CXreEqusXpJwoFeEGN3w8qewAMu35XnmwQHrRskWtVyU'),
+  EARN_VAULT_PROGRAM_ID: z
+    .string()
+    .default('6rXJFpiHnSZ5ro5iYxQzzckX2kSEAqDbk3t3z3cBAUBG'),
+  INTERNAL_SWAP_PROGRAM_ID: z
+    .string()
+    .default('65sbURwLh4S6YQ9WLgTj5nMnXqU6cYa3uETxXw1ezfTE'),
+  POMM_PROGRAM_ID: z
+    .string()
+    .default('2EbCAf16SfymVfzu9B6cZAsTA4gYjuVQG13CaFgFWUPo'),
 
   // Claim URL base (used by claim-service)
   CLAIM_URL_BASE: z.string().url().default('https://ping.cash/c'),
