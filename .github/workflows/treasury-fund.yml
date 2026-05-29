@@ -45,17 +45,28 @@ jobs:
       - name: Request devnet SOL airdrop
         env:
           TREASURY: ${{ github.event.inputs.treasury_address || '8EaS5sf4dT7SzEFNYKC1PD5C3PcKhPnEnHCYjSZ1hcpb' }}
-          AMOUNT: ${{ github.event.inputs.sol_amount || '2000000000' }}
+          AMOUNT: ${{ github.event.inputs.sol_amount || '500000000' }}
         run: |
           set -euo pipefail
-          echo "Funding treasury=$TREASURY amount=$AMOUNT lamports"
-          RESP=$(curl -sS -X POST https://api.devnet.solana.com \
-            -H "content-type: application/json" \
-            -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"requestAirdrop\",\"params\":[\"$TREASURY\",$AMOUNT]}")
-          echo "RPC response: $RESP"
-          SIG=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('result',''))")
+          # The devnet faucet refuses requests > 1 SOL with -32603. Step
+          # down the request size on each retry so we still land *some*
+          # SOL even if the faucet is throttling. Total target is 1.5 SOL
+          # across at most 3 successful requests; we exit after the first
+          # confirmed credit so a single 0.5 SOL grant counts as success.
+          AMOUNTS="$AMOUNT 250000000 100000000"
+          SIG=""
+          for a in $AMOUNTS; do
+            echo "Trying airdrop amount=$a lamports"
+            RESP=$(curl -sS -X POST https://api.devnet.solana.com \
+              -H "content-type: application/json" \
+              -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"requestAirdrop\",\"params\":[\"$TREASURY\",$a]}")
+            echo "RPC response: $RESP"
+            SIG=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('result',''))")
+            if [ -n "$SIG" ]; then break; fi
+            sleep 3
+          done
           if [ -z "$SIG" ]; then
-            echo "::error::Airdrop did not return a signature — response above"
+            echo "::error::Devnet airdrop refused all amounts — faucet likely unavailable"
             exit 1
           fi
           echo "Airdrop sig=$SIG"
