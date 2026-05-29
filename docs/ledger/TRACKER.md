@@ -4,27 +4,33 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-28 (vendor-wiring + 7-day delivery slate commit session). Twilio + Privy + TransFi all wired and live in K8s Secrets on openova-private. Mobile WhatsApp share UX shipped (commit a31e3d2). 12 new deliverable issues filed (#74-#85). 7-day commitment table below.
+**Last refreshed:** 2026-05-29 14:55Z by Ping-TechLead (tech-lead session activated). Worker `ping` shipped 5 commits since 2026-05-28 21:38 closing P0(b)+P0(c). CI was wedged 9h on pnpm-lock.yaml drift (founder still on Build 27 — logo+contacts+HTTP500 fix); tech-lead unblocked via c178257. Worker filed UX-feedback issues #86-#89; #86 walk-evidence pending Build 30 landing.
 
-## 7-Day Delivery Slate — committed 2026-05-28
+## 7-Day Delivery Slate — refreshed 2026-05-29 (commits + CI status)
 
-| #   | Title                                 | ETA                                   | Status                    |
-| --- | ------------------------------------- | ------------------------------------- | ------------------------- |
-| #65 | Twilio + corridor walk evidence       | DONE 2026-05-28                       | 🟩 PASS (artifact 1 of 2) |
-| #74 | Devnet treasury auto-fund             | Day 2                                 | 🟦 backlog                |
-| #75 | OFAC SDN screener service             | Day 2                                 | 🟦 backlog                |
-| #76 | Web claim flow polish                 | Day 3                                 | 🟦 backlog                |
-| #77 | Mobile wallet balance + activity feed | Day 3                                 | 🟦 backlog                |
-| #78 | Hourly corridor smoke cron            | Day 3                                 | 🟦 backlog                |
-| #79 | Mainnet readiness audit doc           | Day 3                                 | 🟦 backlog                |
-| #80 | Mobile onboarding 3-tap polish        | Day 4-5                               | 🟦 backlog                |
-| #83 | Per-corridor demo videos (5x30s)      | Day 5-6                               | 🟦 backlog                |
-| #84 | Backlog burn — close everything else  | Continuous                            | 🟦 backlog                |
-| #81 | Push notifications                    | ⏸ pending founder APNS .p8            | 🟡                        |
-| #82 | MoonPay cash-in                       | ⏸ pending founder MoonPay signup      | 🟡                        |
-| #85 | App Store + Play Store submission     | ⏸ pending founder Play Console signup | 🟡                        |
+| #   | Title                                 | ETA                                   | Status                                                                                |
+| --- | ------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------- |
+| #65 | Twilio + corridor walk evidence       | DONE 2026-05-28                       | 🟩 PASS (artifact 1 of 2)                                                             |
+| #74 | Devnet treasury auto-fund             | Day 1 (29 May)                        | 🟧 IN FLIGHT — code shipped 0a6355a; CI on ac2474b (lint fix follow-up); walk pending |
+| #77 | Mobile wallet balance + activity feed | Day 1 (29 May)                        | 🟧 IN FLIGHT — code shipped 67d9937; iOS TestFlight build in_progress; walk pending   |
+| #86 | UX feedback round 1                   | Day 1 (29 May)                        | 🟧 IN FLIGHT — Build 27 partial (logo+contacts+HTTP500); Build 28+29 deferred to 30   |
+| #75 | OFAC SDN screener service             | Day 2                                 | 🟦 backlog                                                                            |
+| #76 | Web claim flow polish                 | Day 3                                 | 🟦 backlog                                                                            |
+| #78 | Hourly corridor smoke cron            | Day 3                                 | 🟦 backlog                                                                            |
+| #79 | Mainnet readiness audit doc           | Day 3                                 | 🟦 backlog                                                                            |
+| #80 | Mobile onboarding 3-tap polish        | Day 4-5                               | 🟦 backlog                                                                            |
+| #87 | $PING brand mark replace text         | Day 4-5                               | 🟦 backlog                                                                            |
+| #83 | Per-corridor demo videos (5x30s)      | Day 5-6                               | 🟦 backlog                                                                            |
+| #84 | Backlog burn — close everything else  | Continuous                            | 🟦 backlog                                                                            |
+| #81 | Push notifications                    | ⏸ pending founder APNS .p8            | 🟡                                                                                    |
+| #82 | MoonPay cash-in                       | ⏸ pending founder MoonPay signup      | 🟡                                                                                    |
+| #85 | App Store + Play Store submission     | ⏸ pending founder Play Console signup | 🟡                                                                                    |
+| #88 | Cashin: Apple Pay + Stripe + ACH      | Day 4-5                               | 🟦 backlog                                                                            |
+| #89 | Swap: Pyth + Jupiter quote            | Day 6                                 | 🟦 backlog                                                                            |
 
 Phase-2 / mainnet issues (#15, #22-24, #50, #61, #62, #70, #71) explicitly OUT of 7-day scope per session 2026-05-28.
+
+**Prior refresh (2026-05-28):** vendor-wiring + 7-day delivery slate commit session. Twilio + Privy + TransFi all wired and live in K8s Secrets on openova-private. Mobile WhatsApp share UX shipped (commit a31e3d2). 12 new deliverable issues filed (#74-#85).
 
 **Prior refresh (2026-05-27):** post backlog-sweep + CI-unblock + Prisma migrations-on-startup session. **Root-cause fix to #54:** `gh repo edit ping-cash/ping-cash --visibility public` (per repo CLAUDE.md note) — public repos get unlimited Actions minutes on the FREE org plan. CI now actually runs; previously masked failures surface. **#63 filed + shipped same session:** restore corridor-smoke green by (a) wallet lint --fix (2 import-order errors) + (b) Prisma migrations-on-startup pattern across transfer/ledger/user services. **Commits this session:** a162dac (Wise real 4-call flow + 15 vitest), 0d1ee1a (sub-agent reviewer 8 wire-format fixes), 096046e (earn-vault-svc Fastify scaffold + GET /users/:userId/vault + stub-aware reader), 834ced8 (earn-vault #61 batch-1 — squads multisig scaffold + solvency invariant + emergency_withdraw closing H-02 + H-04 + H-05), a410d86 (#50 paste-helper script), 075fbd1 (#63 wallet lint + transfer/ledger Prisma migrations), f461e88 (#63 user-service Prisma migrations). **Issue flips:** #58 closed (PARTIAL → PASS after fixes); #16 closed (scaffold complete; activation gated on #15 program); #61 in-progress (batch-1 of N — adapter CPIs + UserShare PDA remain toolchain-bound per runbook 584c169); #63 in-progress (CI build pending). **Workspace health:** 19/19 pnpm packages typecheck clean; 37+ vitest passing in offramp + 3 passing in earn-vault. **CI:** unblocked end-to-end via repo public flip + lint fixes; Build & Deploy on f461e88 running. **No workarounds rule (founder 2026-05-27):** all session work flows through GHA CI → ghcr.io → openova-private Flux. Mech-4 podman+ghcr is BANNED (saved as durable memory feedback_no_workarounds_ever.md).
 
