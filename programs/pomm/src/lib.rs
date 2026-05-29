@@ -39,6 +39,10 @@ compile_error!(
     "pomm: mainnet-ready feature requires audit-passed feature \
      (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
 );
+// #70: devnet program id (programs/.devnet-keys/pomm-devnet-keypair.json).
+#[cfg(not(feature = "mainnet-ready"))]
+declare_id!("2EbCAf16SfymVfzu9B6cZAsTA4gYjuVQG13CaFgFWUPo");
+#[cfg(feature = "mainnet-ready")]
 declare_id!("PommProgr4mPubKeyP1aceooo111111111111111111");
 
 const EMA_BAND_BPS: u16 = 1_500;

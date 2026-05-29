@@ -12,6 +12,15 @@ internal_swap = "1nternaLSwapProgr4mPubKeyP1aceooo1111111111"
 pomm = "PommProgr4mPubKeyP1aceooo111111111111111111"
 ping_token = "PingTokenProgr4mPubKeyP1aceooo1111111111111"
 
+# #70: devnet deploy IDs — paired with keypairs in programs/.devnet-keys/.
+# Mainnet IDs replace these only after the Squads multisig ceremony in
+# #15/#23/#24, gated behind --features mainnet-ready,audit-passed.
+[programs.devnet]
+earn_vault = "6rXJFpiHnSZ5ro5iYxQzzckX2kSEAqDbk3t3z3cBAUBG"
+internal_swap = "65sbURwLh4S6YQ9WLgTj5nMnXqU6cYa3uETxXw1ezfTE"
+pomm = "2EbCAf16SfymVfzu9B6cZAsTA4gYjuVQG13CaFgFWUPo"
+ping_token = "CXreEqusXpJwoFeEGN3w8qewAMu35XnmwQHrRskWtVyU"
+
 [registry]
 url = "https://api.apr.dev"
 

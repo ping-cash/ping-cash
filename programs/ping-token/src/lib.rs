@@ -18,6 +18,10 @@ compile_error!(
      (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
 );
 
+// #70: devnet program id (programs/.devnet-keys/ping-token-devnet-keypair.json).
+#[cfg(not(feature = "mainnet-ready"))]
+declare_id!("CXreEqusXpJwoFeEGN3w8qewAMu35XnmwQHrRskWtVyU");
+#[cfg(feature = "mainnet-ready")]
 declare_id!("PingTokenProgr4mPubKeyP1aceooo1111111111111");
 
 pub const PING_DECIMALS: u8 = 9;

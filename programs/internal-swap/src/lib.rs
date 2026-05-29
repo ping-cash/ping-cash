@@ -46,6 +46,10 @@ compile_error!(
     "internal-swap: mainnet-ready feature requires audit-passed feature \
      (set only AFTER OtterSec audit completes per #22 EPIC + ADR 0018)"
 );
+// #70: devnet program id (programs/.devnet-keys/internal-swap-devnet-keypair.json).
+#[cfg(not(feature = "mainnet-ready"))]
+declare_id!("65sbURwLh4S6YQ9WLgTj5nMnXqU6cYa3uETxXw1ezfTE");
+#[cfg(feature = "mainnet-ready")]
 declare_id!("1nternaLSwapProgr4mPubKeyP1aceooo1111111111");
 
 const MAX_SPREAD_BPS: u16 = 100;

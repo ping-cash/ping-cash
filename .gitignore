@@ -86,3 +86,6 @@ programs/*/Cargo.lock
 /ping-real-*.png
 /ping-cash-*.png
 /.mcp.json
+
+# Solana program deploy keypairs (private — never commit)
+/programs/.devnet-keys/
