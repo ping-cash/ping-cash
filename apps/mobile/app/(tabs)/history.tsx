@@ -102,7 +102,14 @@ export default function HistoryScreen() {
               </Pressable>
             </View>
           }
-          renderItem={({ item }) => <ActivityRow item={item} />}
+          renderItem={({ item }) => (
+            <ActivityRow
+              item={item}
+              onPress={() =>
+                router.push(`/transfer-detail?id=${item.id}` as never)
+              }
+            />
+          )}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
         />
       </SafeAreaView>
@@ -110,7 +117,13 @@ export default function HistoryScreen() {
   );
 }
 
-function ActivityRow({ item }: { item: Transfer }) {
+function ActivityRow({
+  item,
+  onPress,
+}: {
+  item: Transfer;
+  onPress?: () => void;
+}) {
   // Direction inferred — assume "sent" for now (no sender flag in current type)
   const direction: 'sent' | 'received' = 'sent';
   const statusColor =
@@ -120,7 +133,7 @@ function ActivityRow({ item }: { item: Transfer }) {
         ? colors.error
         : colors.warning;
   return (
-    <Pressable style={styles.row}>
+    <Pressable onPress={onPress} style={styles.row}>
       <View
         style={[
           styles.icon,
