@@ -1,31 +1,36 @@
 /**
  * Expo Push notification registration (#81).
  *
- * Called after auth-store has a user. Asks the OS for notification
- * permission, fetches the Expo push token, and registers it with
- * notify-service so server-side dispatches ("Joe claimed your $50")
- * find this device.
+ * The expo-notifications + expo-device modules are loaded DYNAMICALLY
+ * inside the functions instead of at module top — the same pattern as
+ * receive.tsx's LazyQRCode for react-native-qrcode-svg. Top-level imports
+ * of these modules pull native-module init into the JS bridge bring-up
+ * path, which on the CI simulator delays Maestro's "Create account
+ * is visible" assertion past the 60s timeout.
  *
- * Stub-safe: if expo-notifications isn't bridged (Expo Go web,
- * simulator without push), logs the skip and returns null. The send
- * flow still works — only the buzz on the sender's phone is lost.
+ * Stub-safe: a missing/failing native module returns null instead of
+ * crashing the layout. The send/receive flow still works; only the buzz
+ * on the sender's phone is lost.
  */
-import Constants from 'expo-constants';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { api } from './api';
 
 let _tokenRegistered: string | null = null;
+let _handlerConfigured = false;
 
 export async function registerPushToken(
   userId: string
 ): Promise<string | null> {
-  if (!Device.isDevice) {
-    return null;
-  }
   try {
+    // Dynamic require — keeps expo-notifications + expo-device off the
+    // launch critical path. See header comment.
+    const Device = require('expo-device') as typeof import('expo-device');
+    const Notifications =
+      require('expo-notifications') as typeof import('expo-notifications');
+    if (!Device.isDevice) {
+      return null;
+    }
     const isGranted = (resp: unknown) => {
       const r = resp as { granted?: boolean; status?: string };
       return r.granted === true || r.status === 'granted';
@@ -39,7 +44,6 @@ export async function registerPushToken(
     if (!granted) {
       return null;
     }
-
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -48,15 +52,15 @@ export async function registerPushToken(
         lightColor: '#10B981',
       });
     }
-
+    const Constants =
+      require('expo-constants') as typeof import('expo-constants');
     const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ??
-      Constants.easConfig?.projectId;
+      Constants.default?.expoConfig?.extra?.eas?.projectId ??
+      Constants.default?.easConfig?.projectId;
     const tokenResp = await Notifications.getExpoPushTokenAsync(
       projectId ? { projectId } : undefined
     );
     const token = tokenResp.data;
-
     if (!token) return null;
     if (token === _tokenRegistered) return token;
 
@@ -68,7 +72,6 @@ export async function registerPushToken(
     _tokenRegistered = token;
     return token;
   } catch (err) {
-    // Best-effort — never crash the app on push registration failure.
     // eslint-disable-next-line no-console
     console.warn('[push] register failed (non-fatal):', err);
     return null;
@@ -76,13 +79,22 @@ export async function registerPushToken(
 }
 
 export function configurePushHandler(): void {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
+  if (_handlerConfigured) return;
+  try {
+    const Notifications =
+      require('expo-notifications') as typeof import('expo-notifications');
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+    _handlerConfigured = true;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[push] handler configure failed (non-fatal):', err);
+  }
 }
