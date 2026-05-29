@@ -14,11 +14,14 @@ import {
   Linking,
   Clipboard,
 } from 'react-native';
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useStripe } from '@stripe/stripe-react-native';
+import { api } from '../lib/api';
 import { authStore } from '../lib/auth-store';
 import { colors, radii, spacing } from '../lib/theme';
 import { Button } from '../components/ui/Button';
@@ -33,14 +36,17 @@ type Method = {
   available: boolean;
 };
 
-const PROD_METHODS: Method[] = [
+type StripeMethod = 'apple_pay' | 'card' | 'ach';
+
+const PROD_METHODS: (Method & { stripeMethod?: StripeMethod })[] = [
   {
     icon: 'logo-apple',
     iconColor: '#FFFFFF',
     title: 'Apple Pay',
     subtitle: 'Card from your Wallet — fastest',
     fee: '2.9% + $0.30',
-    available: false,
+    available: true,
+    stripeMethod: 'apple_pay',
   },
   {
     icon: 'card',
@@ -48,7 +54,8 @@ const PROD_METHODS: Method[] = [
     title: 'Debit / credit card',
     subtitle: 'Visa, Mastercard, Amex via Stripe',
     fee: '2.9% + $0.30',
-    available: false,
+    available: true,
+    stripeMethod: 'card',
   },
   {
     icon: 'logo-bitcoin',
@@ -64,7 +71,8 @@ const PROD_METHODS: Method[] = [
     title: 'Bank transfer (ACH)',
     subtitle: '1-3 business days, lowest fees',
     fee: 'Free',
-    available: false,
+    available: true,
+    stripeMethod: 'ach',
   },
 ];
 
@@ -72,12 +80,56 @@ export default function CashinScreen() {
   const router = useRouter();
   const user = authStore.user;
   const wallet = user?.walletAddress ?? '';
+  const stripe = useStripe();
+  const [loadingMethod, setLoadingMethod] = useState<StripeMethod | null>(null);
 
   const copyAddress = async () => {
     if (!wallet) return;
     Clipboard.setString(wallet);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert('Copied', 'Wallet address copied to clipboard.');
+  };
+
+  const handleStripeMethod = async (method: StripeMethod) => {
+    try {
+      setLoadingMethod(method);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      // Default top-up: $25. A future iteration can let the user choose
+      // the amount before tapping the method (Send-screen style sheet).
+      const intent = await api.buildCashinIntent('25.00', method);
+      const initRes = await stripe.initPaymentSheet({
+        merchantDisplayName: 'Ping',
+        paymentIntentClientSecret: intent.clientSecret,
+        customerId: intent.customerId,
+        customerEphemeralKeySecret: intent.ephemeralKey,
+        applePay:
+          method === 'apple_pay' ? { merchantCountryCode: 'US' } : undefined,
+        allowsDelayedPaymentMethods: method === 'ach',
+        returnURL: 'cash://stripe-redirect',
+      });
+      if (initRes.error) {
+        Alert.alert('Cash-in setup failed', initRes.error.message);
+        return;
+      }
+      const presentRes = await stripe.presentPaymentSheet();
+      if (presentRes.error) {
+        if (presentRes.error.code !== 'Canceled') {
+          Alert.alert('Cash-in failed', presentRes.error.message);
+        }
+        return;
+      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        'Top-up confirmed',
+        intent.isLive
+          ? 'Your $25 is on the way to your Ping wallet as USDC.'
+          : 'Demo mode — production funding ships after Stripe sign-up.'
+      );
+    } catch (err) {
+      Alert.alert('Cash-in error', (err as Error).message);
+    } finally {
+      setLoadingMethod(null);
+    }
   };
 
   return (
@@ -181,12 +233,16 @@ export default function CashinScreen() {
           {PROD_METHODS.map(m => (
             <Pressable
               key={m.title}
-              onPress={() =>
-                Alert.alert(
-                  `${m.title} — coming soon`,
-                  `${m.title} ships after vendor KYB + production tier upgrade.`
-                )
-              }
+              onPress={() => {
+                if (m.stripeMethod) {
+                  void handleStripeMethod(m.stripeMethod);
+                } else {
+                  Alert.alert(
+                    `${m.title} — coming soon`,
+                    `${m.title} ships after vendor KYB + production tier upgrade.`
+                  );
+                }
+              }}
               style={[styles.row, !m.available && styles.rowDisabled]}
             >
               <View
@@ -210,6 +266,13 @@ export default function CashinScreen() {
                     <View style={styles.soonChip}>
                       <Heading variant="labelSmall" color="brand">
                         Coming soon
+                      </Heading>
+                    </View>
+                  )}
+                  {loadingMethod && loadingMethod === m.stripeMethod && (
+                    <View style={styles.soonChip}>
+                      <Heading variant="labelSmall" color="brand">
+                        Opening…
                       </Heading>
                     </View>
                   )}

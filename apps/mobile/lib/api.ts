@@ -162,6 +162,20 @@ class ApiClient {
     });
   }
 
+  // Stripe cash-in (#88). Backend returns a PaymentIntent clientSecret
+  // the @stripe/stripe-react-native PaymentSheet consumes. In stub mode
+  // (STRIPE_SECRET_KEY unset on wallet-service) returns a synthetic
+  // clientSecret + isLive:false so the mobile UI walk doesn't crash.
+  async buildCashinIntent(
+    amountUsd: string,
+    method: 'apple_pay' | 'card' | 'ach'
+  ): Promise<CashinIntent> {
+    return this.request('/wallet/cashin/intent', {
+      method: 'POST',
+      body: JSON.stringify({ amountUsd, method }),
+    });
+  }
+
   // Convenience for the mobile "Send to wallet" flow. Calls buildSendIntent,
   // hands the serializedTransaction off to the Privy MPC SDK for signing,
   // then submits to Solana RPC. The signer + rpc params are injected so the
@@ -251,6 +265,16 @@ export interface BalanceSnapshot {
   vUSDC: string;
   PING: string;
   totalUsdValue: string;
+}
+
+export interface CashinIntent {
+  clientSecret: string;
+  amount: number;
+  currency: string;
+  publishableKey: string;
+  ephemeralKey?: string;
+  customerId?: string;
+  isLive: boolean;
 }
 
 export interface Transfer {

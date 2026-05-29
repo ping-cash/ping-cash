@@ -2,6 +2,10 @@ import { loadConfig } from '@ping/config';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 
+import {
+  buildCashinIntent,
+  type CashinMethod,
+} from '../services/cashin.service';
 import { buildSendIntent } from '../services/send.service';
 import {
   getBalanceSnapshot,
@@ -60,6 +64,11 @@ const UnstakeIntentBody = z.object({
 const SendIntentBody = z.object({
   recipientWallet: z.string().min(32).max(44),
   amountUsdc: z.string().regex(/^\d+(\.\d{1,6})?$/),
+});
+
+const CashinIntentBody = z.object({
+  amountUsd: z.string().regex(/^\d+(\.\d{1,2})?$/),
+  method: z.enum(['apple_pay', 'card', 'ach']),
 });
 
 async function requireAuth(
@@ -201,6 +210,31 @@ export async function walletRoutes(fastify: FastifyInstance) {
         body.recipientWallet,
         body.amountUsdc
       );
+      return reply.status(200).send(intent);
+    }
+  );
+
+  // POST /wallet/cashin/intent — build Stripe PaymentIntent for Apple Pay
+  // / card / ACH cash-in (#88). Mobile @stripe/stripe-react-native
+  // PaymentSheet consumes the returned clientSecret. Falls back to a
+  // synthetic intent when STRIPE_SECRET_KEY is unset so the UI walk
+  // doesn't crash in dev.
+  fastify.post(
+    '/cashin/intent',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const auth = await requireAuth(request, reply);
+      if (!auth.wallet) {
+        return reply.status(404).send({
+          error: { code: 'WALLET_NOT_FOUND', message: 'No wallet bound' },
+        });
+      }
+      const body = CashinIntentBody.parse(request.body);
+      const intent = await buildCashinIntent({
+        amountUsd: body.amountUsd,
+        method: body.method as CashinMethod,
+        userId: auth.sub,
+        recipientWallet: auth.wallet,
+      });
       return reply.status(200).send(intent);
     }
   );

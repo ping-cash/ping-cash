@@ -121,6 +121,13 @@ const envSchema = z.object({
   INTERNAL_SERVICE_SECRET: z.string().optional(),
   WALLET_SERVICE_URL: z.string().url().default('http://wallet-service:3002'),
 
+  // Stripe — cash-in via Apple Pay + card + ACH (#88). When the secret
+  // is unset wallet-service runs in stub mode (synthetic clientSecret
+  // so the mobile PaymentSheet UI walk doesn't crash, fails at confirm).
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
   // JWT
   JWT_SECRET: z
     .string()
