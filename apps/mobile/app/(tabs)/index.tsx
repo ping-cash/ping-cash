@@ -20,6 +20,7 @@ import { api, type Transfer } from '../../lib/api';
 import { authStore } from '../../lib/auth-store';
 import { colors, radii, spacing, typography, shadows } from '../../lib/theme';
 import { Heading } from '../../components/ui/Heading';
+import { PingTokenMark } from '../../components/ui/PingTokenMark';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -160,9 +161,13 @@ export default function HomeScreen() {
                 </Heading>
               </View>
               <View style={styles.subBalanceChip}>
-                <View style={styles.pingDot} />
-                <Heading variant="bodySmall" color="secondary">
-                  {pingBalance} $PING
+                <PingTokenMark size={16} />
+                <Heading
+                  variant="bodySmall"
+                  color="secondary"
+                  style={{ marginLeft: 6 }}
+                >
+                  {pingBalance}
                 </Heading>
               </View>
             </View>
@@ -205,7 +210,10 @@ export default function HomeScreen() {
               <Ionicons name="gift" size={20} color={colors.brand} />
             </View>
             <View style={{ flex: 1 }}>
-              <Heading variant="bodyLargeStrong">Earn 1,200 $PING</Heading>
+              <View style={styles.promoTitleRow}>
+                <Heading variant="bodyLargeStrong">Earn 1,200</Heading>
+                <PingTokenMark size={18} />
+              </View>
               <Heading
                 variant="bodySmall"
                 color="secondary"
@@ -469,6 +477,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  promoTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   sectionHeader: {
     flexDirection: 'row',

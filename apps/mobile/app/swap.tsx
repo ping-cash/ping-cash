@@ -12,9 +12,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, spacing, typography } from '../lib/theme';
 import { Button } from '../components/ui/Button';
 import { Heading } from '../components/ui/Heading';
+import { PingTokenMark } from '../components/ui/PingTokenMark';
 
 const FROM_CURRENCY = 'USDC';
-const TO_CURRENCY = 'PING';
 const RATE = 0.085; // placeholder until /quote wires up
 
 export default function SwapScreen() {
@@ -78,14 +78,17 @@ export default function SwapScreen() {
                 TO
               </Heading>
               <View style={styles.tokenChip}>
-                <Heading variant="bodyStrong">{TO_CURRENCY}</Heading>
+                <PingTokenMark size={14} />
+                <Heading variant="bodyStrong" style={{ marginLeft: 6 }}>
+                  $PING
+                </Heading>
               </View>
             </View>
             <Heading variant="displaySmall" color="primary">
               {numeric > 0 ? received : '0'}
             </Heading>
             <Heading variant="caption" color="tertiary">
-              1 {TO_CURRENCY} ≈ ${RATE.toFixed(3)} (indicative)
+              1 $PING ≈ ${RATE.toFixed(3)} (indicative)
             </Heading>
           </View>
         </View>
@@ -144,6 +147,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tokenChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.surfaceElevated,
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
