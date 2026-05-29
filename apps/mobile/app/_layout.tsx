@@ -14,6 +14,7 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 import { useEffect, useState } from 'react';
 import { LogBox } from 'react-native';
 import { authStore } from '../lib/auth-store';
+import { configurePushHandler, registerPushToken } from '../lib/push';
 import { colors, typography } from '../lib/theme';
 import { RootErrorBoundary } from '../components/RootErrorBoundary';
 
@@ -46,6 +47,7 @@ export default function RootLayout() {
   // The Stack must be in the tree from frame 1 so navigation can resolve.
   useEffect(() => {
     let cancelled = false;
+    configurePushHandler();
     const run = async () => {
       try {
         await authStore.hydrate();
@@ -54,6 +56,13 @@ export default function RootLayout() {
         console.warn('[auth hydrate] swallowed:', err);
       }
       if (cancelled) return;
+      // After hydrate: register Expo push token if signed-in (#81). Stub-
+      // safe — registerPushToken returns null on simulator + on Expo Go
+      // web without crashing the layout.
+      const u = authStore.user;
+      if (u?.id) {
+        void registerPushToken(u.id).catch(() => {});
+      }
     };
     run();
     return () => {

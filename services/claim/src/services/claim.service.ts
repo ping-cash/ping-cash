@@ -21,6 +21,7 @@ import {
   type ClaimRecord,
 } from '../utils/redis';
 
+import { notifySenderClaimed } from './notify-bridge.service';
 import { dispatchToOfframp } from './offramp-bridge.service';
 import { sendClaimOtp, verifyClaimOtp } from './twilio.service';
 
@@ -315,6 +316,19 @@ export async function executeCashout(input: {
       accountNumber: input.account,
       accountName: input.accountName,
     },
+  });
+
+  // Fire push notification to the SENDER (#81) — "<recipient> claimed
+  // your $X". Fire-and-forget; failures here never delay the recipient
+  // response or roll back the claim.
+  notifySenderClaimed({
+    senderUserId: record.senderId,
+    amount: `$${record.amount.value} ${record.amount.currency}`,
+    recipientPhone: record.recipientPhone,
+    recipientName: input.accountName,
+    localAmount: record.amount.localValue,
+    localCurrency: record.amount.localCurrency,
+    method: input.method,
   });
 
   return {

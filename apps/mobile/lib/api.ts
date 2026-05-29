@@ -176,6 +176,20 @@ class ApiClient {
     });
   }
 
+  // Push token registration (#81) — mobile registers its Expo push
+  // token with notify-service so server-initiated pushes find this
+  // device. Idempotent on the backend; safe to retry.
+  async registerPushToken(args: {
+    userId: string;
+    expoPushToken: string;
+    platform?: 'ios' | 'android' | 'web';
+  }): Promise<{ registered: boolean }> {
+    return this.request('/notify/push/register', {
+      method: 'POST',
+      body: JSON.stringify(args),
+    });
+  }
+
   // Swap quote (#89) — Pyth Hermes USD price anchor + Jupiter v6 route.
   // Stub fallback when external APIs are unreachable; isLive flag tells
   // the UI whether to mark the rate "indicative".
