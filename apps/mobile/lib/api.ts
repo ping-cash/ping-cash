@@ -145,6 +145,10 @@ class ApiClient {
     return this.request('/wallet/balance');
   }
 
+  async getVaultPosition(): Promise<VaultPosition> {
+    return this.request('/wallet/vault');
+  }
+
   async getWalletAddress(): Promise<{ address: string; chain: string }> {
     return this.request('/wallet/address');
   }
@@ -294,6 +298,13 @@ export interface BalanceSnapshot {
   vUSDC: string;
   PING: string;
   totalUsdValue: string;
+}
+
+export interface VaultPosition {
+  walletAddress: string;
+  vUsdcBalance: string;
+  earnedPingLifetime: string;
+  apyDisplay: string;
 }
 
 export interface CashinIntent {

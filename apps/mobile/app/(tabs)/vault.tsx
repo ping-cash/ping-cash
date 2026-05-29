@@ -1,17 +1,39 @@
 /**
  * Earn / Vault screen — APY hero, key stats, and configuration row.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { api, type VaultPosition } from '../../lib/api';
 import { colors, radii, spacing, shadows } from '../../lib/theme';
 import { Heading } from '../../components/ui/Heading';
 import { PingTokenMark } from '../../components/ui/PingTokenMark';
 
 export default function VaultScreen() {
   const [autoStake, setAutoStake] = useState(true);
+  const [vault, setVault] = useState<VaultPosition | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const v = await api.getVaultPosition();
+        if (!cancelled) setVault(v);
+      } catch {
+        // Stub-safe: vault endpoint may 404 on a fresh signup; UI falls
+        // back to zero values rather than blocking the tab.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const apy = vault?.apyDisplay ?? '5.0';
+  const staked = vault?.vUsdcBalance ?? '0';
+  const earned = vault?.earnedPingLifetime ?? '0';
 
   return (
     <View style={styles.container}>
@@ -34,7 +56,7 @@ export default function VaultScreen() {
                 marginTop: spacing.lg,
               }}
             >
-              <Heading variant="displayLarge">5.0</Heading>
+              <Heading variant="displayLarge">{apy}</Heading>
               <Heading
                 variant="h1"
                 color="secondary"
@@ -63,9 +85,9 @@ export default function VaultScreen() {
 
           {/* Stats grid */}
           <View style={styles.statsRow}>
-            <Stat label="Your stake" value="$0.00" />
-            <Stat label="Earned (30d)" value="$0.00" tint={colors.brand} />
-            <Stat label="Total" value="0" trailingMark="ping" />
+            <Stat label="Your stake" value={`$${staked}`} />
+            <Stat label="Earned (30d)" value={`$0.00`} tint={colors.brand} />
+            <Stat label="Total" value={earned} trailingMark="ping" />
           </View>
 
           {/* Auto-stake setting */}
