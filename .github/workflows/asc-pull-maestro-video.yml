@@ -1,0 +1,83 @@
+name: Pull Maestro walk video → comment on issue
+
+# When iOS Build N passes Maestro + lands TestFlight, this workflow can be
+# triggered manually with a run-id + issue-number to attach the
+# maestro-walk.mp4 artifact as a comment on the GitHub issue. Closes the
+# evidence loop for #83 (corridor demo videos) and any future closure walk
+# that wants the video alongside the screenshot.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'iOS workflow run id (e.g., 26637837188)'
+        required: true
+      issue_number:
+        description: 'GitHub issue number to comment on'
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download maestro-results artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: maestro-results
+          path: ${{ runner.temp }}/maestro
+          run-id: ${{ github.event.inputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify the video lands in the artifact
+        run: |
+          set -euo pipefail
+          if [ ! -f "$RUNNER_TEMP/maestro/maestro-walk.mp4" ]; then
+            echo "::error::maestro-walk.mp4 not found in artifact"
+            ls -la "$RUNNER_TEMP/maestro/" || true
+            exit 1
+          fi
+          ls -la "$RUNNER_TEMP/maestro/maestro-walk.mp4"
+          file "$RUNNER_TEMP/maestro/maestro-walk.mp4"
+
+      - name: Stage the video in the repo so it surfaces via raw GitHub
+        run: |
+          set -euo pipefail
+          mkdir -p docs/walks
+          DEST="docs/walks/maestro-walk-${{ github.event.inputs.run_id }}.mp4"
+          cp "$RUNNER_TEMP/maestro/maestro-walk.mp4" "$DEST"
+          ls -la "$DEST"
+
+      - name: Commit + push the video so the issue comment can deep-link
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/walks/maestro-walk-${{ github.event.inputs.run_id }}.mp4
+          git commit -m "docs(walks): maestro-walk video from iOS run ${{ github.event.inputs.run_id }} — Refs #${{ github.event.inputs.issue_number }}"
+          git push
+
+      - name: Post the video link as an issue comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          URL="https://raw.githubusercontent.com/$REPO/main/docs/walks/maestro-walk-${{ github.event.inputs.run_id }}.mp4"
+          gh issue comment ${{ github.event.inputs.issue_number }} \
+            --repo "$REPO" \
+            --body "## Maestro walk video — iOS run ${{ github.event.inputs.run_id }}
+
+The Maestro e2e walk (01-launch → 02-signin → 03-tabs → 04-send-screen) recorded as a single MP4 via \`xcrun simctl io recordVideo\`. Captures landing → signup → OTP → dashboard → tabs → send modal in one continuous run.
+
+**Video:** [maestro-walk-${{ github.event.inputs.run_id }}.mp4]($URL)
+
+Source iOS run: https://github.com/$REPO/actions/runs/${{ github.event.inputs.run_id }}
+"
