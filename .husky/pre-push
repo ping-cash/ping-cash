@@ -1,0 +1,35 @@
+#!/usr/bin/env sh
+# Pre-push: format + typecheck so B&D's prettier format:check + tsc stop
+# failing on un-formatted / type-broken commits. Tech Lead tick-32 fix
+# after format thrash on commits 055f59f and dce4b7f burned CI minutes.
+
+set -e
+
+echo "[husky pre-push] pnpm format ..."
+pnpm format >/dev/null 2>&1 || {
+  echo "::error::pnpm format failed — fix the prettier crash before pushing"
+  exit 1
+}
+
+# If format modified ALREADY-TRACKED files, amend them into HEAD so the
+# push includes the format diff. Use `git add -u` (NOT `-A`) so untracked
+# local artifacts (debug PNGs, scratch files) NEVER sneak into the
+# commit. Use env-var identity since bastion repos run without
+# global git config.
+if ! git diff --quiet; then
+  echo "[husky pre-push] prettier modified tracked files — auto-amending HEAD"
+  git add -u
+  GIT_AUTHOR_NAME="${GIT_AUTHOR_NAME:-Emrah Baysal}" \
+  GIT_AUTHOR_EMAIL="${GIT_AUTHOR_EMAIL:-emrahbaysal@gmail.com}" \
+  GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-Emrah Baysal}" \
+  GIT_COMMITTER_EMAIL="${GIT_COMMITTER_EMAIL:-emrahbaysal@gmail.com}" \
+    git commit --amend --no-edit --no-verify
+fi
+
+echo "[husky pre-push] pnpm typecheck ..."
+pnpm typecheck >/dev/null 2>&1 || {
+  echo "::error::pnpm typecheck failed — run 'pnpm typecheck' to see errors"
+  exit 1
+}
+
+echo "[husky pre-push] OK"

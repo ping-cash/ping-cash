@@ -79,3 +79,10 @@ packages/api-client/src/generated/
 target/
 **/*.rs.bk
 programs/*/Cargo.lock
+
+# Local debug artifacts — never commit
+/claim-*.png
+/logo-*.png
+/ping-real-*.png
+/ping-cash-*.png
+/.mcp.json
