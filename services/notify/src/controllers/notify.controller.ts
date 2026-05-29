@@ -96,20 +96,35 @@ export async function notifyRoutes(fastify: FastifyInstance) {
           reason: 'no-token-on-file',
         });
       }
-      const result = await dispatch({
-        deviceToken: tokenRow.token,
-        template: 'SENDER_TRANSFER_CLAIMED' as const,
-        params: {
-          amount: body.amount,
-          recipientPhone: body.recipientPhone ?? '',
-          recipientName: body.recipientName ?? '',
-          localAmount: body.localAmount ?? '',
-          localCurrency: body.localCurrency ?? '',
-          method: body.method ?? '',
-        },
-        channels: ['push'],
-      });
-      return reply.status(200).send({ dispatched: true, result });
+      // Push dispatch is best-effort from the caller's perspective
+      // (claim-service fire-and-forget); a delivery failure must
+      // surface as 200 with a non-delivered flag, not 502 — otherwise
+      // every failed push generates a noisy upstream error in
+      // claim-service logs that doesn't impact the recipient flow.
+      try {
+        const result = await dispatch({
+          deviceToken: tokenRow.token,
+          template: 'SENDER_TRANSFER_CLAIMED' as const,
+          params: {
+            amount: body.amount,
+            recipientPhone: body.recipientPhone ?? '',
+            recipientName: body.recipientName ?? '',
+            localAmount: body.localAmount ?? '',
+            localCurrency: body.localCurrency ?? '',
+            method: body.method ?? '',
+          },
+          channels: ['push'],
+        });
+        return reply
+          .status(200)
+          .send({ dispatched: result.anyDelivered, result });
+      } catch (err) {
+        return reply.status(200).send({
+          dispatched: false,
+          reason: 'dispatch-failed',
+          detail: (err as Error).message,
+        });
+      }
     }
   );
 }
