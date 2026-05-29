@@ -86,7 +86,11 @@ export default function CashinScreen() {
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+            <Ionicons
+              name="chevron-back"
+              size={24}
+              color={colors.textPrimary}
+            />
           </Pressable>
           <Heading variant="h3">Add money</Heading>
           <View style={{ width: 44 }} />
@@ -174,7 +178,7 @@ export default function CashinScreen() {
             PRODUCTION FUNDING (COMING SOON)
           </Heading>
 
-          {PROD_METHODS.map((m) => (
+          {PROD_METHODS.map(m => (
             <Pressable
               key={m.title}
               onPress={() =>
