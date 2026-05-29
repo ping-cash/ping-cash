@@ -1,0 +1,84 @@
+# Fastfile — App Store metadata + screenshots + submit-for-review pipeline.
+#
+# Three lanes, each runnable in isolation via the asc-deliver workflow:
+#   - metadata          push EN copy from fastlane/metadata/ → ASC. No screenshots, no binary.
+#   - screenshots       upload device-frame screenshots from fastlane/screenshots/.
+#   - submit            tap "Submit for Review" against the most recent uploaded build.
+#
+# Auth: ASC_KEY_ID + ASC_ISSUER_ID + APP_STORE_CONNECT_PRIVATE_KEY (the same .p8 the
+# ios.yml workflow already uses for TestFlight uploads via altool; the key has the
+# "App Manager" role with submission scope).
+
+default_platform(:ios)
+
+platform :ios do
+  before_all do
+    UI.message("Fastlane lanes for cash.ping.app — #{ENV['LANE_NAME'] || 'unspecified'}")
+  end
+
+  # Authenticate against App Store Connect using the existing CI .p8 key.
+  # Returns the api_key hash that the action methods (deliver, etc.) consume.
+  private_lane :asc_api_key do
+    app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: ENV.fetch("ASC_KEY_FILEPATH"),
+      duration: 1200,
+      in_house: false,
+    )
+  end
+
+  desc "Push App Store metadata only (no screenshots, no binary)"
+  lane :metadata do
+    api_key = asc_api_key
+    deliver(
+      api_key: api_key,
+      force: true,                   # skip the HTML preview confirmation
+      skip_screenshots: true,
+      skip_binary_upload: true,
+      skip_app_version_update: false,
+      submit_for_review: false,
+      automatic_release: false,
+      precheck_include_in_app_purchases: false,
+      run_precheck_before_submit: false,
+      metadata_path: "./fastlane/metadata",
+    )
+  end
+
+  desc "Push App Store screenshots only (no metadata, no binary)"
+  lane :screenshots do
+    api_key = asc_api_key
+    deliver(
+      api_key: api_key,
+      force: true,
+      skip_metadata: true,
+      skip_binary_upload: true,
+      submit_for_review: false,
+      automatic_release: false,
+      screenshots_path: "./fastlane/screenshots",
+    )
+  end
+
+  desc "Submit the most recent TestFlight build for App Store review"
+  lane :submit do
+    api_key = asc_api_key
+    deliver(
+      api_key: api_key,
+      force: true,
+      skip_metadata: false,
+      skip_screenshots: false,
+      skip_binary_upload: true,           # binary already uploaded by ios.yml
+      submit_for_review: true,
+      automatic_release: false,           # keep manual release post-approval
+      submission_information: {
+        add_id_info_uses_idfa: false,
+        export_compliance_uses_encryption: false,
+        export_compliance_encryption_updated: false,
+      },
+      precheck_include_in_app_purchases: false,
+      run_precheck_before_submit: false,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+    )
+  end
+end

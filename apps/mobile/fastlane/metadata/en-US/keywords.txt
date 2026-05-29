@@ -1,0 +1,1 @@
+remittance,money transfer,send money,usdc,solana,gcash,upi,m-pesa,jazzcash,bkash

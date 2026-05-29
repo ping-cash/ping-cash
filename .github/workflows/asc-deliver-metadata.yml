@@ -1,0 +1,69 @@
+name: ASC deliver — metadata + screenshots + submit-for-review
+
+# Pushes App Store Connect listing artifacts via fastlane deliver. Three
+# lanes (metadata / screenshots / submit) — invoke each separately via
+# workflow_dispatch so the founder can verify each step in ASC before
+# tapping the next.
+#
+# Why three lanes vs one big deliver: deliver --submit_for_review is
+# all-or-nothing. If a single metadata field is rejected by ASC review
+# (banned-word in keywords, wrong privacy URL shape, etc.) the whole
+# submission rolls back. Splitting lets us land metadata first, see
+# ASC's "ready for screenshots" state, upload screenshots second, see
+# "ready for review" state, then tap submit only when all green.
+
+on:
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: 'fastlane lane to run (metadata, screenshots, submit)'
+        required: true
+        default: 'metadata'
+        type: choice
+        options:
+          - metadata
+          - screenshots
+          - submit
+
+permissions:
+  contents: read
+
+jobs:
+  deliver:
+    name: fastlane ${{ github.event.inputs.lane }}
+    runs-on: macos-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ruby (fastlane needs Ruby >= 3.1)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: false
+
+      - name: Install fastlane (pinned to latest stable)
+        run: |
+          gem install fastlane -NV --no-document
+
+      - name: Write App Store Connect API key to disk
+        run: |
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" \
+            | base64 -d > ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+          chmod 600 ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+
+      - name: Run fastlane ${{ github.event.inputs.lane }}
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_FILEPATH: /Users/runner/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+          FASTLANE_HIDE_CHANGELOG: 'true'
+          FASTLANE_SKIP_UPDATE_CHECK: 'true'
+          FASTLANE_OPT_OUT_USAGE: 'true'
+          LANE_NAME: ${{ github.event.inputs.lane }}
+        run: |
+          fastlane ios ${{ github.event.inputs.lane }} --verbose

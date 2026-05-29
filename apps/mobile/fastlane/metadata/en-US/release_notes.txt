@@ -1,0 +1,1 @@
+First version of Ping. We're sending USD to GCash, Maya, UPI, M-Pesa, BDO Bank, Cebuana, and 25+ other rails — at 0.4% fee with no FX markup. Built on Solana + USDC, fully non-custodial via Privy MPC wallets. Tap Send, share the claim link with WhatsApp, and your recipient picks how they want to receive.

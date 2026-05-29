@@ -1,0 +1,26 @@
+Send money home like sending a text. Ping lets you transfer USD to friends and family in 30+ countries — they receive local currency to GCash, Maya, UPI, M-Pesa, JazzCash, bKash, Nagad, BDO Bank, Cebuana Cash Pickup, or directly to their bank account.
+
+Why Ping
+
+• 0.4% flat fee. No FX markup. Banks and remittance services charge 5-10%. Ping charges 0.4%, transparently, before you send.
+• Recipient in seconds. Most payouts land in under 60 seconds on GCash, UPI, M-Pesa, and mobile money rails.
+• Non-custodial. Your money lives in a wallet only you control via MPC threshold signatures. We never hold customer funds.
+• Built on Solana with USDC. Sub-cent network fees + 1:1 USD-backed stablecoin = no FX skim.
+
+How it works
+
+1. Sign up with your phone in under 30 seconds — no KYC required for small transfers.
+2. Add USD via Apple Pay, debit card, or bank transfer.
+3. Pick a recipient by phone number. They get a link to claim their money — no app install required for them.
+
+Where you can send
+
+Philippines (GCash, Maya, BDO Bank, Cebuana Cash Pickup), India (UPI, NEFT, Paytm), Pakistan (JazzCash, EasyPaisa, bank transfer), Bangladesh (bKash, Nagad), Kenya (M-Pesa), Turkey (bank transfer), UAE (bank transfer), Nigeria (bank transfer), and more.
+
+Coming soon
+
+• Cash-out to local bank in EU + US
+• Multi-currency wallets (PHP, INR, KES, AED, etc.)
+• Earn yield on idle USDC balances via curated DeFi protocols
+
+Built by the Ping team — open source, audited, and operated by a non-profit foundation. Visit ping.cash for tech docs, audits, and roadmap.
