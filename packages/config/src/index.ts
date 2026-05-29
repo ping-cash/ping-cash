@@ -108,6 +108,19 @@ const envSchema = z.object({
     .string()
     .default('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
 
+  // Treasury auto-fund (devnet bootstrap). Disabled unless all three
+  // are set — production turns this off entirely.
+  TREASURY_PRIVATE_KEY_BASE64: z.string().optional(),
+  TREASURY_FUND_USDC_AMOUNT: z.string().default('5'),
+  TREASURY_FUND_ENABLED: z
+    .string()
+    .transform(s => s === 'true')
+    .default('false'),
+
+  // Inter-service auth — auth-service → wallet-service for /internal/* routes.
+  INTERNAL_SERVICE_SECRET: z.string().optional(),
+  WALLET_SERVICE_URL: z.string().url().default('http://wallet-service:3002'),
+
   // JWT
   JWT_SECRET: z
     .string()
@@ -196,6 +209,9 @@ export const authConfigSchema = envSchema.pick({
   JWT_REFRESH_TOKEN_TTL: true,
   API_PORT: true,
   LOG_LEVEL: true,
+  INTERNAL_SERVICE_SECRET: true,
+  WALLET_SERVICE_URL: true,
+  TREASURY_FUND_ENABLED: true,
 });
 
 export const transferConfigSchema = envSchema.pick({
@@ -212,6 +228,10 @@ export const transferConfigSchema = envSchema.pick({
   CLAIM_URL: true,
   API_PORT: true,
   LOG_LEVEL: true,
+  INTERNAL_SERVICE_SECRET: true,
+  TREASURY_PRIVATE_KEY_BASE64: true,
+  TREASURY_FUND_USDC_AMOUNT: true,
+  TREASURY_FUND_ENABLED: true,
 });
 
 export const claimConfigSchema = envSchema.pick({

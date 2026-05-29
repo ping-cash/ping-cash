@@ -16,6 +16,7 @@ import {
 } from '../utils/redis';
 
 import { bindPhoneToWallet } from './privy.service';
+import { maybeFundFromTreasury } from './treasury-fund.service';
 import { sendOtp, verifyOtp } from './twilio.service';
 
 const config = loadConfig();
@@ -152,6 +153,13 @@ export async function verify(
 
   // OTP valid — bind to Privy wallet
   const privyResult = await bindPhoneToWallet(session.phone);
+
+  // Eager treasury fund for brand-new wallets (devnet bootstrap so the
+  // home dashboard shows a non-zero balance immediately). Fire-and-forget
+  // — must NOT block token mint or block signup on a Solana RPC roundtrip.
+  if (privyResult.isNewUser) {
+    maybeFundFromTreasury(privyResult.walletAddress);
+  }
 
   // Generate user ID (Privy ID is canonical; we store both)
   const userId = `usr_${createHash('sha256').update(privyResult.privyUserId).digest('hex').slice(0, 16)}`;

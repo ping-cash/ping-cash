@@ -1,17 +1,53 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 
+import { loadConfig } from '@ping/config';
+
 import { buildSendIntent } from '../services/send.service';
 import {
   getBalanceSnapshot,
   isValidSolanaAddress,
 } from '../services/solana.service';
 import {
+  fundNewWallet,
+  getTreasuryAddress,
+} from '../services/treasury.service';
+import {
   buildStakeIntent,
   buildUnstakeIntent,
   getVaultPosition,
 } from '../services/vault.service';
 import { WalletErrors } from '../utils/errors';
+
+const config = loadConfig();
+
+const FundNewWalletBody = z.object({
+  recipientAddress: z.string().min(32).max(44),
+});
+
+function requireInternalSecret(
+  request: FastifyRequest,
+  reply: FastifyReply
+): boolean {
+  const expected = config.INTERNAL_SERVICE_SECRET;
+  if (!expected) {
+    void reply.status(503).send({
+      error: {
+        code: 'INTERNAL_AUTH_NOT_CONFIGURED',
+        message: 'INTERNAL_SERVICE_SECRET not set on wallet-service',
+      },
+    });
+    return false;
+  }
+  const header = request.headers['x-internal-secret'];
+  if (header !== expected) {
+    void reply.status(401).send({
+      error: { code: 'UNAUTHORIZED', message: 'Invalid internal secret' },
+    });
+    return false;
+  }
+  return true;
+}
 
 const StakeIntentBody = z.object({
   amountUsdc: z.string().regex(/^\d+(\.\d{1,6})?$/),
@@ -185,6 +221,37 @@ export async function walletRoutes(fastify: FastifyInstance) {
       return reply
         .status(200)
         .send({ valid: isValidSolanaAddress(address), address });
+    }
+  );
+
+  // POST /wallet/internal/fund-new-wallet — server-to-server.
+  // Auth-service fires this when a fresh wallet is bound during signup.
+  // Guarded by x-internal-secret header (shared INTERNAL_SERVICE_SECRET).
+  fastify.post(
+    '/internal/fund-new-wallet',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      if (!requireInternalSecret(request, reply)) return;
+      const parsed = FundNewWalletBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          error: { code: 'VALIDATION_ERROR', message: parsed.error.message },
+        });
+      }
+      const result = await fundNewWallet(parsed.data.recipientAddress);
+      return reply.status(200).send(result);
+    }
+  );
+
+  // GET /wallet/internal/treasury — diagnostics: pubkey + whether enabled.
+  fastify.get(
+    '/internal/treasury',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      if (!requireInternalSecret(request, reply)) return;
+      return reply.status(200).send({
+        enabled: config.TREASURY_FUND_ENABLED,
+        amountUsdc: config.TREASURY_FUND_USDC_AMOUNT,
+        treasuryAddress: getTreasuryAddress(),
+      });
     }
   );
 }
