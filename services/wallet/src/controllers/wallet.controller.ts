@@ -81,7 +81,7 @@ const SwapQuoteQuery = z.object({
 async function requireAuth(
   request: FastifyRequest,
   reply: FastifyReply
-): Promise<{ sub: string; wallet?: string }> {
+): Promise<{ sub: string; wallet?: string; isTest?: boolean }> {
   const authHeader = request.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     void reply.status(401).send({
@@ -92,14 +92,25 @@ async function requireAuth(
   const token = authHeader.slice(7);
   const payload = (
     request.server as {
-      jwt: { verify: (t: string) => { sub: string; wallet?: string } };
+      jwt: {
+        verify: (t: string) => {
+          sub: string;
+          wallet?: string;
+          isTest?: boolean;
+        };
+      };
     }
   ).jwt.verify(token);
   return payload;
 }
 
 export async function walletRoutes(fastify: FastifyInstance) {
-  // GET /wallet/balance — snapshot of USDC + vUSDC + $PING balances
+  // GET /wallet/balance — snapshot of USDC + vUSDC + $PING balances.
+  // For test-phone JWTs (+447700900 Ofcom range, OTP_TEST_PHONES) we
+  // return a synthetic $5 USDC so the corridor demo's send-flow stage 3
+  // works regardless of the public devnet faucet's universal rate-limit.
+  // Symmetric with auth-service's bypassing Privy/Twilio for the same
+  // range. Per #74 + memory [[feedback_test_phone_bypass_pattern]].
   fastify.get(
     '/balance',
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -112,6 +123,15 @@ export async function walletRoutes(fastify: FastifyInstance) {
             code: 'VALIDATION_ERROR',
             message: 'No wallet address available',
           },
+        });
+      }
+      if (auth.isTest) {
+        return reply.status(200).send({
+          walletAddress,
+          USDC: '5.00',
+          vUSDC: '0',
+          PING: '0',
+          totalUsdValue: '5.00',
         });
       }
       const snapshot = await getBalanceSnapshot(walletAddress);

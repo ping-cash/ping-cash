@@ -176,13 +176,18 @@ export async function verify(
   // Generate user ID (Privy ID is canonical; we store both)
   const userId = `usr_${createHash('sha256').update(privyResult.privyUserId).digest('hex').slice(0, 16)}`;
 
-  // Mint access + refresh tokens
+  // Mint access + refresh tokens. `isTest` flags the +447700900 Ofcom
+  // drama range (per OTP_TEST_PHONES) so downstream services can apply
+  // symmetric bypass — e.g. wallet-service surfaces synthetic $5 USDC
+  // for the corridor demo without depending on the public devnet faucet
+  // which is universally rate-limited (#74).
   const jti = randomBytes(16).toString('hex');
   const accessToken = app.jwt.sign({
     sub: userId,
     phone: session.phoneHash,
     privyId: privyResult.privyUserId,
     wallet: privyResult.walletAddress,
+    isTest: isTestPhone(session.phone),
   });
 
   const refreshToken = app.jwt.sign(
