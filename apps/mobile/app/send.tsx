@@ -15,7 +15,7 @@ import {
   Linking,
   TextInput,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,7 +28,15 @@ import { Heading } from '../components/ui/Heading';
 
 export default function SendScreen() {
   const router = useRouter();
-  const [phone, setPhone] = useState('+');
+  // Accept a prefilled recipient via ?to=<phone> — used by the receive
+  // QR round-trip + future deep links like ping.cash/send?to=+44…
+  const params = useLocalSearchParams<{ to?: string }>();
+  const initialPhone = params.to
+    ? params.to.startsWith('+')
+      ? params.to
+      : `+${params.to}`
+    : '+';
+  const [phone, setPhone] = useState(initialPhone);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
