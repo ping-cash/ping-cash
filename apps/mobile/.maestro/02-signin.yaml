@@ -6,17 +6,16 @@ appId: cash.ping.app
     timeout: 8000
 - takeScreenshot: 02-signup
 # Hard-target the phone input now that it has a testID. The input
-# default value is '+' (signup.tsx useState('+')), so we only need
-# to type the digits — Maestro's iOS phone-pad keyboard can't type
-# the literal '+' so we let the React state default it for us.
+# default value is the user's IDD prefix from expo-localization (or
+# '+' fallback), so we only need to type the digits — Maestro's iOS
+# phone-pad keyboard can't type the literal '+'.
 - tapOn:
     id: 'phone-input'
 - inputText: '447700900789'
-# Dismiss the keyboard before tapping the action button — the keyboard
-# may cover "Send verification code" on smaller sim heights. The signup
-# layout was also refactored to ScrollView so the input stays visible
-# above the keyboard and the Send button stays sticky at bottom.
-- hideKeyboard
+# Tap the Send button by testID. signup.tsx is now wrapped in
+# ScrollView with sticky-bottom actions — the keyboard no longer
+# covers the button, so we don't need hideKeyboard (which is brittle
+# on iOS sims that don't expose a standard dismiss action).
 - tapOn:
     id: 'btn-Send verification code'
 - extendedWaitUntil:
@@ -25,9 +24,7 @@ appId: cash.ping.app
 - takeScreenshot: 03-verify
 # OTP test code: OTP_TEST_PHONES bypass accepts 123456 for
 # +447700900* numbers (per auth.service.ts isTestPhone bypass).
-# Same keyboard concern on the OTP screen.
 - inputText: '123456'
-- hideKeyboard
 # Auto-submit handler triggers when the 6th digit lands
 # (8dcf14b 3-tap onboarding fix), so we just need to wait for the
 # dashboard. The button tap is also a safe no-op if auto-submit
