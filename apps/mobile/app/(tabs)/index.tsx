@@ -70,7 +70,11 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const firstName = user?.phone?.slice(-4) ?? 'there';
+  // Prefer the display name if the user set one; fall back to a
+  // masked phone tail so brand-new accounts still get a friendly
+  // greeting on the dashboard.
+  const greetingName =
+    user?.name?.split(/\s+/)[0] ?? user?.phone?.slice(-4) ?? 'there';
   const [dollars, cents] = balanceUsd.split('.');
 
   return (
@@ -95,7 +99,7 @@ export default function HomeScreen() {
                 {greeting()}
               </Heading>
               <Heading variant="h2" style={{ marginTop: 2 }} numberOfLines={1}>
-                ····{firstName}
+                {user?.name ? greetingName : `····${greetingName}`}
               </Heading>
             </View>
             <Pressable
