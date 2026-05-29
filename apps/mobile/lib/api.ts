@@ -38,7 +38,12 @@ function getBaseUrl(): string {
     return 'http://localhost:3001';
   }
 
-  // Production URL
+  // Production URL — wired via openova-private Ingress
+  // (ping.openova.io / app.ping.cash / api.ping.cash share LE cert SAN
+  // via cert-manager). Before 2026-05-29, api.ping.cash had no Ingress
+  // rule, so iOS TestFlight builds saw Traefik's default self-signed
+  // cert and the /auth/verify TLS handshake failed silently — blocking
+  // the Maestro 'Good' assertion on every iOS build.
   return 'https://api.ping.cash';
 }
 
