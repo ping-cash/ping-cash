@@ -15,23 +15,19 @@ appId: cash.ping.app
 - takeScreenshot: 04-home
 - assertVisible:
     id: 'btn-Add money'
-# Quick tab walk — each must render without crash. Use the tab-bar
-# accessibility labels which expo-router sets from the screen title.
-- tapOn: 'Activity'
-- extendedWaitUntil:
-    visible:
-      text: '(Activity|Recent|No transfers|No activity)'
-      enabled: true
-    timeout: 8000
+# Quick tab walk — each must render without crash. Use the testID
+# pattern set by expo-router via tabBarTestID (see (tabs)/_layout.tsx).
+# Text-find on the iOS AX tree was unreliable for tab buttons even
+# with the title prop set (Build 97bf545 failure: "Element not found:
+# Text matching regex: Activity").
+- tapOn:
+    id: 'tab-Activity'
 - takeScreenshot: 05-history
-- tapOn: 'Earn'
-- extendedWaitUntil:
-    visible: 'APY'
-    timeout: 8000
+- tapOn:
+    id: 'tab-Earn'
 - takeScreenshot: 06-vault
-- tapOn: 'Profile'
-- extendedWaitUntil:
-    visible: 'Sign out'
-    timeout: 8000
+- tapOn:
+    id: 'tab-Profile'
 - takeScreenshot: 07-profile
-- tapOn: 'Home'
+- tapOn:
+    id: 'tab-Home'

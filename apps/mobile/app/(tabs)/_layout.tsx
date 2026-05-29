@@ -55,6 +55,7 @@ export default function TabLayout() {
           title: 'Home',
           headerShown: false,
           tabBarIcon: tabIcon('home-outline', 'home'),
+          tabBarButtonTestID: 'tab-Home',
         }}
       />
       <Tabs.Screen
@@ -62,6 +63,7 @@ export default function TabLayout() {
         options={{
           title: 'Activity',
           tabBarIcon: tabIcon('time-outline', 'time'),
+          tabBarButtonTestID: 'tab-Activity',
         }}
       />
       <Tabs.Screen
@@ -69,6 +71,7 @@ export default function TabLayout() {
         options={{
           title: 'Earn',
           tabBarIcon: tabIcon('flash-outline', 'flash'),
+          tabBarButtonTestID: 'tab-Earn',
         }}
       />
       <Tabs.Screen
@@ -76,6 +79,7 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: tabIcon('person-outline', 'person'),
+          tabBarButtonTestID: 'tab-Profile',
         }}
       />
     </Tabs>
