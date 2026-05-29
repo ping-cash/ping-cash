@@ -1,0 +1,11 @@
+Ping is a P2P remittance app. To test:
+
+1. Tap "Create account" on the splash screen
+2. Enter +447700900789 as phone (any +44770090xxx works for review — UK Ofcom drama range bypasses real SMS via OTP_TEST_PHONES)
+3. Tap "Send verification code"
+4. Enter OTP 123456 in the OTP screen
+5. Home tab loads with $5 USDC demo balance + 4 quick actions
+
+The corridor demo flow (Send → claim link → recipient cash-out) is documented at https://ping.cash/help. Real recipient claim happens via web link (no app install required for the recipient), routing to GCash/Maya/UPI/M-Pesa/JazzCash via TransFi sandbox.
+
+The app is fully non-custodial: wallets are MPC-managed via Privy (2-of-3 threshold: device shard + Privy shard + recovery shard), so no operator including Ping ever holds user funds unilaterally. See privacy policy at https://ping.cash/privacy.

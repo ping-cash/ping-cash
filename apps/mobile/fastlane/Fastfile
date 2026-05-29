@@ -30,24 +30,18 @@ platform :ios do
 
   desc "Create the App Store Connect app record if it doesn't exist yet (idempotent)"
   lane :produce_app do
+    # produce only takes the app-creation fields; review_information +
+    # demo account live in metadata/review_information/ pushed by the
+    # metadata lane via deliver.
     produce(
       app_identifier: "cash.ping.app",
       app_name: "Ping Cash",
       language: "en-US",
       app_version: "1.0",
       sku: "cash.ping.app.1",
-      platform: "ios",                  # lowercase singular per fastlane 2.235
+      platform: "ios",
       itc_team_id: ENV["ITC_TEAM_ID"],
       team_id: ENV["APPLE_TEAM_ID"],
-      app_review_information: {
-        first_name: "Emrah",
-        last_name: "Baysal",
-        phone_number: "+447700900789",
-        email_address: "dev@ping.cash",
-        demo_user: "+447700900789",
-        demo_password: "OTP code: 123456 (auto-bypass on +44770090 range)",
-        notes: "Ping is a P2P remittance app. To test: tap Create account, enter +447700900789 (any +44770090xxx works for review), then OTP 123456. Home shows $5 USDC demo balance.",
-      },
     )
   end
 
