@@ -18,24 +18,16 @@ idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 # L-01 ADR 0018 guard (mirrors ping-token): mainnet-ready requires audit-passed
 mainnet-ready = []
 audit-passed = []
-# Devnet builds default to OFF — read_pyth_ping_per_usdc_x64 returns a
-# fixed mock price (1 PING = $0.10) so the program compiles + deploys
-# without the pyth-sdk-solana ↔ anchor-lang 0.30.1 AccountInfo type
-# split blocking devnet validation. Mainnet build adds `pyth-real` to
-# wire the real Pyth integration (with confidence + staleness checks).
-pyth-real = ["dep:pyth-sdk-solana"]
+# #71: pyth-real feature gate REMOVED. anchor 0.31.1 + solana-program
+# 2.x align with pyth-solana-receiver-sdk 1.0.1 (receiver-pattern, post-
+# pull-oracle Pyth SDK) — real Pyth on every build, no cfg-gate.
 
 [dependencies]
-anchor-lang = "0.30.1"
-anchor-spl = { version = "0.30.1", features = ["token_2022"] }
-# Pin solana-program to 1.18.17. solana-program 2.x split AccountInfo
-# into a separate `solana-account-info` crate, which conflicts with
-# pyth-sdk-solana's expected AccountInfo type. Pinning the old single-
-# crate version keeps the Pyth integration's type signatures unified.
-solana-program = "=1.18.17"
-# Per #62 rebuild scope (ADR 0009 H-04): Pyth price-feed verification.
-# OPTIONAL — only pulled in when `pyth-real` feature is set (mainnet
-# build). Devnet defaults to mock price to avoid the anchor-lang 0.30.1
-# ↔ pyth-sdk-solana solana-program 1.x/2.x AccountInfo type split.
-pyth-sdk-solana = { version = "=0.10.6", optional = true }
+anchor-lang = "0.31.1"
+anchor-spl = { version = "0.31.1", features = ["token_2022"] }
+solana-program = "~2.1"
+# #71 + #62 H-04: Pyth price-feed via the receiver SDK. anchor-lang
+# 0.31.1 + pyth-solana-receiver-sdk 1.0.1 share the same solana-program
+# 2.x AccountInfo type, so no cfg-gate or type bridge needed.
+pyth-solana-receiver-sdk = "=1.0.1"
 

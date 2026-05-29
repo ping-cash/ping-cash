@@ -2,8 +2,18 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
-#[cfg(feature = "pyth-real")]
-use pyth_sdk_solana::state::SolanaPriceAccount;
+// #71: receiver-sdk replaces pyth-sdk-solana — solana-program 2.x
+// compat unifies AccountInfo so no cfg-gate. Real Pyth on every build.
+use pyth_solana_receiver_sdk::price_update::{
+    get_feed_id_from_hex, PriceUpdateV2,
+};
+
+// Pyth USDC/USD price feed id — used as PING/USDC proxy until
+// $PING TGE + Pyth listing happens. Per ADR 0009 audit gate: the real
+// PING/USDC feed id replaces this constant when the Pyth Foundation
+// accepts the PING listing post-TGE.
+const PYTH_FEED_ID_USDC_USD: &str =
+    "eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a";
 
 // ============================================================================
 // ⚠️  DO NOT DEPLOY THIS PROGRAM TO MAINNET — per ADR 0018 + #22 EPIC gates.
@@ -124,7 +134,7 @@ pub mod internal_swap {
             .checked_div(amount_out as u128)
             .ok_or(SwapError::MathOverflow)?;
         let oracle_usdc_per_ping_x64 = read_pyth_ping_per_usdc_x64(
-            &ctx.accounts.pyth_price_account,
+            &ctx.accounts.pyth_price_update,
             &Clock::get()?,
         )?;
         assert_amm_within_oracle_band(amm_usdc_per_ping_x64, oracle_usdc_per_ping_x64)?;
@@ -201,7 +211,7 @@ pub mod internal_swap {
             .checked_div(amount_in as u128)
             .ok_or(SwapError::MathOverflow)?;
         let oracle_usdc_per_ping_x64 = read_pyth_ping_per_usdc_x64(
-            &ctx.accounts.pyth_price_account,
+            &ctx.accounts.pyth_price_update,
             &Clock::get()?,
         )?;
         assert_amm_within_oracle_band(amm_usdc_per_ping_x64, oracle_usdc_per_ping_x64)?;
@@ -466,57 +476,42 @@ pub const MAX_PYTH_STALENESS_SEC: i64 = 60;
 pub const MAX_PYTH_CONF_BPS: u64 = 100; // 100 bps = 1%
 
 fn read_pyth_ping_per_usdc_x64(
-    _price_account: &AccountInfo,
-    _clock: &Clock,
+    price_update: &Account<PriceUpdateV2>,
+    clock: &Clock,
 ) -> Result<u128> {
-    // DEVNET (default) — return mock $0.10/PING as Q64.64 so the program
-    // compiles + deploys without pyth-sdk-solana. Devnet doesn't need a
-    // real oracle to validate the swap path; the band-check assertion
-    // still runs against this mock price.
-    #[cfg(not(feature = "pyth-real"))]
-    {
-        // 0.10 × 2^64 = (1 << 64) / 10
-        return Ok((1u128 << 64) / 10);
-    }
-
-    // MAINNET — real Pyth integration. Gated on `pyth-real` feature,
-    // which in turn requires resolving the anchor-lang 0.30.1 ↔
-    // pyth-sdk-solana 0.10.x AccountInfo type split (anchor 0.31
-    // migration OR custom fork via [patch.crates-io]). Audit-readiness
-    // checks below (confidence interval, staleness) preserved verbatim
-    // from the pre-stub source so the OtterSec engagement reviews the
-    // same code that will deploy to mainnet.
-    #[cfg(feature = "pyth-real")]
-    {
-        let price_feed = SolanaPriceAccount::account_info_to_feed(_price_account)
-            .map_err(|_| error!(SwapError::OracleAccountInvalid))?;
-        let price = price_feed
-            .get_price_no_older_than(_clock.unix_timestamp, MAX_PYTH_STALENESS_SEC as u64)
-            .ok_or(error!(SwapError::OracleStaleOrInvalid))?;
-        require!(price.price > 0, SwapError::OracleStaleOrInvalid);
-        let abs_price = price.price as u64;
-        let conf_bps = (price.conf as u128)
-            .checked_mul(10_000)
-            .ok_or(SwapError::MathOverflow)?
-            .checked_div(abs_price as u128)
-            .ok_or(SwapError::MathOverflow)?;
-        require!(
-            conf_bps <= MAX_PYTH_CONF_BPS as u128,
-            SwapError::OracleConfidenceTooWide
-        );
-        // Convert Pyth's i64 + expo into a Q64.64 fixed-point.
-        let mantissa = price.price as u128;
-        let q64_64_one: u128 = 1u128 << 64;
-        let abs_expo = price.expo.unsigned_abs() as u32;
-        let scale = 10u128
-            .checked_pow(abs_expo)
-            .ok_or(SwapError::MathOverflow)?;
-        mantissa
-            .checked_mul(q64_64_one)
-            .ok_or(SwapError::MathOverflow)?
-            .checked_div(scale)
-            .ok_or(SwapError::MathOverflow.into())
-    }
+    // #71: receiver-sdk pattern. The client pushes a Pyth update onto
+    // the chain via pyth-solana-receiver; this code reads the on-chain
+    // PriceUpdateV2 account. Audit-readiness checks (confidence
+    // interval + staleness) preserved verbatim from the pre-migration
+    // source so the OtterSec engagement reviews the same logic.
+    let feed_id = get_feed_id_from_hex(PYTH_FEED_ID_USDC_USD)
+        .map_err(|_| error!(SwapError::OracleAccountInvalid))?;
+    let price = price_update
+        .get_price_no_older_than(clock, MAX_PYTH_STALENESS_SEC as u64, &feed_id)
+        .map_err(|_| error!(SwapError::OracleStaleOrInvalid))?;
+    require!(price.price > 0, SwapError::OracleStaleOrInvalid);
+    let abs_price = price.price as u64;
+    let conf_bps = (price.conf as u128)
+        .checked_mul(10_000)
+        .ok_or(SwapError::MathOverflow)?
+        .checked_div(abs_price as u128)
+        .ok_or(SwapError::MathOverflow)?;
+    require!(
+        conf_bps <= MAX_PYTH_CONF_BPS as u128,
+        SwapError::OracleConfidenceTooWide
+    );
+    // Convert Pyth's i64 + exponent into Q64.64 fixed-point.
+    let mantissa = price.price as u128;
+    let q64_64_one: u128 = 1u128 << 64;
+    let abs_expo = price.exponent.unsigned_abs() as u32;
+    let scale = 10u128
+        .checked_pow(abs_expo)
+        .ok_or(SwapError::MathOverflow)?;
+    mantissa
+        .checked_mul(q64_64_one)
+        .ok_or(SwapError::MathOverflow)?
+        .checked_div(scale)
+        .ok_or(SwapError::MathOverflow.into())
 }
 
 fn quote_ping_to_usdc(
@@ -698,15 +693,14 @@ pub struct SwapUsdcForPing<'info> {
     /// Pool's $PING reserve. Source of swap output.
     #[account(mut, address = pool.ping_vault)]
     pub ping_vault: InterfaceAccount<'info, TokenAccount>,
-    /// H-04 fix (#62 c.4527806799): Pyth price account for $PING/USDC.
+    /// H-04 fix (#62 c.4527806799): Pyth PriceUpdateV2 for $PING/USDC
+    /// (USDC/USD proxy until $PING TGE + Pyth listing per ADR 0009).
     /// Read via read_pyth_ping_per_usdc_x64 + checked against AMM-derived
     /// price via assert_amm_within_oracle_band (MAX_ORACLE_DEVIATION_BPS=300).
-    /// CHECK: validated inside the helper via SolanaPriceAccount::account_info_to_feed
-    /// (which verifies owner == pyth-oracle program + magic bytes).
-    /// Note: read-only AccountInfo (no #[account] constraints) so devnet
-    /// can swap in a Pyth mock fixture.
-    /// CHECK: see read_pyth_ping_per_usdc_x64 implementation
-    pub pyth_price_account: AccountInfo<'info>,
+    /// Anchor constraint-validated as a `PriceUpdateV2` account via the
+    /// receiver-sdk derive — the SDK enforces account-owner ==
+    /// pyth-solana-receiver program id automatically.
+    pub pyth_price_update: Account<'info, PriceUpdateV2>,
     pub token_program: Interface<'info, TokenInterface>,
 }
 
@@ -761,9 +755,8 @@ pub struct SwapPingForUsdc<'info> {
     /// Pool's USDC reserve (source of swap output).
     #[account(mut, address = pool.usdc_vault)]
     pub usdc_vault: InterfaceAccount<'info, TokenAccount>,
-    /// H-04 Pyth price account — same shape as SwapUsdcForPing.
-    /// CHECK: validated inside read_pyth_ping_per_usdc_x64 helper.
-    pub pyth_price_account: AccountInfo<'info>,
+    /// H-04 Pyth PriceUpdateV2 — same shape as SwapUsdcForPing.
+    pub pyth_price_update: Account<'info, PriceUpdateV2>,
     pub token_program: Interface<'info, TokenInterface>,
 }
 
@@ -923,7 +916,7 @@ pub enum SwapError {
     WrongAuthority,
     #[msg("AMM price deviates from Pyth oracle beyond MAX_ORACLE_DEVIATION_BPS — sandwich/manipulation defense")]
     PriceDeviatesFromOracle,
-    #[msg("Pyth price account could not be parsed as a SolanaPriceAccount")]
+    #[msg("Pyth price update account could not be parsed as PriceUpdateV2")]
     OracleAccountInvalid,
     #[msg("Pyth price is stale (>MAX_PYTH_STALENESS_SEC since last update) or non-positive")]
     OracleStaleOrInvalid,

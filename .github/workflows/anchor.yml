@@ -24,30 +24,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust 1.85.0 (edition2024 stabilized — needed for digest 0.11/block-buffer 0.12)
+      - name: Install Rust 1.89.0 (needed by darling 0.23 / serde_with 3.20 pulled in by solana 2.1.x via anchor 0.31.x — #71)
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.85.0
+          toolchain: 1.89.0
           components: rustfmt, clippy
 
-      - name: Install Solana CLI
+      - name: Install Solana CLI (2.1.21 — matches anchor-spl 0.31.1's spl-associated-token-account ^6 needing solana-program ^2.1)
         run: |
-          sh -c "$(curl -sSfL https://release.anza.xyz/v1.18.17/install)"
+          sh -c "$(curl -sSfL https://release.anza.xyz/v2.1.21/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
-      - name: Install Anchor
+      - name: Install Anchor (0.31.1 — #71 toolchain bump)
         run: |
-          # avm from crates.io is anchor-installer; pinning to 0.30.1 keeps
-          # cargo + edition2021 compatible. cargo install --git from HEAD
-          # pulls anchor master which now requires edition2024 (Rust 1.85+).
-          cargo install --locked --version 0.30.1 anchor-cli
-          # avm itself comes from crates.io
-          cargo install --locked --version 0.30.1 avm || true
-          # Ensure 0.30.1 is active if avm got installed
-          if command -v avm >/dev/null 2>&1; then
-            avm install 0.30.1
-            avm use 0.30.1
-          fi
+          # anchor-cli 0.31.x uses solana-program 2.x so the AccountInfo
+          # type unifies with pyth-solana-receiver-sdk 1.0.1 — removes
+          # the cfg-gated pyth-real feature flag entirely. avm at 0.31.1
+          # doesn't exist on crates.io; install anchor-cli directly.
+          cargo install --locked --version 0.31.1 anchor-cli
           anchor --version
 
       - name: Install Node deps
