@@ -194,6 +194,12 @@ class ApiClient {
     });
   }
 
+  async deletePushToken(userId: string): Promise<{ cleared: boolean }> {
+    return this.request(`/notify/push/register/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Swap quote (#89) — Pyth Hermes USD price anchor + Jupiter v6 route.
   // Stub fallback when external APIs are unreachable; isLive flag tells
   // the UI whether to mark the rate "indicative".

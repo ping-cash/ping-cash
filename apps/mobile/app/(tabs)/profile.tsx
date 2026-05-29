@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { api } from '../../lib/api';
 import { authStore } from '../../lib/auth-store';
 import { colors, radii, spacing, typography, shadows } from '../../lib/theme';
 import { Heading } from '../../components/ui/Heading';
@@ -32,6 +33,15 @@ export default function ProfileScreen() {
           text: 'Sign out',
           style: 'destructive',
           onPress: async () => {
+            // Clear the push token registration on the backend so the
+            // next user signing in here gets a fresh subscription
+            // (#81 — avoid notifying the wrong device).
+            const userId = user?.id;
+            if (userId) {
+              try {
+                await api.deletePushToken(userId);
+              } catch {}
+            }
             await authStore.clear();
             router.replace('/');
           },
