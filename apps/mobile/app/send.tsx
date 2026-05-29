@@ -2,7 +2,7 @@
  * Send money screen — jumbo amount entry → share screen with WhatsApp deep
  * link and OS share-sheet. Confetti + haptic success on transfer creation.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Pressable,
@@ -42,6 +42,53 @@ export default function SendScreen() {
   const [loading, setLoading] = useState(false);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
   const [recipientName, setRecipientName] = useState<string | null>(null);
+  const [localPreview, setLocalPreview] = useState<{
+    rate: string;
+    currency: string;
+  } | null>(null);
+
+  // Recipient local currency inferred from E.164 prefix. Mirrors the
+  // claim-service mapping so the preview here matches what the
+  // recipient will actually see post-cashout.
+  const localCurrency = (() => {
+    if (phone.startsWith('+63')) return 'PHP';
+    if (phone.startsWith('+91')) return 'INR';
+    if (phone.startsWith('+92')) return 'PKR';
+    if (phone.startsWith('+880')) return 'BDT';
+    if (phone.startsWith('+254')) return 'KES';
+    if (phone.startsWith('+234')) return 'NGN';
+    if (phone.startsWith('+90')) return 'TRY';
+    if (phone.startsWith('+971')) return 'AED';
+    if (phone.startsWith('+966')) return 'SAR';
+    if (phone.startsWith('+62')) return 'IDR';
+    return null;
+  })();
+
+  // Debounced FX fetch so the user sees a live "≈ X PHP" preview
+  // as they type. Cancels in-flight requests on each keystroke.
+  useEffect(() => {
+    if (!localCurrency || !amount || parseFloat(amount) <= 0) {
+      setLocalPreview(null);
+      return;
+    }
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      api
+        .getRate('USD', localCurrency)
+        .then(r => {
+          if (cancelled) return;
+          const conv = (parseFloat(amount) * parseFloat(r.rate)).toFixed(2);
+          setLocalPreview({ rate: conv, currency: localCurrency });
+        })
+        .catch(() => {
+          if (!cancelled) setLocalPreview(null);
+        });
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [amount, localCurrency]);
 
   const handlePickContact = async () => {
     try {
@@ -270,6 +317,16 @@ export default function SendScreen() {
                   autoFocus
                 />
               </View>
+              {localPreview ? (
+                <Heading
+                  variant="bodyStrong"
+                  color="brand"
+                  align="center"
+                  style={{ marginTop: 6 }}
+                >
+                  ≈ {localPreview.rate} {localPreview.currency}
+                </Heading>
+              ) : null}
               <View style={styles.feePill}>
                 <View style={styles.dot} />
                 <Heading variant="caption" color="secondary">
