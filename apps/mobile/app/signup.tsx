@@ -117,7 +117,6 @@ export default function SignupScreen() {
               onPress={handleSubmit}
               loading={loading}
               iconRight="arrow-forward"
-              testID="btn-Send verification code"
             />
             <Heading
               variant="caption"

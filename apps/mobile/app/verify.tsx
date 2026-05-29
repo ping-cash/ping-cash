@@ -190,7 +190,6 @@ export default function VerifyScreen() {
               loading={loading}
               disabled={code.length !== 6}
               iconRight="arrow-forward"
-              testID="btn-Verify and continue"
             />
           </View>
         </KeyboardAvoidingView>
