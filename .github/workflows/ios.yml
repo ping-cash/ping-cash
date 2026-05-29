@@ -162,10 +162,16 @@ jobs:
           for c in certs:
               a = c.get('attributes', {})
               print(f"  - id={c['id']} type={a.get('certificateType')} expires={a.get('expirationDate')}")
-          if len(certs) >= 2:
-              certs.sort(key=lambda c: c['attributes'].get('expirationDate') or '')
-              victim = certs[0]
-              print(f'revoking oldest: {victim["id"]}')
+          # Always revoke ALL existing distribution certs before this build.
+          # fastlane cert reuses any cert it finds — if Apple has marked a
+          # cert as Revoked server-side, fastlane still "finds" it, signs
+          # the IPA with the local p12, and altool then rejects the upload
+          # with -19241 Certificate Revoked. Cycling certs every run is the
+          # only way to guarantee xcodebuild signs with a valid cert. The
+          # team distribution-cert cap is 2; we revoke up to 2 then create
+          # 1 fresh, staying within budget.
+          for victim in certs:
+              print(f'revoking {victim["id"]}')
               dreq = urllib.request.Request(
                   f'https://api.appstoreconnect.apple.com/v1/certificates/{victim["id"]}',
                   headers=hdrs, method='DELETE')
