@@ -10,6 +10,7 @@ import {
   ScrollView,
   Alert,
   Share,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,6 +51,17 @@ export default function TransferDetailScreen() {
       message: `Money on Ping for you: ${transfer.claimUrl}`,
       url: transfer.claimUrl,
     });
+  };
+
+  const shareViaWhatsApp = async () => {
+    if (!transfer?.claimUrl) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const phoneDigits = transfer.recipientPhone.replace(/[^\d]/g, '');
+    const message = `I sent you $${transfer.amount} on Ping. Claim it here: ${transfer.claimUrl}`;
+    const url = `whatsapp://send?phone=${phoneDigits}&text=${encodeURIComponent(message)}`;
+    const fallback = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
+    const canOpen = await Linking.canOpenURL(url);
+    Linking.openURL(canOpen ? url : fallback);
   };
 
   const cancelTransfer = async () => {
@@ -167,9 +179,16 @@ export default function TransferDetailScreen() {
           ) : null}
 
           {isClaimable ? (
-            <View style={{ marginTop: spacing.xl }}>
+            <View style={{ marginTop: spacing.xl, gap: spacing.sm }}>
               <Button
-                label="Share claim link"
+                label="Share via WhatsApp"
+                variant="whatsapp"
+                onPress={shareViaWhatsApp}
+                icon="logo-whatsapp"
+              />
+              <Button
+                label="Share another way…"
+                variant="secondary"
                 onPress={shareClaimLink}
                 icon="share-outline"
               />
