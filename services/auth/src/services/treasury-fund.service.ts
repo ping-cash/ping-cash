@@ -14,11 +14,24 @@ import { logger } from '../utils/logger';
 const config = loadConfig();
 
 export function maybeFundFromTreasury(walletAddress: string): void {
-  if (!config.TREASURY_FUND_ENABLED) return;
-  if (!config.INTERNAL_SERVICE_SECRET) {
-    logger.warn('Treasury fund enabled but INTERNAL_SERVICE_SECRET unset');
+  if (!config.TREASURY_FUND_ENABLED) {
+    logger.info(
+      { walletAddress },
+      'Treasury fund skipped — TREASURY_FUND_ENABLED=false'
+    );
     return;
   }
+  if (!config.INTERNAL_SERVICE_SECRET) {
+    logger.warn(
+      { walletAddress },
+      'Treasury fund enabled but INTERNAL_SERVICE_SECRET unset — cannot call wallet-service'
+    );
+    return;
+  }
+  logger.info(
+    { walletAddress, walletServiceUrl: config.WALLET_SERVICE_URL },
+    'Treasury fund triggered (fire-and-forget) for new wallet'
+  );
   // Fire-and-forget — must not delay token mint.
   void fundOnce(walletAddress).catch(err => {
     logger.error(
