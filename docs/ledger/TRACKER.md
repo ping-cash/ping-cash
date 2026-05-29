@@ -16,25 +16,25 @@
 
 ## 7-Day Delivery Slate — refreshed 2026-05-29 (commits + CI status)
 
-| #   | Title                                 | ETA                                   | Status                                                                                      |
-| --- | ------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------- |
-| #65 | Twilio + corridor walk evidence       | DONE 2026-05-28                       | 🟩 PASS (artifact 1 of 2)                                                                   |
-| #74 | Devnet treasury auto-fund             | Day 1 (29 May)                        | 🟨 status/uat — code-complete + cluster verified; walk-evidence deferred to faucet recovery |
-| #77 | Mobile wallet balance + activity feed | DONE 2026-05-29 08:50Z                | 🟩 CLOSED — Build 36 Maestro landing + curl /wallet/balance + 4-eyes PASS                   |
-| #86 | UX feedback round 1                   | DONE 2026-05-29 08:50Z                | 🟩 CLOSED — Build 36 Maestro landing screenshot + 4-eyes PASS                               |
-| #75 | OFAC SDN screener service             | Day 2                                 | 🟦 backlog                                                                                  |
+| #   | Title                                 | ETA                                   | Status                                                                                       |
+| --- | ------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------- |
+| #65 | Twilio + corridor walk evidence       | DONE 2026-05-28                       | 🟩 PASS (artifact 1 of 2)                                                                    |
+| #74 | Devnet treasury auto-fund             | Day 1 (29 May)                        | 🟨 status/uat — code-complete + cluster verified; walk-evidence deferred to faucet recovery  |
+| #77 | Mobile wallet balance + activity feed | DONE 2026-05-29 08:50Z                | 🟩 CLOSED — Build 36 Maestro landing + curl /wallet/balance + 4-eyes PASS                    |
+| #86 | UX feedback round 1                   | DONE 2026-05-29 08:50Z                | 🟩 CLOSED — Build 36 Maestro landing screenshot + 4-eyes PASS                                |
+| #75 | OFAC SDN screener service             | Day 2                                 | 🟦 backlog                                                                                   |
 | #76 | Web claim flow polish                 | DONE 2026-05-29 09:30Z                | 🟩 CLOSED — 19cb7a2 polish + a814527 build.yml fix + 5d06630 6-screenshot walk + 4-eyes PASS |
-| #78 | Hourly corridor smoke cron            | DONE 2026-05-29 11:20Z                | 🟩 CLOSED — 238989c cron `0 * * * *`, hourly walks vs prior 6-hour                          |
-| #79 | Mainnet readiness audit doc           | DONE 2026-05-29 11:22Z                | 🟩 CLOSED — 87ccc39 docs/MAINNET-READINESS.md 10-section + sign-off table                   |
-| #80 | Mobile onboarding 3-tap polish        | DONE 2026-05-29 11:20Z                | 🟩 CLOSED — 8dcf14b 3→2 tap (auto-submit OTP) + 4-eyes PASS                                 |
-| #87 | $PING brand mark replace text         | DONE 2026-05-29 09:33Z                | 🟩 CLOSED — 645c7b6 PingTokenMark + 9e1e165 vault gap fix + 4-eyes PARTIAL→fix              |
-| #83 | Per-corridor demo videos (5x30s)      | Day 5-6                               | 🟦 backlog                                                                                  |
-| #84 | Backlog burn — close everything else  | Continuous                            | 🟦 backlog                                                                                  |
-| #81 | Push notifications                    | ⏸ pending founder APNS .p8            | 🟡                                                                                          |
-| #82 | MoonPay cash-in                       | ⏸ pending founder MoonPay signup      | 🟡                                                                                          |
-| #85 | App Store + Play Store submission     | ⏸ pending founder Play Console signup | 🟡                                                                                          |
-| #88 | Cashin: Apple Pay + Stripe + ACH      | Day 4-5                               | 🟦 backlog                                                                                  |
-| #89 | Swap: Pyth + Jupiter quote            | Day 6                                 | 🟦 backlog                                                                                  |
+| #78 | Hourly corridor smoke cron            | DONE 2026-05-29 11:20Z                | 🟩 CLOSED — 238989c cron `0 * * * *`, hourly walks vs prior 6-hour                           |
+| #79 | Mainnet readiness audit doc           | DONE 2026-05-29 11:22Z                | 🟩 CLOSED — 87ccc39 docs/MAINNET-READINESS.md 10-section + sign-off table                    |
+| #80 | Mobile onboarding 3-tap polish        | DONE 2026-05-29 11:20Z                | 🟩 CLOSED — 8dcf14b 3→2 tap (auto-submit OTP) + 4-eyes PASS                                  |
+| #87 | $PING brand mark replace text         | DONE 2026-05-29 09:33Z                | 🟩 CLOSED — 645c7b6 PingTokenMark + 9e1e165 vault gap fix + 4-eyes PARTIAL→fix               |
+| #83 | Per-corridor demo videos (5x30s)      | Day 5-6                               | 🟦 backlog                                                                                   |
+| #84 | Backlog burn — close everything else  | Continuous                            | 🟦 backlog                                                                                   |
+| #81 | Push notifications                    | ⏸ pending founder APNS .p8            | 🟡                                                                                           |
+| #82 | MoonPay cash-in                       | ⏸ pending founder MoonPay signup      | 🟡                                                                                           |
+| #85 | App Store + Play Store submission     | ⏸ pending founder Play Console signup | 🟡                                                                                           |
+| #88 | Cashin: Apple Pay + Stripe + ACH      | Day 4-5                               | 🟦 backlog                                                                                   |
+| #89 | Swap: Pyth + Jupiter quote            | Day 6                                 | 🟦 backlog                                                                                   |
 
 Phase-2 / mainnet issues (#15, #22-24, #50, #61, #62, #70, #71) explicitly OUT of 7-day scope per session 2026-05-28.
 

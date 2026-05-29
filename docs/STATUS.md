@@ -218,7 +218,6 @@ Per [ADR 0006](adr/0006-deployment-via-openova-sovereign.md), Ping deploys to th
 
 ---
 
-
 **Mainnet cutover gate:** see [docs/MAINNET-READINESS.md](MAINNET-READINESS.md) for the complete devnet→mainnet checklist + sign-off table.
 
 ## What's Next (autonomous build sequence)
