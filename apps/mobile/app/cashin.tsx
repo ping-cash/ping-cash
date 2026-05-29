@@ -1,9 +1,15 @@
 /**
- * Cash-in / Add Money — currently devnet-mode. Real fiat on-ramps
- * (Apple Pay, Stripe, MoonPay, ACH) are placeholders until production
- * vendor signups complete. For now, surfacing a working path:
- * show the user's wallet address + open Solana + Circle devnet
- * faucets so they can fund their own wallet for testing.
+ * Cash-in / Add Money — 4 live fiat on-ramps + devnet test funds.
+ *
+ *   - Apple Pay         (#88 via Stripe PaymentSheet, sandbox mode)
+ *   - Debit/credit card (#88 via Stripe PaymentSheet, sandbox mode)
+ *   - Crypto on-ramp    (#82 via MoonPay sandbox widget — Linking)
+ *   - Bank ACH          (#88 via Stripe ACH, sandbox mode)
+ *
+ * Each flips from sandbox to production when the corresponding
+ * EXPO_PUBLIC_* publishable key + ConfigMap secret lands. The
+ * devnet faucet card stays for testing — Solana + Circle USDC
+ * sandboxes let users self-fund before the real rails go live.
  */
 import {
   View,
