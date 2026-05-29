@@ -12,6 +12,9 @@ appId: cash.ping.app
 - tapOn:
     id: 'phone-input'
 - inputText: '447700900789'
+# Dismiss the keyboard before tapping the action button — the keyboard
+# may cover "Send verification code" on smaller sim heights.
+- hideKeyboard
 - tapOn:
     text: 'Send verification code'
 - extendedWaitUntil:
@@ -20,7 +23,9 @@ appId: cash.ping.app
 - takeScreenshot: 03-verify
 # OTP test code: OTP_TEST_PHONES bypass accepts 123456 for
 # +447700900* numbers (per auth.service.ts isTestPhone bypass).
+# Same keyboard concern on the OTP screen.
 - inputText: '123456'
+- hideKeyboard
 # Auto-submit handler triggers when the 6th digit lands
 # (8dcf14b 3-tap onboarding fix), so we just need to wait for the
 # dashboard. The button tap is also a safe no-op if auto-submit
