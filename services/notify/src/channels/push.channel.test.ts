@@ -12,12 +12,14 @@ describe('sendPush (Expo)', () => {
   });
 
   it('returns delivered:true when Expo returns ok ticket', async () => {
-    global.fetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({ data: { status: 'ok', id: 'tk_abc123' } }),
-        { status: 200 }
-      )
-    ) as never;
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ data: { status: 'ok', id: 'tk_abc123' } }),
+          { status: 200 }
+        )
+      ) as never;
 
     const r = await sendPush({
       deviceToken: 'ExponentPushToken[validlooking]',
@@ -30,12 +32,14 @@ describe('sendPush (Expo)', () => {
   });
 
   it('handles Expo array response shape', async () => {
-    global.fetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({ data: [{ status: 'ok', id: 'tk_xyz' }] }),
-        { status: 200 }
-      )
-    ) as never;
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ data: [{ status: 'ok', id: 'tk_xyz' }] }),
+          { status: 200 }
+        )
+      ) as never;
 
     const r = await sendPush({
       deviceToken: 'ExponentPushToken[token]',
@@ -95,12 +99,14 @@ describe('sendPush (Expo)', () => {
   });
 
   it('still sends with a non-Expo-looking token (warns but tries)', async () => {
-    global.fetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({ data: { status: 'ok', id: 'tk_legacy' } }),
-        { status: 200 }
-      )
-    ) as never;
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ data: { status: 'ok', id: 'tk_legacy' } }),
+          { status: 200 }
+        )
+      ) as never;
 
     // FCM-style token, not Expo shape — channel logs a warn but
     // still POSTs (Expo's relay accepts both).

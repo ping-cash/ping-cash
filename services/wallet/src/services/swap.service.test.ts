@@ -13,7 +13,9 @@ describe('buildSwapQuote', () => {
 
   it('returns stub fallback shape when Jupiter is unreachable', async () => {
     // Force fetch to reject Jupiter call (mocking fetch globally).
-    global.fetch = vi.fn().mockRejectedValue(new Error('network down')) as never;
+    global.fetch = vi
+      .fn()
+      .mockRejectedValue(new Error('network down')) as never;
 
     const q = await buildSwapQuote({
       fromSymbol: 'USDC',
@@ -32,7 +34,9 @@ describe('buildSwapQuote', () => {
   });
 
   it('honors custom slippageBps', async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error('network down')) as never;
+    global.fetch = vi
+      .fn()
+      .mockRejectedValue(new Error('network down')) as never;
     const q = await buildSwapQuote({
       fromSymbol: 'USDC',
       toSymbol: 'PING',
