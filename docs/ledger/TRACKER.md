@@ -4,7 +4,7 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every status change; cron-refreshed alongside [TRUST.md](TRUST.md).
 
-**Last refreshed:** 2026-05-29 14:55Z by Ping-TechLead (tech-lead session activated). Worker `ping` shipped 5 commits since 2026-05-28 21:38 closing P0(b)+P0(c). CI was wedged 9h on pnpm-lock.yaml drift (founder still on Build 27 — logo+contacts+HTTP500 fix); tech-lead unblocked via c178257. Worker filed UX-feedback issues #86-#89; #86 walk-evidence pending Build 30 landing.
+**Last refreshed:** 2026-05-29 15:32Z by Ping-TechLead (tick 2). Worker shipped 5 commits since 2026-05-28 21:38; tech-lead committed lockfile c178257 (9h CI unblock). Build 30 (67d9937) reached CI but FAILED Maestro 01-launch (landing "Ping" text never visible, accessibility tree timed out — react-native-qrcode-svg native init suspected). openova-private bumps #287 (c024c83) + #288 (9ef4440) merged 07:15Z + 07:17Z → 60 stale bumps closed → cluster has latest. Corridor smoke green on devnet via workflow_dispatch 26623900624 (47s). Direct curl /wallet/balance returns clean JSON — wallet-service @solana bundle works (P0-α false-alarm retracted; tech-lead Principle-7 self-correction). New P0-γ found: fresh signup balance returns USDC=0 not $5 — treasury auto-fund (#74) not depositing. Founder STILL on Build 27 — Build 31 with P0-β fix pending.
 
 ## 7-Day Delivery Slate — refreshed 2026-05-29 (commits + CI status)
 
