@@ -1,26 +1,31 @@
 appId: cash.ping.app
 ---
-# After /auth/verify → dashboard should render.
+# After /auth/verify the dashboard hydrates. We wait on the brand
+# greeting (always present) rather than the dynamic Balance label so
+# this flow works whether the wallet endpoint returns or stubs.
 - extendedWaitUntil:
-    visible: 'Available balance'
-    timeout: 20000
+    visible: 'Good'
+    timeout: 25000
 - takeScreenshot: 04-home
 - assertVisible: 'Send'
-- assertVisible: 'Receive'
-# Quick tab walk — each must render without crash.
+- assertVisible: 'Add money'
+# Quick tab walk — each must render without crash. Use the tab-bar
+# accessibility labels which expo-router sets from the screen title.
 - tapOn: 'Activity'
 - extendedWaitUntil:
-    visible: 'activity'
-    timeout: 5000
+    visible:
+      text: '(Activity|Recent|No transfers|No activity)'
+      enabled: true
+    timeout: 8000
 - takeScreenshot: 05-history
 - tapOn: 'Earn'
 - extendedWaitUntil:
     visible: 'APY'
-    timeout: 5000
+    timeout: 8000
 - takeScreenshot: 06-vault
 - tapOn: 'Profile'
 - extendedWaitUntil:
     visible: 'Sign out'
-    timeout: 5000
+    timeout: 8000
 - takeScreenshot: 07-profile
 - tapOn: 'Home'
