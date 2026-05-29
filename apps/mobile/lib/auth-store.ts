@@ -63,6 +63,17 @@ class AuthStore {
     ]);
   }
 
+  async updateUser(patch: Partial<User>): Promise<void> {
+    if (!this.user) return;
+    this.user = { ...this.user, ...patch };
+    try {
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(this.user));
+    } catch {
+      // Storage failure is non-fatal — in-memory state still has the
+      // new value for the current session.
+    }
+  }
+
   async clear(): Promise<void> {
     this.accessToken = null;
     this.refreshToken = null;
