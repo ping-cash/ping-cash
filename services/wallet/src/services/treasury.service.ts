@@ -152,3 +152,58 @@ export function getTreasuryAddress(): string | null {
   const k = getTreasuryKeypair();
   return k ? k.publicKey.toBase58() : null;
 }
+
+export interface TreasuryStatus {
+  enabled: boolean;
+  amountUsdc: string;
+  treasuryAddress: string | null;
+  /** Live SOL balance (decimal, e.g. "0.5"). null when unable to read. */
+  solBalance: string | null;
+  /** Live USDC balance (decimal). null when unable to read. */
+  usdcBalance: string | null;
+  /** Aggregate readiness — true ⇔ enabled, key configured, SOL & USDC > 0. */
+  ready: boolean;
+}
+
+/**
+ * Diagnostic snapshot — the single answer to "is the treasury actually
+ * able to fund new wallets right now?" Used by the /internal/treasury
+ * route to surface the real blocker (e.g. empty wallet) without making
+ * the operator dig through wallet-service logs.
+ */
+export async function getTreasuryStatus(): Promise<TreasuryStatus> {
+  const config = loadConfig();
+  const address = getTreasuryAddress();
+  const base: TreasuryStatus = {
+    enabled: !!config.TREASURY_FUND_ENABLED,
+    amountUsdc: config.TREASURY_FUND_USDC_AMOUNT,
+    treasuryAddress: address,
+    solBalance: null,
+    usdcBalance: null,
+    ready: false,
+  };
+  if (!address || !config.SOLANA_RPC_URL) return base;
+
+  try {
+    const connection = new Connection(config.SOLANA_RPC_URL, 'confirmed');
+    const pubkey = new PublicKey(address);
+    const solLamports = await connection.getBalance(pubkey);
+    base.solBalance = (solLamports / 1e9).toFixed(4);
+
+    const mint = new PublicKey(config.SOLANA_USDC_MINT);
+    const ata = getAssociatedTokenAddressSync(mint, pubkey);
+    try {
+      const acct = await connection.getTokenAccountBalance(ata);
+      base.usdcBalance = acct.value.uiAmountString ?? '0';
+    } catch {
+      base.usdcBalance = '0';
+    }
+    base.ready =
+      base.enabled &&
+      Number(base.solBalance) > 0 &&
+      Number(base.usdcBalance) > 0;
+  } catch (err) {
+    logger.warn({ err: (err as Error).message }, 'Treasury status read failed');
+  }
+  return base;
+}

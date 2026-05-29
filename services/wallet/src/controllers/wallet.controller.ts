@@ -10,6 +10,7 @@ import {
 import {
   fundNewWallet,
   getTreasuryAddress,
+  getTreasuryStatus,
 } from '../services/treasury.service';
 import {
   buildStakeIntent,
@@ -241,9 +242,22 @@ export async function walletRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // GET /wallet/internal/treasury — diagnostics: pubkey + whether enabled.
+  // GET /wallet/internal/treasury — diagnostics: live status incl SOL +
+  // USDC balance + readiness aggregate. Single curl answer to "is the
+  // treasury actually able to fund right now?"
   fastify.get(
     '/internal/treasury',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      if (!requireInternalSecret(request, reply)) return;
+      const status = await getTreasuryStatus();
+      return reply.status(200).send(status);
+    }
+  );
+
+  // Keep the simpler shape exposed too — some operator scripts only need
+  // the pubkey + enabled flag without paying for the RPC round-trip.
+  fastify.get(
+    '/internal/treasury/pubkey',
     async (request: FastifyRequest, reply: FastifyReply) => {
       if (!requireInternalSecret(request, reply)) return;
       return reply.status(200).send({
