@@ -1,17 +1,65 @@
 /**
  * Receive screen — show user's phone + a shareable link.
- * Full QR / username vanity URL ships in Phase 2.
+ *
+ * QRCode is loaded LAZILY via dynamic require to keep react-native-svg's
+ * native module init off the app launch path. Expo Router's _ctx
+ * pre-requires every screen file at bundle start; a top-level
+ *   import QRCode from 'react-native-qrcode-svg'
+ * fires react-native-svg's RCTBridgeModule registration while the JS
+ * bridge is still spinning up the root view, which produced Build 30's
+ * 112s `kAXErrorIPCTimeout` — main thread hung waiting for the bridge.
  */
+import { useEffect, useState } from 'react';
 import { View, StyleSheet, Pressable, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import QRCode from 'react-native-qrcode-svg';
 import { authStore } from '../lib/auth-store';
 import { colors, radii, spacing } from '../lib/theme';
 import { Button } from '../components/ui/Button';
 import { Heading } from '../components/ui/Heading';
+
+type QRComponent = (props: {
+  value: string;
+  size?: number;
+  color?: string;
+  backgroundColor?: string;
+}) => JSX.Element;
+
+function LazyQRCode({ value }: { value: string }) {
+  const [Comp, setComp] = useState<QRComponent | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    // Dynamic require so the native module init happens after the receive
+    // screen is navigated to, not at app launch via the route registry.
+    Promise.resolve()
+      .then(() => require('react-native-qrcode-svg'))
+      .then(mod => {
+        if (!cancelled) setComp(() => mod.default as QRComponent);
+      })
+      .catch(() => {
+        // If the SVG module fails to load we degrade gracefully — the
+        // receive screen still works via the phone number + share link.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  if (!Comp) {
+    return (
+      <View style={{ width: 200, height: 200, backgroundColor: '#FFFFFF' }} />
+    );
+  }
+  return (
+    <Comp
+      value={value}
+      size={200}
+      color={colors.bg}
+      backgroundColor="#FFFFFF"
+    />
+  );
+}
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -45,12 +93,7 @@ export default function ReceiveScreen() {
         <View style={styles.content}>
           <View style={styles.qrCard}>
             <View style={styles.qrInner}>
-              <QRCode
-                value={link}
-                size={200}
-                color={colors.bg}
-                backgroundColor="#FFFFFF"
-              />
+              <LazyQRCode value={link} />
             </View>
             <Heading
               variant="bodySmall"

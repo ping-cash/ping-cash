@@ -2,10 +2,16 @@ appId: cash.ping.app
 ---
 - launchApp:
     clearState: true
+# 60s margin — Build 30 hung 112s on "Ping" via kAXErrorIPCTimeout. The
+# real launch path budget is ~3s on a warm sim; 60s is generous enough
+# that a transient cold-start delay never trips it, while still failing
+# fast on a true main-thread freeze (vs. the previous 15s which was
+# inside the iOS accessibility-tree timeout window and produced opaque
+# "Unknown error" failures with no screenshot evidence).
 - extendedWaitUntil:
     visible: 'Ping'
-    timeout: 15000
+    timeout: 60000
 - takeScreenshot: 01-landing
 - extendedWaitUntil:
     visible: 'Create account'
-    timeout: 8000
+    timeout: 30000
