@@ -1,6 +1,8 @@
 # ADR 0025: Smart-routing cash-in architecture (multi-provider, multi-network, bridge-to-Solana)
 
-**Status:** Proposed (founder-direction set 2026-05-30 16:45Z; live-widget verification supports the routing logic)
+**Status:** Proposed — AMENDED 2026-05-30 17:30Z with founder multi-pool treasury directive + 20-provider verified rates. See `docs/research/2026-05-30-20provider-omr-usd-final.md`.
+
+**Amendment summary (17:30Z):** Founder directive 17:25Z: "we don't have concern about holding multiple pools of USDC in multiple chains and we can manually or automatically move from the pools." Bridge cost becomes treasury OpEx, not per-tx cost. User-facing quote = raw widget rate (no bridge cost added). 20-provider sweep yielded NEW USD winner: **Topper via Onramper on Base = 98.38 USDC (1.62% effective)** — beats prior BSC+Wormhole assumption (2.29%) by 0.67pp. OMR winner unchanged: Alchemy direct on Solana = 247.04 USDC (4.98%).
 **Date:** 2026-05-30
 **Supersedes:** none (extends [ADR 0024](0024-cashin-three-method-architecture.md))
 **Related:** [ADR 0001](0001-stablecoin-rails-on-solana.md), [ADR 0004](0004-privy-mpc-wallets.md), [ADR 0024](0024-cashin-three-method-architecture.md)
