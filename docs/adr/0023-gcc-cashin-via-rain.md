@@ -1,6 +1,6 @@
 # ADR 0023: GCC cash-in via Rain (Oman/KSA/Bahrain/Kuwait/Qatar)
 
-**Status:** Proposed (pending Rain sales verification)
+**Status:** Needs revalidation per [ADR 0024](0024-cashin-three-method-architecture.md) — Rain stays valid only if they offer Pay-by-Bank (open banking), not IBAN-paste UX
 **Date:** 2026-05-30
 **Supersedes:** none (extends [ADR 0022](0022-cashin-transfi-only.md))
 **Related:** [ADR 0022](0022-cashin-transfi-only.md), [ADR 0005](0005-transfi-primary-offramp.md), [ADR 0014](0014-entity-jurisdiction-oman-llc.md)

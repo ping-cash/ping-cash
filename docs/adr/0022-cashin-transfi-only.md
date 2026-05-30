@@ -1,9 +1,10 @@
 # ADR 0022: Cash-in via TransFi only (no PSP gateway)
 
-**Status:** Accepted
+**Status:** Superseded by [ADR 0024](0024-cashin-three-method-architecture.md) (2026-05-30 14:30Z)
 **Date:** 2026-05-30
 **Supersedes:** none
-**Related:** [ADR 0001](0001-stablecoin-rails-on-solana.md), [ADR 0004](0004-privy-mpc-wallets.md), [ADR 0005](0005-transfi-primary-offramp.md), [ADR 0017](0017-custody-model.md)
+**Superseded by:** [ADR 0024](0024-cashin-three-method-architecture.md) — founder rejected TransFi cash-in's manual-IBAN UX as unacceptable
+**Related:** [ADR 0001](0001-stablecoin-rails-on-solana.md), [ADR 0004](0004-privy-mpc-wallets.md), [ADR 0005](0005-transfi-primary-offramp.md), [ADR 0017](0017-custody-model.md), [ADR 0024](0024-cashin-three-method-architecture.md)
 
 ## Context
 
