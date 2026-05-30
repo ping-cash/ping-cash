@@ -170,11 +170,16 @@ class ApiClient {
   // amount metadata. Per ADR 0017 the backend NEVER signs.
   async buildSendIntent(
     recipientWallet: string,
-    amountUsdc: string
+    amount: string,
+    tokenKind: 'USDC' | 'PING' = 'USDC'
   ): Promise<SendIntent> {
     return this.request('/wallet/send-intent', {
       method: 'POST',
-      body: JSON.stringify({ recipientWallet, amountUsdc }),
+      body: JSON.stringify({
+        recipientWallet,
+        amountUsdc: amount, // server legacy field — carries amount for any SPL token
+        tokenKind,
+      }),
     });
   }
 
@@ -237,11 +242,16 @@ class ApiClient {
   // configured for the Sovereign's Solana RPC endpoint. Per ADR 0020.
   async signAndSubmitUsdcSend(
     recipientWallet: string,
-    amountUsdc: string,
+    amount: string,
     privySign: (base64UnsignedTx: string) => Promise<string>,
-    submitRaw: (base64SignedTx: string) => Promise<string>
+    submitRaw: (base64SignedTx: string) => Promise<string>,
+    tokenKind: 'USDC' | 'PING' = 'USDC'
   ): Promise<{ intent: SendIntent; txSignature: string }> {
-    const intent = await this.buildSendIntent(recipientWallet, amountUsdc);
+    const intent = await this.buildSendIntent(
+      recipientWallet,
+      amount,
+      tokenKind
+    );
     const signedB64 = await privySign(intent.serializedTransaction);
     const txSignature = await submitRaw(signedB64);
     return { intent, txSignature };
