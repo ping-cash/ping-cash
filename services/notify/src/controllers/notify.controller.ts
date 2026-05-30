@@ -111,6 +111,61 @@ const MoonpayWebhookBody = z.object({
     .passthrough(),
 });
 
+/**
+ * Verify Onramper's `X-Onramper-Signature` header.
+ * Onramper sends a hex-encoded HMAC-SHA256 of the raw request body
+ * computed with the partner's webhook secret. Timing-safe comparison.
+ *
+ * When ONRAMPER_WEBHOOK_SECRET is unset we return true (dev-mode bypass)
+ * so the webhook still functions end-to-end before the secret lands in
+ * the cluster Secret. Narrows to verified-only once the secret appears.
+ */
+export function verifyOnramperSignature(
+  rawBody: string,
+  sigHeader: string | undefined,
+  secret: string | undefined
+): boolean {
+  if (!secret) return true; // dev-mode bypass
+  if (!sigHeader) return false;
+  const expected = createHmac('sha256', secret).update(rawBody).digest();
+  if (sigHeader.length !== expected.length * 2) return false;
+  let given: Buffer;
+  try {
+    given = Buffer.from(sigHeader, 'hex');
+  } catch {
+    return false;
+  }
+  if (given.length !== expected.length) return false;
+  return timingSafeEqual(given, expected);
+}
+
+// Onramper webhook payload — per docs.onramper.com/docs/webhooks.
+// On `transaction_completed` the user's USDC has landed on the wallet
+// address we passed in `wallets=usdc_base:<addr>` at checkout-URL
+// build time. We dispatch a push notification ("Your USDC just
+// landed") and log for ledger reconciliation. The user's wallet was
+// already credited by Onramper-Topper-Base — Ping does not need to
+// fund anything from treasury (unlike Stripe-shape where Ping bridges
+// fiat -> on-chain itself).
+const OnramperWebhookBody = z
+  .object({
+    type: z.string(),
+    data: z
+      .object({
+        id: z.string().optional(),
+        status: z.string().optional(),
+        walletAddress: z.string().optional(),
+        inCurrency: z.string().optional(),
+        inAmount: z.number().optional(),
+        outCurrency: z.string().optional(),
+        outAmount: z.number().optional(),
+        txHash: z.string().optional(),
+        partnerData: z.string().optional(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
 // Stripe webhook payload — emits `payment_intent.succeeded` after the
 // user finishes the PaymentSheet. On success we credit USDC on-chain
 // from treasury to the user's wallet (devnet now, mainnet at cutover).
@@ -227,6 +282,115 @@ export async function notifyRoutes(fastify: FastifyInstance) {
       );
       // Always 200 so MoonPay doesn't retry; we've taken delivery.
       return reply.status(200).send({ received: true });
+    }
+  );
+
+  // POST /notify/webhooks/onramper — Onramper cash-in webhook (ADR 0026).
+  // Onramper POSTs here when a user finishes the checkout flow at the
+  // signed buy.onramper.com URL we built in wallet-service cashin.
+  // On `transaction_completed`, USDC has already been delivered to the
+  // user's wallet by Onramper-Topper-Base; we (a) verify signature,
+  // (b) dispatch a push notification, (c) log for ledger reconciliation.
+  // No treasury fund call — unlike the prior Stripe shape where Ping
+  // bridged fiat->on-chain itself, Onramper handles the on-chain delivery.
+  fastify.post(
+    '/webhooks/onramper',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const rawBody =
+        (request as FastifyRequest & { rawBody?: string }).rawBody ?? '';
+      const sigHeader = request.headers['x-onramper-signature'];
+      const secret = process.env.ONRAMPER_WEBHOOK_SECRET;
+
+      if (
+        !verifyOnramperSignature(
+          rawBody,
+          typeof sigHeader === 'string' ? sigHeader : undefined,
+          secret
+        )
+      ) {
+        request.log.warn(
+          { hasSigHeader: !!sigHeader, hasSecret: !!secret },
+          'Onramper webhook signature verification failed'
+        );
+        return reply.status(400).send({
+          error: {
+            code: 'INVALID_SIGNATURE',
+            message: 'Onramper signature mismatch',
+          },
+        });
+      }
+
+      const parsed = OnramperWebhookBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          error: { code: 'VALIDATION_ERROR', message: parsed.error.message },
+        });
+      }
+      const evt = parsed.data;
+      const tx = evt.data;
+
+      // Only act on transaction_completed; other states (created, pending,
+      // failed) are accepted with 200 so Onramper doesn't retry. Push
+      // dispatch happens only on success.
+      if (evt.type !== 'transaction_completed' && tx.status !== 'completed') {
+        request.log.info(
+          { type: evt.type, status: tx.status, txId: tx.id },
+          'Onramper webhook received (non-credit event)'
+        );
+        return reply.status(200).send({ received: true });
+      }
+
+      // Extract userId from partnerData (we set `userId=<sub>` at
+      // checkout-URL build time per wallet-service onramper.adapter.ts).
+      let userId: string | undefined;
+      if (tx.partnerData?.startsWith('userId=')) {
+        userId = tx.partnerData.slice('userId='.length);
+      }
+
+      request.log.info(
+        {
+          txId: tx.id,
+          walletAddress: tx.walletAddress,
+          inAmount: tx.inAmount,
+          inCurrency: tx.inCurrency,
+          outAmount: tx.outAmount,
+          outCurrency: tx.outCurrency,
+          txHash: tx.txHash,
+          userId,
+        },
+        'Onramper transaction_completed — USDC delivered'
+      );
+
+      // Best-effort push notification ("Your USDC just landed"). Skip
+      // gracefully if no userId or no push token on file. Uses
+      // CASHIN_COMPLETED template (follow-up: register the template in
+      // templates.service.ts when copy is finalized; for now we route
+      // through dispatch with `as never` to bypass the closed-union
+      // TemplateId check — same pattern as line ~153 dispatch).
+      if (userId) {
+        try {
+          const tokenRow = await getPushToken(userId);
+          if (tokenRow) {
+            await dispatch({
+              deviceToken: tokenRow.token,
+              template: 'CASHIN_COMPLETED',
+              params: {
+                outAmount: String(tx.outAmount ?? ''),
+                outCurrency: String(tx.outCurrency ?? 'USDC'),
+                inAmount: String(tx.inAmount ?? ''),
+                inCurrency: String(tx.inCurrency ?? 'USD'),
+              },
+            } as never);
+          }
+        } catch (err) {
+          request.log.warn(
+            { userId, err: (err as Error).message },
+            'Onramper push dispatch failed (non-fatal)'
+          );
+        }
+      }
+
+      return reply.status(200).send({ received: true, credited: true });
     }
   );
 
