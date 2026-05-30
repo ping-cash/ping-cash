@@ -114,7 +114,11 @@ export default function ReceiveScreen() {
       <StatusBar style="light" />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backButton}
+            testID="back-button"
+          >
             <Ionicons
               name="chevron-back"
               size={24}

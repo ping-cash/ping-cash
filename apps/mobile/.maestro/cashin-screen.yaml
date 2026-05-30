@@ -32,4 +32,5 @@ appId: cash.ping.app
     id: 'cashin-method-apple_pay'
 - assertVisible:
     id: 'cashin-method-google_pay'
-- back
+- tapOn:
+    id: 'back-button'

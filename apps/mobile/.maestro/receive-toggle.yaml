@@ -27,4 +27,8 @@ appId: cash.ping.app
     id: 'receive-wallet-address'
 - tapOn:
     id: 'receive-mode-phone'
-- back
+# Use explicit testID-anchored back button instead of Maestro's `back`
+# action — the latter is unreliable on iOS sim for stack screens that
+# use custom (non-system-default) back chevrons.
+- tapOn:
+    id: 'back-button'
