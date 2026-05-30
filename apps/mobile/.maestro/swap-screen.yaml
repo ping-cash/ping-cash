@@ -6,6 +6,8 @@
 #   - Confirm button reachable
 appId: cash.ping.app
 ---
+- back
+- back
 - tapOn:
     id: 'tab-Home'
 - extendedWaitUntil:

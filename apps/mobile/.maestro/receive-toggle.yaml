@@ -6,9 +6,12 @@
 #   - USDC/USDT warning visible
 appId: cash.ping.app
 ---
-# Prior sub-flows may leave us on a non-Home screen (e.g.,
-# 04-send-screen.yaml ends on the claim-share view). Hard-tap the Home
-# tab first to guarantee fast-actions are visible.
+# Prior sub-flow 04-send-screen.yaml ends on the /send stack screen
+# (no tab bar visible — tab-Home is not in the AX tree from a stack
+# screen). Pop the stack first with `back` so we're on (tabs) layout,
+# then tab-Home is available.
+- back
+- back
 - tapOn:
     id: 'tab-Home'
 - extendedWaitUntil:

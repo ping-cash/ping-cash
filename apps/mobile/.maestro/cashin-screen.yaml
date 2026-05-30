@@ -10,6 +10,8 @@
 #   - Tap card → fee disclosure alert appears
 appId: cash.ping.app
 ---
+- back
+- back
 - tapOn:
     id: 'tab-Home'
 - extendedWaitUntil:
