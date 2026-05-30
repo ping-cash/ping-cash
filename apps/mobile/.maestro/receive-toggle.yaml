@@ -7,12 +7,14 @@
 appId: cash.ping.app
 ---
 # Per 00-all.yaml ordering this runs immediately after 03-tabs.yaml
-# which ends with tap tab-Home — so we're already on the home tab.
-# ActionTile component on home sets testID=`btn-${label}`.
+# which ends with tap tab-Home. ActionTile on home sets testID=
+# `btn-${label}`. iOS sim takes ~10-20s to fully render dashboard
+# after auth (per 03-tabs.yaml comment about 25s waits); use the
+# same 25s timeout pattern as the existing 03-tabs.yaml proven flow.
 - extendedWaitUntil:
     visible:
-      id: 'btn-Send'
-    timeout: 8000
+      id: 'btn-Receive'
+    timeout: 25000
 - tapOn:
     id: 'btn-Receive'
 - extendedWaitUntil:

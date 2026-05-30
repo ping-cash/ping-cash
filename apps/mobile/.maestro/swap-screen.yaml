@@ -9,8 +9,8 @@ appId: cash.ping.app
 # cashin-screen.yaml ends with `back` returning to home tab.
 - extendedWaitUntil:
     visible:
-      id: 'btn-Send'
-    timeout: 8000
+      id: 'btn-Swap'
+    timeout: 25000
 - tapOn:
     id: 'btn-Swap'
 - back

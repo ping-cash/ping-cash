@@ -10,12 +10,11 @@
 #   - Tap card → fee disclosure alert appears
 appId: cash.ping.app
 ---
-# receive-toggle.yaml ends with `back` returning to home tab. Confirm
-# home is rendered then tap Add money fast action.
+# receive-toggle.yaml ends with `back` returning to home tab.
 - extendedWaitUntil:
     visible:
-      id: 'btn-Send'
-    timeout: 8000
+      id: 'btn-Add money'
+    timeout: 25000
 - tapOn:
     id: 'btn-Add money'
 - extendedWaitUntil:
