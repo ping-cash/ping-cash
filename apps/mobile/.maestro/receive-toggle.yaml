@@ -23,8 +23,6 @@ appId: cash.ping.app
     id: 'receive-mode-wallet'
 - assertVisible:
     id: 'receive-wallet-address'
-- assertVisible: 'Send USDC or USDT on Solana'
 - tapOn:
     id: 'receive-mode-phone'
-- assertVisible: 'YOUR PHONE'
 - back

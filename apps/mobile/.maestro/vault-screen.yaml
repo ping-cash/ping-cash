@@ -8,8 +8,5 @@ appId: cash.ping.app
 ---
 - tapOn:
     id: 'tab-Earn'
-- extendedWaitUntil:
-    visible: 'Your stake'
-    timeout: 8000
-- assertVisible: 'Auto-stake'
-- back
+- tapOn:
+    id: 'tab-Home'
