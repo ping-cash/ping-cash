@@ -10,7 +10,14 @@
  * 112s `kAXErrorIPCTimeout` — main thread hung waiting for the bridge.
  */
 import { useEffect, useState } from 'react';
-import { View, StyleSheet, Pressable, Share } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  Share,
+  ScrollView,
+  Clipboard,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -61,23 +68,45 @@ function LazyQRCode({ value }: { value: string }) {
   );
 }
 
+type Mode = 'phone' | 'wallet';
+
 export default function ReceiveScreen() {
   const router = useRouter();
   const user = authStore.user;
   const phone = user?.phone ?? '';
-  // QR encodes the phone directly so any QR scanner (Ping or generic)
-  // reads the recipient number. /c/<code> is reserved for claim-code
-  // links — a phone there 404s. The shareable text link points at a
-  // landing page the sender's Ping app intercepts (or the marketing
-  // site falls back to web-claim's "download Ping to send to <X>").
-  const qrPayload = phone;
-  const shareLink = `https://ping.cash/send?to=${encodeURIComponent(phone)}`;
+  const walletAddress = user?.walletAddress ?? '';
+  const [mode, setMode] = useState<Mode>('phone');
+  const [copied, setCopied] = useState(false);
+
+  // Phone mode: QR encodes the phone directly so any QR scanner (Ping or
+  // generic) reads the recipient number. Wallet mode: QR encodes the raw
+  // Solana address so any wallet (Phantom, Backpack, exchange withdraw
+  // flow) reads it correctly. ADR 0024 Method 1: direct stablecoin
+  // deposit is the cheapest cash-in path — 0 fee + ~$0.0001 gas.
+  const qrPayload = mode === 'phone' ? phone : walletAddress;
+  const shareLink =
+    mode === 'phone'
+      ? `https://ping.cash/send?to=${encodeURIComponent(phone)}`
+      : '';
 
   const handleShare = async () => {
-    await Share.share({
-      message: `Send me money on Ping: ${shareLink}`,
-      url: shareLink,
-    });
+    if (mode === 'phone') {
+      await Share.share({
+        message: `Send me money on Ping: ${shareLink}`,
+        url: shareLink,
+      });
+    } else {
+      await Share.share({
+        message: `My Solana wallet for USDC/USDT: ${walletAddress}`,
+      });
+    }
+  };
+
+  const handleCopyAddress = () => {
+    if (!walletAddress) return;
+    Clipboard.setString(walletAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -96,7 +125,44 @@ export default function ReceiveScreen() {
           <View style={{ width: 44 }} />
         </View>
 
-        <View style={styles.content}>
+        <View style={styles.modeToggle}>
+          <Pressable
+            onPress={() => setMode('phone')}
+            style={[
+              styles.modeButton,
+              mode === 'phone' && styles.modeButtonActive,
+            ]}
+            testID="receive-mode-phone"
+          >
+            <Heading
+              variant="bodySmall"
+              color={mode === 'phone' ? 'primary' : 'tertiary'}
+            >
+              From Ping users
+            </Heading>
+          </Pressable>
+          <Pressable
+            onPress={() => setMode('wallet')}
+            style={[
+              styles.modeButton,
+              mode === 'wallet' && styles.modeButtonActive,
+            ]}
+            testID="receive-mode-wallet"
+          >
+            <Heading
+              variant="bodySmall"
+              color={mode === 'wallet' ? 'primary' : 'tertiary'}
+            >
+              From any wallet
+            </Heading>
+          </Pressable>
+        </View>
+
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.qrCard}>
             <View style={styles.qrInner}>
               <LazyQRCode value={qrPayload} />
@@ -107,31 +173,76 @@ export default function ReceiveScreen() {
               align="center"
               style={{ marginTop: spacing.md }}
             >
-              Show this QR — they tap their phone camera at it to send you money
+              {mode === 'phone'
+                ? 'Show this QR — they tap their phone camera at it to send you money'
+                : 'Scan from Phantom, Backpack, or any Solana wallet to send USDC/USDT'}
             </Heading>
           </View>
 
-          <View style={styles.phoneCard}>
-            <Heading variant="labelSmall" color="tertiary">
-              YOUR PHONE
-            </Heading>
-            <Heading variant="h1" style={{ marginTop: 4 }}>
-              {phone}
-            </Heading>
-            <Heading
-              variant="bodySmall"
-              color="secondary"
-              style={{ marginTop: 6 }}
-            >
-              Anyone with this number can send you money on Ping. Recipients who
-              aren't on Ping yet get a claim link they can open in any browser.
-            </Heading>
-          </View>
-        </View>
+          {mode === 'phone' ? (
+            <View style={styles.phoneCard}>
+              <Heading variant="labelSmall" color="tertiary">
+                YOUR PHONE
+              </Heading>
+              <Heading variant="h1" style={{ marginTop: 4 }}>
+                {phone}
+              </Heading>
+              <Heading
+                variant="bodySmall"
+                color="secondary"
+                style={{ marginTop: 6 }}
+              >
+                Anyone with this number can send you money on Ping. Recipients
+                who aren't on Ping yet get a claim link they can open in any
+                browser.
+              </Heading>
+            </View>
+          ) : (
+            <View style={styles.phoneCard}>
+              <Heading variant="labelSmall" color="tertiary">
+                SOLANA WALLET ADDRESS
+              </Heading>
+              <Pressable
+                onPress={handleCopyAddress}
+                style={styles.addressBox}
+                testID="receive-wallet-address"
+              >
+                <Heading variant="bodySmall" style={styles.addressText}>
+                  {walletAddress || 'Loading…'}
+                </Heading>
+                <Ionicons
+                  name={copied ? 'checkmark-circle' : 'copy-outline'}
+                  size={20}
+                  color={copied ? colors.success : colors.textSecondary}
+                />
+              </Pressable>
+              <Heading
+                variant="bodySmall"
+                color="secondary"
+                style={{ marginTop: spacing.md }}
+              >
+                Send USDC or USDT on Solana to this address. Both stablecoins
+                land instantly with no Ping fee — only the Solana network fee
+                (~$0.0001).
+              </Heading>
+              <View style={styles.warningBox}>
+                <Ionicons name="warning" size={16} color={colors.warning} />
+                <Heading
+                  variant="bodySmall"
+                  color="secondary"
+                  style={{ flex: 1, marginLeft: spacing.sm }}
+                >
+                  Only send USDC or USDT on Solana. Other assets or networks
+                  will be lost permanently.
+                </Heading>
+              </View>
+            </View>
+          )}
+        </ScrollView>
 
         <View style={styles.actions}>
           <Button
-            label="Share my Ping link"
+            label={mode === 'phone' ? 'Share my Ping link' : 'Share my address'}
             onPress={handleShare}
             icon="share-outline"
           />
@@ -158,7 +269,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  content: { flex: 1, justifyContent: 'center', gap: spacing.xl },
+  modeToggle: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: 4,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  modeButton: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    borderRadius: radii.md,
+  },
+  modeButtonActive: {
+    backgroundColor: colors.bg,
+  },
+  scroll: { flex: 1 },
+  content: { gap: spacing.xl, paddingBottom: spacing.lg },
   qrCard: {
     backgroundColor: colors.surface,
     borderRadius: radii.xl,
@@ -179,6 +309,31 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
+  },
+  addressBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  addressText: {
+    flex: 1,
+    fontFamily: 'monospace',
+    fontSize: 12,
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.bg,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.warning,
   },
   actions: { paddingBottom: spacing.lg },
 });

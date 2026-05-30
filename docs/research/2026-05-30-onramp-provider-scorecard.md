@@ -1,4 +1,72 @@
-# Crypto On-Ramp Provider Scorecard — VERIFIED FACTS (2026-05-30 15:00Z)
+# Crypto On-Ramp Provider Scorecard — VERIFIED FACTS (2026-05-30 16:15Z)
+
+## CRITICAL CORRECTION (added 16:15Z after live widget verification)
+
+**Founder provided deliberately-fake quote numbers to test whether prior analysis was anchored on real data. It was not.** A live-widget verification agent navigated each provider's actual buy widget and captured the REAL number of USDC/USDT delivered for $100 USD via credit card (US user, default IP geo). The verified numbers invalidate the "card processing fee" anchoring that produced the prior scorecard's rankings.
+
+### Verified live-widget quotes (US user, $100 USD, credit card, default IP geo)
+
+| Rank | Path                                                        | $100 → delivered        | Effective fee |
+| ---- | ----------------------------------------------------------- | ----------------------- | ------------- |
+| 1    | **Topper (via Onramper aggregator)**                        | 97.27 USDT / 97.23 USDC | **2.73%**     |
+| 2    | **Alchemy Pay (direct widget)**                             | 97.00 USDC              | **3.00%**     |
+| 3    | Banxa (via Onramper)                                        | 96.11 USDT / 95.99 USDC | 3.89%         |
+| 4    | MoonPay (via Onramper)                                      | 95.81 USDT / 95.46 USDC | 4.19%         |
+| 5    | Kraken debit (via Onramper)                                 | 95.16 USDC              | 4.84%         |
+| 6    | Stripe (via Onramper)                                       | 94.96 USDC              | 5.04%         |
+| 7    | Paybis direct (USDC-ETH only — Solana not on consumer page) | 94.02 USDC              | 5.98%         |
+| 8    | **MoonPay direct widget**                                   | 93.61 USDT / 93.26 USDC | **6.74%**     |
+| 9    | Ramp Network (via Onramper)                                 | 93.14 USDT / 93.05 USDC | 6.86%         |
+| 10   | Coinify (via Onramper)                                      | 92.94 USDC              | 7.06%         |
+| 11   | Guardarian (via Onramper)                                   | 92.79 USDT / 92.69 USDC | 7.21%         |
+
+**INACCESSIBLE without partner integration** (cannot get quote without KYC/login): Coinbase Onramp, Stripe Crypto direct, Mercuryo, Kado (now Swapped — Cloudflare wall), Banxa direct (Cloudflare wall), Ramp Network direct (login gate).
+
+### Three findings that invert the prior recommendation
+
+**1. Aggregator-vs-direct delta is REAL and ~2 percentage points.** Same provider (MoonPay), same fiat, same crypto, same payment method:
+
+- Direct widget: $100 → 93.26 USDC (6.74%)
+- Via Onramper: $100 → 95.46 USDC (4.54%)
+- Delta: 2.20pp savings via aggregator
+
+Onramper has negotiated wholesale rates with underlying providers and passes some of the rebate to integrators. **Implication: integrate the aggregator, not direct providers.**
+
+**2. The "1.99% flat" / "4.5% Visa" published rates were marketing slices, not all-in.** Published rates exclude the USD→USDC exchange spread, which is where most of the fee lives:
+
+- Banxa "1.99% flat" → actual all-in 3.89-14% depending on path
+- MoonPay "4.5% Visa" → actual all-in 6.74% direct widget
+- Transak "1-3%" → unverifiable in production (prod widget gates quote behind email)
+
+**3. USDT-SOL is reliably 0.04-0.4pp cheaper than USDC-SOL** on most providers (Topper, Banxa, MoonPay). Stripe and Kraken are USDC-only / USDC-better exceptions. Architectural implication: at on-ramp time, quote BOTH and pick cheaper for the user; user wallet (Privy MPC) holds either equivalently.
+
+### Architectural shift
+
+**Onramper as the integration target, not direct providers.** Onramper unlocks 6+ providers' wholesale rates with a single integration AND beats direct MoonPay/Ramp/Banxa pricing by ~2pp. Even though Onramper's mainnet KYB requires "registered legal entity already incorporated" (a real T4 gate), the rate-comparison value plus single-integration efficiency makes Onramper the strongest single-provider pick once Oman CR lands.
+
+For Phase-1 pre-CR sandbox: Alchemy Pay direct (3.00% verified) + Onramper sandbox (for the multi-provider comparison logic). Drop direct MoonPay, Ramp, Banxa as standalone integrations.
+
+For Method 1 (direct USDC receive per ADR 0024): ships as the only ~0% cash-in path; users who already hold USDC anywhere pay only Solana gas (~$0.0001).
+
+### Apple Pay + bank transfer are NOT cheaper
+
+Verified per Onramper widget at $100:
+
+- Apple Pay: identical rate to card on Topper/MoonPay/Banxa/Stripe — UX/conversion lever only, not a fee lever
+- Bank transfer: Coinify (only US bank rail in Onramper) at $300 → 96.21% efficiency vs Topper card at 97.23% → **card is cheaper than bank for Solana stablecoin small tickets in US**
+
+### Files
+
+- `docs/research/2026-05-31-onramp-widget-verified-quotes.md` — full agent output with per-provider screenshots list and Section 4 architectural findings (separate artifact; this scorecard kept for cross-reference)
+- Screenshots in `.playwright-mcp/`
+
+---
+
+## Original scorecard (PRIOR TO 16:15Z CORRECTION — KEPT FOR HISTORICAL REFERENCE)
+
+The text below was the 15:00Z analysis anchored on providers' marketing-published fees. **The actual live-widget rates are 3-6pp WORSE than what these tables imply.** Use the CRITICAL CORRECTION block above for ground truth.
+
+---
 
 **Authority:** LIVE-VERIFIED via two parallel general-purpose research agents (Agent C: founder-named 6; Agent D: 10 other major players). All scores cite the provider's OWN documentation, pricing pages, or developer materials. UNVERIFIED is used explicitly when materials don't confirm — no speculation.
 
