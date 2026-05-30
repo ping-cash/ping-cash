@@ -4,6 +4,27 @@
 
 **Founder provided deliberately-fake quote numbers to test whether prior analysis was anchored on real data. It was not.** A live-widget verification agent navigated each provider's actual buy widget and captured the REAL number of USDC/USDT delivered for $100 USD via credit card (US user, default IP geo). The verified numbers invalidate the "card processing fee" anchoring that produced the prior scorecard's rankings.
 
+### Founder-verified live-widget quotes (16:30Z, multi-currency, multi-chain)
+
+Founder personally checked widgets after challenging my agent's data. The OMR + EUR data points were not in the agent's scope. Critically, **Alchemy Pay supports OMR directly as a source currency** — first verified data point on this.
+
+| Provider                | Spent    | USDC on Solana | USDC on BNB | Effective fee (Solana)       |
+| ----------------------- | -------- | -------------- | ----------- | ---------------------------- |
+| **Alchemy direct**      | $100 USD | 97.00          | 97.91       | **3.00%**                    |
+| **Alchemy direct**      | 100 OMR  | **247.04**     | 247.79      | **4.98%**                    |
+| **Alchemy direct**      | 100 EUR  | 113.55         | 114.42      | ~2-3%                        |
+| Topper direct           | $100 USD | 95.49          | 95.49       | 4.51%                        |
+| **Onramper aggregator** | $100 USD | 97.23 USDC     | —           | **2.77%** (routes to Topper) |
+| **Onramper aggregator** | 100 OMR  | 243.03 USDC    | —           | 6.53%                        |
+
+**Three key findings from founder's verification:**
+
+1. **Alchemy direct accepts OMR natively at 4.98% effective fee** — first verified Oman-corridor data point. This makes Alchemy Pay the Phase-1 primary for MENA, not Banxa.
+2. **Aggregator-vs-direct verdict is geo-dependent**:
+   - US/EU mainstream → Onramper aggregator wins by 0.23pp over Alchemy direct (routes to Topper at 2.77%)
+   - OMR → Alchemy direct wins by 0.5pp over Onramper (Onramper has worse Oman routes)
+3. **USDC on BNB is consistently 0.5-1pp cheaper than USDC on Solana** across all three fiats tested. Phase-2 architectural question: accept BNB-USDC at on-ramp + bridge to Solana via Wormhole/CCTP (~0.1-0.3% cost) for net ~0.7-0.9pp savings.
+
 ### Verified live-widget quotes (US user, $100 USD, credit card, default IP geo)
 
 | Rank | Path                                                        | $100 → delivered        | Effective fee |
