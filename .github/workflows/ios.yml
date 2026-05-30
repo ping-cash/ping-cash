@@ -16,6 +16,15 @@ on:
       - '.github/workflows/ios.yml'
   workflow_dispatch:
 
+# Serialize iOS builds. Concurrent runs race on the cert-revoke loop:
+# build B's pre-revoke step kills the freshly-issued cert that build A
+# is mid-altool-uploading with, causing 409 Validation failed -
+# Certificate Revoked. Cancelling in-progress runs on new push keeps
+# the cert lifecycle clean. Memory [[feedback_ios_cert_cycle]] applies.
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
 defaults:
   run:
     working-directory: apps/mobile
