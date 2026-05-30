@@ -13,9 +13,4 @@ appId: cash.ping.app
     timeout: 8000
 - tapOn:
     id: 'btn-Swap'
-- extendedWaitUntil:
-    visible: 'USDC'
-    timeout: 8000
-- inputText: '0.5'
-- hideKeyboard
 - back

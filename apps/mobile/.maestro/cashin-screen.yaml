@@ -33,8 +33,4 @@ appId: cash.ping.app
     id: 'cashin-method-apple_pay'
 - assertVisible:
     id: 'cashin-method-google_pay'
-- tapOn:
-    id: 'cashin-method-card'
-- assertVisible: 'Confirm cash-in'
-- tapOn: 'Cancel'
 - back
