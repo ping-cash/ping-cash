@@ -1,0 +1,42 @@
+name: ASC Agreement Probe
+on: { workflow_dispatch: {} }
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os, base64, time, jwt, requests, json
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try: key = base64.b64decode(key_b64, validate=False)
+          except: key = key_b64.encode()
+          if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          token = jwt.encode({'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+                              'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+                             key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}'}
+          base = 'https://api.appstoreconnect.apple.com'
+          # Check most recent build attempts via betaBuildLocalizations
+          apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
+          app_id = apps['data'][0]['id']
+          # List the 5 most recent builds (any state) — even processing/rejected/expired
+          # The /v1/builds endpoint should return both VALID and INVALID/PROCESSING
+          r = requests.get(f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=10', headers=h).json()
+          print('Last 10 builds in ASC (any state):')
+          for b in r.get('data', []):
+              attrs = b.get('attributes', {})
+              print(f"  v{attrs.get('version')}: state={attrs.get('processingState')} expired={attrs.get('expired')} uploadedDate={attrs.get('uploadedDate')}")
+          # Check appStoreVersions / preReleaseVersions to see if pre-release queue has anything
+          print('\nPre-release versions:')
+          pr = requests.get(f'{base}/v1/preReleaseVersions?filter[app]={app_id}&sort=-version&limit=10', headers=h).json()
+          for v in pr.get('data', []):
+              a = v.get('attributes', {})
+              print(f"  version={a.get('version')} platform={a.get('platform')}")
+          PY
