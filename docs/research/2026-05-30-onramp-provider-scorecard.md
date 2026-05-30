@@ -96,6 +96,62 @@ Founder supplied a Gemini-generated comparison table. Cross-checked against veri
 
 ---
 
+## Multi-LLM cross-validation findings (2026-05-30 15:30Z)
+
+Founder ran the scorecard past Gemini + ChatGPT for independent validation. Both surfaced real issues my analysis missed. Synthesis:
+
+### Adopted from Gemini
+
+1. **MCC 6051 blocking on Omani local cards is REAL.** Omani banks (Bank Muscat, Bank Dhofar, NBO) routinely block transactions categorized as MCC 6051 (Quasi-Cash / Crypto) under CBO guidance. The "Banxa Oman ✓" score reflected Banxa's published country list but ignored bank-side acceptance. Housemaid using local Omani debit card faces high rejection rate. Same applies to all on-ramps with Oman listed — class problem, not Banxa-specific. **Score caveat added to Banxa + Mercuryo: Oman support is "country-listed" not "card-accept-rate-verified".**
+
+2. **Apple Pay inherits card MCC routing.** Native Apple Pay support means nothing if the underlying card is upstream-blocked. Mercuryo's native Apple Pay 23-currency advantage is qualified by the same MCC issue.
+
+### Rejected from Gemini
+
+1. **"Alchemy Pay should be #1 for Oman corridor"** — PayBy and BotIM Pay are UAE-specific e-wallets, not accessible to Oman residents. For Oman corridor, Alchemy Pay is identical to or worse than Banxa.
+
+2. **"Stripe Crypto Onramp expanding in GCC"** — speculation about future. USDC-Solana not in EU is verified blocker today.
+
+### Adopted from ChatGPT
+
+1. **"Paybis cannot be top-ranked if Solana delivery is UNVERIFIED."** Hard gate, not a scoring axis. **Paybis demoted out of top tier until verified.**
+
+2. **MULTI-PROVIDER ROUTER architecture, not single-provider integration.** Phantom's onramp picker is exactly this: route at runtime by country × payment method × historical success rate. This sharpens ADR 0024 §Method-3 from "pick one card provider" to "router across multiple." **Architectural adoption — pending ADR 0025 draft.**
+
+3. **"Validate Banxa native Solana USDC → Privy with no custody handoff"** — concrete sandbox technical verification needed. Some on-ramps deliver to their own custodial wallet first; user must withdraw separately. Make-or-break for ADR 0001 non-custodial promise. **Verification task filed.**
+
+### Rejected from ChatGPT
+
+1. **"MoonPay scored too low because conversion matters more than fees"** — true for mature funnel with existing users. Ping is a brand-new Phase-1 product where transaction margin IS the value prop. For Day-1 launch, 4.5% vs 1.99% Banxa is material. For mainnet scale, ChatGPT's point lands; demote MoonPay re-evaluation to post-launch.
+
+### Synthesized re-ranking
+
+| Tier                               | Provider                                                                                          | Action                                                                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| T1 ship now (sandbox, no CR)       | **Banxa + Transak + Alchemy Pay**                                                                 | Build all three adapters in parallel. Banxa for global card, Transak for India UPI + sandbox-first, Alchemy Pay for UAE PayBy/BotIM Pay |
+| T2 add after CR                    | **Mercuryo + MoonPay**                                                                            | Mercuryo: Oman redundancy + Apple Pay 23 ccy. MoonPay: conversion-optimized at scale                                                    |
+| T3 gate-verify                     | **Paybis**                                                                                        | Email `partners@paybis.com`; if Solana delivery confirmed → reconsider                                                                  |
+| T4 reject (verified hard blockers) | Stripe, Coinbase, Ramp, Onramper, Robinhood, Wert, Sardine, Kado, Mt Pelerin, Topper, Circle Mint | Unchanged                                                                                                                               |
+
+### Corridor reality — Oman is genuinely harder than my Banxa score showed
+
+For Omani local-bank-issued cards, ALL on-ramps face MCC 6051 rejection. Universal mitigations:
+
+1. **Apple Pay tied to international-issued card** (e.g., Visa from FAB UAE) — bypasses local MCC routing
+2. **Open banking** (Lean when Oman lands per ADR 0024)
+3. **Direct USDC receive** (Method 1 per ADR 0024) — no on-ramp at all, no MCC exposure, no fee
+4. **UAE employer / friend fronts the OMR conversion** — pragmatic for housemaid corridor in practice
+
+**Method 1 (direct USDC receive) needs first-class architectural status, not "nice to have" status, for Oman residents.**
+
+### Three verifications dominating everything else
+
+1. **Banxa sandbox: Solana USDC → Privy address direct delivery** (ChatGPT's unknown). Write sandbox test, complete buy, verify USDC lands at partner Privy address without custody handoff.
+2. **Banxa: MCC routing code** (Gemini's unknown). Sales question: MCC 6051 vs other code.
+3. **Paybis: Solana USDC delivery** (both LLMs agree). Email `partners@paybis.com`.
+
+---
+
 ## Critical findings
 
 ### 1. Only TWO providers have verified Oman support across the entire 16-provider universe
