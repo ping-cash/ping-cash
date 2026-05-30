@@ -12,6 +12,13 @@ import type { SendIntent } from '@ping/types';
  * 1. Environment variable (production)
  * 2. Expo Constants extra field
  * 3. Default fallback for development
+ *
+ * Build 2026-05-30 03:00Z — ships all evening fixes (Maestro testID
+ * hardening, iOS cert-revoke broaden, live FX preview on Send, vault tab
+ * pull-to-refresh, home greeting first-name, WhatsApp share pair, push
+ * token clear-on-logout, notification prefs AsyncStorage persistence,
+ * cashin header reflects 4 live on-ramps, Stripe TEST → on-chain credit
+ * chain wired end-to-end via /notify/webhooks/stripe).
  */
 
 // Determine the base URL based on environment
