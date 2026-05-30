@@ -89,3 +89,12 @@ programs/*/Cargo.lock
 
 # Solana program deploy keypairs (private — never commit)
 /programs/.devnet-keys/
+alchemy-*.png
+moonpay-*.png
+onramper-*.png
+
+# Root-level screenshots from local Playwright probes — keep in .playwright-mcp/ only
+/alchemy-*.png
+/moonpay-*.png
+/onramper-*.png
+/transfi-*.png

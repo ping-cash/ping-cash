@@ -361,6 +361,57 @@ export async function notifyRoutes(fastify: FastifyInstance) {
         'Onramper transaction_completed — USDC delivered'
       );
 
+      // SANDBOX-MODE auto-fund: Onramper sandbox doesn't actually
+      // transfer USDC on-chain — it returns a synthetic success. For
+      // the e2e DoD walk on devnet without production KYB, we trigger
+      // a treasury → user-wallet on-chain credit, matching the
+      // OTP_TEST_PHONES pattern. Detect sandbox via the API base URL
+      // containing 'stg'; production swaps to api.onramper.com.
+      // [[feedback_test_phone_bypass_pattern]] applies.
+      const isSandbox = (process.env.ONRAMPER_API_BASE_URL ?? '').includes(
+        'stg'
+      );
+      const recipient = tx.walletAddress;
+      if (isSandbox && recipient) {
+        const internalSecret = process.env.INTERNAL_SERVICE_SECRET ?? '';
+        const walletSvc =
+          process.env.WALLET_SERVICE_URL ??
+          'http://wallet-service.ping.svc.cluster.local';
+        try {
+          const res = await fetch(
+            `${walletSvc}/wallet/internal/fund-new-wallet`,
+            {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+                'x-internal-secret': internalSecret,
+              },
+              body: JSON.stringify({ recipientAddress: recipient }),
+            }
+          );
+          const json = (await res.json()) as {
+            funded?: boolean;
+            txSignature?: string;
+            reason?: string;
+          };
+          request.log.info(
+            {
+              recipient,
+              userId,
+              funded: json.funded,
+              txSignature: json.txSignature ?? null,
+              reason: json.reason ?? null,
+            },
+            'Onramper sandbox → treasury auto-fund dispatched'
+          );
+        } catch (err) {
+          request.log.error(
+            { recipient, err: (err as Error).message },
+            'Onramper sandbox → treasury fund failed (non-fatal)'
+          );
+        }
+      }
+
       // Best-effort push notification ("Your USDC just landed"). Skip
       // gracefully if no userId or no push token on file. Uses
       // CASHIN_COMPLETED template (follow-up: register the template in

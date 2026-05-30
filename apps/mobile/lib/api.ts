@@ -178,17 +178,20 @@ class ApiClient {
     });
   }
 
-  // Stripe cash-in (#88). Backend returns a PaymentIntent clientSecret
-  // the @stripe/stripe-react-native PaymentSheet consumes. In stub mode
-  // (STRIPE_SECRET_KEY unset on wallet-service) returns a synthetic
-  // clientSecret + isLive:false so the mobile UI walk doesn't crash.
+  // Cash-in via Onramper aggregator (ADR 0026). Backend returns a
+  // signed buy.onramper.com URL the mobile launches in a WebView /
+  // in-app browser. Topper-on-Base is the production default; sandbox
+  // returns Guardarian/Coinify as the test ramps.
+  // In stub mode (ONRAMPER_API_KEY unset) returns synthetic checkoutUrl
+  // + isLive:false so the mobile UI walk doesn't crash.
   async buildCashinIntent(
     amountUsd: string,
-    method: 'apple_pay' | 'card' | 'ach'
+    method: 'apple_pay' | 'card' | 'ach' | 'google_pay',
+    opts?: { email?: string; country?: string }
   ): Promise<CashinIntent> {
     return this.request('/wallet/cashin/intent', {
       method: 'POST',
-      body: JSON.stringify({ amountUsd, method }),
+      body: JSON.stringify({ amountUsd, method, ...opts }),
     });
   }
 
@@ -326,12 +329,19 @@ export interface VaultPosition {
 }
 
 export interface CashinIntent {
-  clientSecret: string;
+  /** Signed buy.onramper.com URL — launch in WebView / in-app browser */
+  checkoutUrl: string;
+  /** Fiat amount in minor units (cents for USD) */
   amount: number;
+  /** Always 'USD' per ADR 0026 (bank handles user's local FX) */
   currency: string;
-  publishableKey: string;
-  ephemeralKey?: string;
-  customerId?: string;
+  /** Expected USDC delivered at quote time (e.g., 98.38 for $100) */
+  expectedUsdcAmount: number;
+  /** Underlying ramp picked by Onramper (e.g., 'topper') */
+  provider: string;
+  /** Ping's fee % — bank FX is separate, disclosed in UX */
+  feePercent: number;
+  /** True for live Onramper; false in stub mode */
   isLive: boolean;
 }
 
