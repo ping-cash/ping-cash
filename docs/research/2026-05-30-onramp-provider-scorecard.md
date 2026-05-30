@@ -8,7 +8,7 @@
 
 ---
 
-## Universe surveyed — 16 providers
+## Universe surveyed — 17 providers (+1 added 15:15Z)
 
 ### Founder-named 6 (Agent C)
 
@@ -17,6 +17,10 @@ MoonPay, Transak, Stripe Crypto Onramp, Coinbase Onramp, Banxa, Onramper
 ### Other major players (Agent D — kept after filter pass)
 
 Ramp Network, Mercuryo, Alchemy Pay, Kado, Wert, Sardine, Paybis, Topper (Uphold), Robinhood Connect, Mt Pelerin
+
+### Added 15:15Z post-Gemini cross-reference
+
+**Circle (Circle Mint)** — added after Gemini suggested its inclusion. Direct verification via `developers.circle.com/circle-mint` confirms Circle Mint is **institutional-only** ("for exchanges, institutional traders, wallet providers, banks, and consumer-app companies") and does NOT offer an end-user card → USDC → user-wallet flow. Including for completeness with explicit DOA verdict — see scoring row + verdict below.
 
 ### Dropped as marginal/no-wallet-picker-presence
 
@@ -39,37 +43,56 @@ Simplex (Nuvei subsidiary), Guardarian, Switchere, Bridge.xyz (Stripe-acquired O
 
 ## Merged scorecard — all 16 providers ranked
 
-| Rank | Provider             | Oman support           | Solana USDC                  | Card fee                | Apple Pay              | No-CR sandbox | Total /800 |
-| ---- | -------------------- | ---------------------- | ---------------------------- | ----------------------- | ---------------------- | ------------- | ---------- |
-| 1    | **Paybis**           | UNVERIFIED             | **UNVERIFIED**               | from 0.49% tiered       | ✓                      | 70            | **580**    |
-| 2    | **Banxa**            | ✓ verbatim             | ✓                            | 1.99% flat              | ✓ worldwide            | 90            | **570**    |
-| 3    | Mt Pelerin           | UNVERIFIED             | ✓                            | 1.5% card / free SEPA   | UNVERIFIED             | 80            | 530        |
-| 4    | Ramp Network         | ✗ **NOT supported**    | ✓                            | ~2.9%                   | ✓                      | 40            | 515        |
-| 5    | Kado                 | UNVERIFIED             | ✓ native                     | 0.5-2.9%                | ✓                      | 50            | 515        |
-| 6    | Alchemy Pay          | UAE ✓, Oman UNV        | ✓                            | UNVERIFIED              | ✓                      | 30            | 510        |
-| 7    | **Mercuryo**         | ✓ verbatim             | ✓                            | 3.95%                   | ✓ native 23 currencies | 30            | 500        |
-| 8    | Topper (Uphold)      | UNVERIFIED             | ✓                            | UNVERIFIED              | ✓                      | 50            | 475        |
-| 9    | **Transak**          | UNVERIFIED             | ✓                            | 1-3%                    | ✓                      | **95**        | 475        |
-| 10   | Onramper             | UNVERIFIED             | ✓ (passthrough)              | passthrough             | ✗ sandbox-blocked      | 85            | 475        |
-| 11   | MoonPay              | UNVERIFIED             | ✓                            | 4.5% Visa               | ✓ all regions          | 50            | 460        |
-| 12   | Wert                 | UNVERIFIED             | ✓                            | custom $1 floor + %     | ✓                      | 50            | 415        |
-| 13   | Sardine              | UNVERIFIED             | ✓                            | UNVERIFIED              | UNVERIFIED             | 30            | 415        |
-| 14   | Robinhood Connect    | ✗ US-only              | ✓                            | low (Robinhood absorbs) | ✗ debit only           | 0             | 350        |
-| 15   | Coinbase Onramp      | UNVERIFIED             | ✓ (NOT in zero-fee tier)     | 2.5% CC / 0.5% ACH      | ✓ (US $500/wk)         | 40            | 315        |
-| 16   | Stripe Crypto Onramp | ✗ Stripe-Oman incompat | ✓ in US only — **NOT in EU** | UNVERIFIED              | ✓                      | 5             | 270        |
+| Rank | Provider             | Oman support                    | Solana USDC                                      | Card fee                           | Apple Pay              | No-CR sandbox | Total /800                |
+| ---- | -------------------- | ------------------------------- | ------------------------------------------------ | ---------------------------------- | ---------------------- | ------------- | ------------------------- |
+| 1    | **Paybis**           | UNVERIFIED                      | **UNVERIFIED**                                   | from 0.49% tiered                  | ✓                      | 70            | **580**                   |
+| 2    | **Banxa**            | ✓ verbatim                      | ✓                                                | 1.99% flat                         | ✓ worldwide            | 90            | **570**                   |
+| 3    | Mt Pelerin           | UNVERIFIED                      | ✓                                                | 1.5% card / free SEPA              | UNVERIFIED             | 80            | 530                       |
+| 4    | Ramp Network         | ✗ **NOT supported**             | ✓                                                | ~2.9%                              | ✓                      | 40            | 515                       |
+| 5    | Kado                 | UNVERIFIED                      | ✓ native                                         | 0.5-2.9%                           | ✓                      | 50            | 515                       |
+| 6    | Alchemy Pay          | UAE ✓, Oman UNV                 | ✓                                                | UNVERIFIED                         | ✓                      | 30            | 510                       |
+| 7    | **Mercuryo**         | ✓ verbatim                      | ✓                                                | 3.95%                              | ✓ native 23 currencies | 30            | 500                       |
+| 8    | Topper (Uphold)      | UNVERIFIED                      | ✓                                                | UNVERIFIED                         | ✓                      | 50            | 475                       |
+| 9    | **Transak**          | UNVERIFIED                      | ✓                                                | 1-3%                               | ✓                      | **95**        | 475                       |
+| 10   | Onramper             | UNVERIFIED                      | ✓ (passthrough)                                  | passthrough                        | ✗ sandbox-blocked      | 85            | 475                       |
+| 11   | MoonPay              | UNVERIFIED                      | ✓                                                | 4.5% Visa                          | ✓ all regions          | 50            | 460                       |
+| 12   | Wert                 | UNVERIFIED                      | ✓                                                | custom $1 floor + %                | ✓                      | 50            | 415                       |
+| 13   | Sardine              | UNVERIFIED                      | ✓                                                | UNVERIFIED                         | UNVERIFIED             | 30            | 415                       |
+| 14   | Robinhood Connect    | ✗ US-only                       | ✓                                                | low (Robinhood absorbs)            | ✗ debit only           | 0             | 350                       |
+| 15   | Coinbase Onramp      | UNVERIFIED                      | ✓ (NOT in zero-fee tier)                         | 2.5% CC / 0.5% ACH                 | ✓ (US $500/wk)         | 40            | 315                       |
+| 16   | Stripe Crypto Onramp | ✗ Stripe-Oman incompat          | ✓ in US only — **NOT in EU**                     | UNVERIFIED                         | ✓                      | 5             | 270                       |
+| 17   | **Circle Mint**      | UNVERIFIED (institutional only) | ✓ (B2B to Ping's wallet, NOT to end-user wallet) | n/a — no end-user card flow exists | n/a                    | 0             | n/a — wrong product shape |
 
 ---
 
 ## Verified hard blockers (DOA for Ping)
 
-| Provider                 | Blocker                                                                                                                     | Source                                                                                                                |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Ramp Network**         | Oman, UAE, KSA **all explicitly unsupported**                                                                               | `support.rampnetwork.com/en/articles/433-which-countries-and-us-states-are-unsupported-for-buying-and-selling-crypto` |
-| **Stripe Crypto Onramp** | USDC-Solana **NOT supported in EU**; effectively US-only product                                                            | `docs.stripe.com/crypto/onramp`                                                                                       |
-| **Coinbase Onramp**      | Zero-fee USDC is **Base-only, NOT Solana** — Solana pays full 2.5% CC / 0.5% ACH                                            | `coinbase.com/developer-platform/discover/launches/zero-fee-usdc`                                                     |
-| **Onramper**             | "You must have a registered legal entity that is already incorporated" verbatim + Apple Pay **cannot be tested in sandbox** | `docs.onramper.com/docs/step-by-step-guide`, `docs.onramper.com/docs/testing-overview`                                |
-| **Robinhood Connect**    | US-only                                                                                                                     | `robinhood.com/us/en/on-ramp/`                                                                                        |
-| **Wert, Sardine**        | No public pricing — custom contracts only                                                                                   | `wert.io/pricing`, `docs.payments.sardine.ai/overview/pricing`                                                        |
+| Provider                 | Blocker                                                                                                                                                                                                                                                                                                                                                                                               | Source                                                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Ramp Network**         | Oman, UAE, KSA **all explicitly unsupported**                                                                                                                                                                                                                                                                                                                                                         | `support.rampnetwork.com/en/articles/433-which-countries-and-us-states-are-unsupported-for-buying-and-selling-crypto` |
+| **Stripe Crypto Onramp** | USDC-Solana **NOT supported in EU**; effectively US-only product                                                                                                                                                                                                                                                                                                                                      | `docs.stripe.com/crypto/onramp`                                                                                       |
+| **Coinbase Onramp**      | Zero-fee USDC is **Base-only, NOT Solana** — Solana pays full 2.5% CC / 0.5% ACH                                                                                                                                                                                                                                                                                                                      | `coinbase.com/developer-platform/discover/launches/zero-fee-usdc`                                                     |
+| **Onramper**             | "You must have a registered legal entity that is already incorporated" verbatim + Apple Pay **cannot be tested in sandbox**                                                                                                                                                                                                                                                                           | `docs.onramper.com/docs/step-by-step-guide`, `docs.onramper.com/docs/testing-overview`                                |
+| **Robinhood Connect**    | US-only                                                                                                                                                                                                                                                                                                                                                                                               | `robinhood.com/us/en/on-ramp/`                                                                                        |
+| **Wert, Sardine**        | No public pricing — custom contracts only                                                                                                                                                                                                                                                                                                                                                             | `wert.io/pricing`, `docs.payments.sardine.ai/overview/pricing`                                                        |
+| **Circle Mint**          | Institutional-only ("for exchanges, institutional traders, wallet providers, banks, and consumer-app companies") — **does NOT offer end-user card → USDC → user-wallet flow**. Using Circle Mint puts Ping in the fiat money flow (Ping wires fiat → Circle credits USDC to Ping → Ping distributes to users) = MoR + PCI scope + money transmitter implications — exactly what ADR 0001/0024 reject. | `developers.circle.com/circle-mint`                                                                                   |
+
+---
+
+## Gemini cross-reference (founder-provided table, 2026-05-30 15:10Z)
+
+Founder supplied a Gemini-generated comparison table. Cross-checked against verified data:
+
+| Gemini's claim                                     | Verification verdict                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Circle API ~1.9-2.9% direct interchange**        | **WRONG for Ping's use case.** Circle Mint is B2B institutional; there is no Circle product that takes an end-user's card and delivers USDC to that user's wallet. Gemini's number conflates Circle Mint's institutional wire-in fees with end-user card processing that doesn't exist as a Circle product. Adopting it would require Ping to build its OWN card acquiring (PCI DSS + MoR + money transmitter) — rejected per ADR 0001/0024. |
+| **Sardine ~2.5-2.9% with $1.00 min**               | **UNVERIFIED on Sardine's own pages.** `docs.payments.sardine.ai/overview/pricing` discloses no public pricing. Gemini's figure may be sourced from third-party press or speculation — Sardine's own materials say custom contracts only.                                                                                                                                                                                                    |
+| **Ramp Network ~2.9% + $2.49 min**                 | Partially verified. Card fee 2.9% matches my data. Min $2.49 UNVERIFIED on Ramp's own pages but plausible per their tiered pricing. Note: **Ramp is DOA for Ping** because Oman/UAE/KSA all explicitly unsupported per their support article — Gemini's table doesn't surface this.                                                                                                                                                          |
+| **Transak ~2.9-3.5% + $2-3 min**                   | Partially verified. Transak's own support article cites 1-3% card fees (broader range than Gemini). Flat min $2-3 UNVERIFIED on Transak's pricing FAQ. Note: my data has Transak at "1-3%" per `support.transak.com/en/articles/7846060` — Gemini's "2.9-3.5%" likely reflects higher-tier card-network surcharges.                                                                                                                          |
+| **Stripe Onramp ~1.5% + standard ~3.5-3.9% total** | Plausible interpretation. Stripe Onramp pricing is sales-quoted; my data only had one case-study example ($1.28 on $100 ≈ 1.28%). Gemini's "1.5% + standard" likely refers to Stripe Onramp's margin + underlying Stripe card processing combined. Note: **Stripe Onramp is DOA for Ping** because USDC-Solana NOT supported in EU — Gemini's table doesn't surface this either.                                                             |
+| **MoonPay ~4.5% + $3.99-4.99 min**                 | Verified. 4.5% matches my data per `moonpay.com/buy`. Min flat $3.99-4.99 plausible from MoonPay's published rates.                                                                                                                                                                                                                                                                                                                          |
+
+**Net add from Gemini's row:** zero net additions. Circle is DOA for Ping (wrong product shape). All other rows either match my verified data or surface UNVERIFIED-against-vendor-docs claims that don't change the ranking.
 
 ---
 
