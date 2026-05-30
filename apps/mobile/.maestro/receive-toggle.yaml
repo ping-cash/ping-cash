@@ -6,20 +6,13 @@
 #   - USDC/USDT warning visible
 appId: cash.ping.app
 ---
-# Prior sub-flow 04-send-screen.yaml ends on the /send stack screen
-# (no tab bar visible — tab-Home is not in the AX tree from a stack
-# screen). Pop the stack first with `back` so we're on (tabs) layout,
-# then tab-Home is available.
-- back
-- back
-- tapOn:
-    id: 'tab-Home'
+# Per 00-all.yaml ordering this runs immediately after 03-tabs.yaml
+# which ends with tap tab-Home — so we're already on the home tab.
+# ActionTile component on home sets testID=`btn-${label}`.
 - extendedWaitUntil:
     visible:
       id: 'btn-Send'
     timeout: 8000
-# Home tab has 4 fast-actions: Send, Receive, Add money, Swap.
-# ActionTile component sets testID=`btn-${label}`.
 - tapOn:
     id: 'btn-Receive'
 - extendedWaitUntil:

@@ -6,10 +6,7 @@
 #   - Confirm button reachable
 appId: cash.ping.app
 ---
-- back
-- back
-- tapOn:
-    id: 'tab-Home'
+# cashin-screen.yaml ends with `back` returning to home tab.
 - extendedWaitUntil:
     visible:
       id: 'btn-Send'

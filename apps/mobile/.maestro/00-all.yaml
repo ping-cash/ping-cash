@@ -17,11 +17,16 @@ appId: cash.ping.app
 - runFlow: 01-launch.yaml
 - runFlow: 02-signin.yaml
 - runFlow: 03-tabs.yaml
-- runFlow: 04-send-screen.yaml
 # DoD enrichment 2026-05-30 19:30Z — comprehensive devnet coverage.
 # Each subflow exercises one founder-DoD surface; failure on any flow
 # fails the build per the iOS workflow's set -euo pipefail.
+#
+# Ordering matters: 03-tabs.yaml ends with tap tab-Home (home visible);
+# 04-send-screen.yaml leaves us on the /send stack (no tab bar). New
+# enrichment flows assume home-tab state at entry, so they run BEFORE
+# 04-send-screen.yaml. Each new flow ends with `back` to return to home.
 - runFlow: receive-toggle.yaml
 - runFlow: cashin-screen.yaml
 - runFlow: swap-screen.yaml
 - runFlow: vault-screen.yaml
+- runFlow: 04-send-screen.yaml
