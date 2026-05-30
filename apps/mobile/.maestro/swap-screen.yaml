@@ -6,12 +6,11 @@
 #   - Confirm button reachable
 appId: cash.ping.app
 ---
-- runFlow:
-    when:
-      visible: 'Swap'
-    commands:
-      - tapOn: 'Swap'
-- assertVisible: 'USDC'
+- tapOn:
+    id: 'btn-Swap'
+- extendedWaitUntil:
+    visible: 'USDC'
+    timeout: 8000
 - inputText: '0.5'
 - hideKeyboard
 - back

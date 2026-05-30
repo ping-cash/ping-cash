@@ -10,13 +10,12 @@
 #   - Tap card → fee disclosure alert appears
 appId: cash.ping.app
 ---
-- runFlow:
-    when:
-      visible: 'Add money'
-    commands:
-      - tapOn: 'Add money'
-- assertVisible:
-    id: 'cashin-amount-input'
+- tapOn:
+    id: 'btn-Add money'
+- extendedWaitUntil:
+    visible:
+      id: 'cashin-amount-input'
+    timeout: 8000
 - tapOn:
     id: 'cashin-amount-input'
 - eraseText

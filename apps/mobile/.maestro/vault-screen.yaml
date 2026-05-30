@@ -6,11 +6,10 @@
 #   - Auto-stake toggle present
 appId: cash.ping.app
 ---
-- runFlow:
-    when:
-      visible: 'Vault'
-    commands:
-      - tapOn: 'Vault'
-- assertVisible: 'Your stake'
+- tapOn:
+    id: 'tab-Earn'
+- extendedWaitUntil:
+    visible: 'Your stake'
+    timeout: 8000
 - assertVisible: 'Auto-stake'
 - back

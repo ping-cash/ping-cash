@@ -6,19 +6,14 @@
 #   - USDC/USDT warning visible
 appId: cash.ping.app
 ---
-# Reach Receive — typically nested under a tab/menu; try common paths
-- runFlow:
-    when:
-      visible: 'Receive money'
-    commands:
-      - tapOn: 'Receive money'
-- runFlow:
-    when:
-      visible: 'Receive'
-    commands:
-      - tapOn: 'Receive'
-- assertVisible:
-    id: 'receive-mode-phone'
+# Home tab has 4 fast-actions: Send, Receive, Add money, Swap.
+# Button component auto-sets testID=`btn-${label}` per 03-tabs.yaml comment.
+- tapOn:
+    id: 'btn-Receive'
+- extendedWaitUntil:
+    visible:
+      id: 'receive-mode-phone'
+    timeout: 8000
 - tapOn:
     id: 'receive-mode-wallet'
 - assertVisible:
