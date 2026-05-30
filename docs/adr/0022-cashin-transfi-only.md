@@ -43,21 +43,37 @@ Ping does not appear in any card-network agreement, payment-processor agreement,
 
 ### Coverage at launch
 
-TransFi covers 140+ countries with geo-aware rail selection. At Phase-1 launch:
+**AMENDED 2026-05-30 13:35Z** — original fee table was sourced from TransFi marketing blogs. Live API sweep (`docs/research/2026-05-30-transfi-api-sweep.md`) replaces marketing claims with verified rail support per currency. **TransFi's actual MENA coverage is UAE-only.** All other GCC + Egypt + Turkey + India are blocked at the API level (`Invalid Currency` / `Currency Not Configured`).
 
-| Region | Primary rail user sees             | Rough effective fee |
-| ------ | ---------------------------------- | ------------------- |
-| AE     | FAB IBAN bank transfer / MADA card | ~1-2%               |
-| KSA    | MADA card / bank transfer          | ~2%                 |
-| EG     | Fawry / bank transfer              | ~2%                 |
-| PH     | GCash / Maya / bank                | ~2%                 |
-| IN     | UPI / IMPS                         | ~1-2%               |
-| PK     | JazzCash / EasyPaisa               | ~2%                 |
-| TR     | IBAN                               | ~1%                 |
-| US     | ACH / card                         | $0.50-3%            |
-| EU     | SEPA / card                        | ~1-3%               |
+**Cash-IN currencies verified live (22, all via local rail — no Visa/Mastercard):**
 
-User pays TransFi directly; Ping has zero direct cost on cash-in.
+| Currency                                    | Local rail (bypass mechanism)                  | Status |
+| ------------------------------------------- | ---------------------------------------------- | ------ |
+| **AED** (UAE)                               | `bank_transfer` (NI/Magnati/AANI IBAN backend) | ✓      |
+| **EUR** (EU)                                | SEPA pull + SEPA bank + SEPA bank VA           | ✓      |
+| **PHP** (Philippines)                       | BDO/BPI/Landbank + GCash + GrabPay             | ✓      |
+| **IDR, MYR, THB, VND, PKR, BDT** (SE Asia)  | Local bank + e-wallet rails                    | ✓      |
+| **KES, GHS, UGX, TZS, XOF, XAF** (Africa)   | M-Pesa / Airtel / MTN / Orange mobile money    | ✓      |
+| **BRL** (Brazil)                            | PIX (central bank instant — effectively free)  | ✓      |
+| **MXN, ARS, COP, CLP, PEN** (Latin America) | SPEI + local bank rails                        | ✓      |
+| **AUD** (Australia)                         | PayID/NPP                                      | ✓      |
+
+**Cash-IN BLOCKED at API level (currencies returned `Invalid Currency` or `Currency Not Configured`):**
+
+| Currency                    | Status                                                                 | Implication for Ping                                                      |
+| --------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **OMR** (Oman)              | `Invalid Currency`                                                     | Founder's primary corridor BLOCKED — needs second provider (see ADR 0023) |
+| **SAR** (KSA)               | `Invalid Currency`                                                     | KSA sender corridor BLOCKED                                               |
+| **QAR, KWD, BHD, JOD, ILS** | `Invalid Currency`                                                     | All GCC ex-UAE blocked                                                    |
+| **EGP** (Egypt)             | `Currency Not Configured`                                              | Despite Fawry blog claims                                                 |
+| **TRY** (Turkey)            | `Invalid Currency`                                                     | BKM not integrated                                                        |
+| **INR** (India)             | `Invalid Currency` for cash-in, `Currency Not Configured` for cash-out | India corridor blocked both directions; UPI not integrated                |
+| **USD**                     | `No payment methods available`                                         | No ACH rail despite US in country list                                    |
+| **GBP**                     | `Currency Not Configured`                                              | No UK Faster Payments                                                     |
+
+**Cash-OUT (withdraw) coverage:** broadly similar (22 currencies) — PHP/IDR/MYR/THB/VND/BDT/KES/GHS/ZAR/TZS/BRL/MXN/ARS/COP/CLP/PEN/CNY/XOF/XAF + EUR/AED + NGN added. Notable: **PKR cash-out is BLOCKED** (`No payment methods available`) even though PKR cash-in works — Pakistan recipients cannot be paid out via TransFi.
+
+User pays TransFi directly; Ping has zero direct cost on cash-in. Effective fee per rail is sales-quoted (not in public docs); expected range 0.5-2% for local-rail cash-in based on industry refs.
 
 ### What is explicitly NOT in scope at launch
 
