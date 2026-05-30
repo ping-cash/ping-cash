@@ -18,3 +18,10 @@ appId: cash.ping.app
 - runFlow: 02-signin.yaml
 - runFlow: 03-tabs.yaml
 - runFlow: 04-send-screen.yaml
+# DoD enrichment 2026-05-30 19:30Z — comprehensive devnet coverage.
+# Each subflow exercises one founder-DoD surface; failure on any flow
+# fails the build per the iOS workflow's set -euo pipefail.
+- runFlow: receive-toggle.yaml
+- runFlow: cashin-screen.yaml
+- runFlow: swap-screen.yaml
+- runFlow: vault-screen.yaml

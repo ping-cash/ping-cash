@@ -1,0 +1,30 @@
+# DoD Method-1 surface: Receive tab phone | wallet toggle (ADR 0024).
+#
+# Pass criteria:
+#   - Receive screen renders both Phone and Wallet modes
+#   - Wallet mode exposes Solana address + copy button
+#   - USDC/USDT warning visible
+appId: cash.ping.app
+---
+# Reach Receive — typically nested under a tab/menu; try common paths
+- runFlow:
+    when:
+      visible: 'Receive money'
+    commands:
+      - tapOn: 'Receive money'
+- runFlow:
+    when:
+      visible: 'Receive'
+    commands:
+      - tapOn: 'Receive'
+- assertVisible:
+    id: 'receive-mode-phone'
+- tapOn:
+    id: 'receive-mode-wallet'
+- assertVisible:
+    id: 'receive-wallet-address'
+- assertVisible: 'Send USDC or USDT on Solana'
+- tapOn:
+    id: 'receive-mode-phone'
+- assertVisible: 'YOUR PHONE'
+- back

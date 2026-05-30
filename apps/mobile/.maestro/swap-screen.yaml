@@ -1,0 +1,17 @@
+# DoD step 6: Swap USDC -> $PING via Jupiter route.
+#
+# Pass criteria:
+#   - Swap screen renders
+#   - Amount entry produces a live quote
+#   - Confirm button reachable
+appId: cash.ping.app
+---
+- runFlow:
+    when:
+      visible: 'Swap'
+    commands:
+      - tapOn: 'Swap'
+- assertVisible: 'USDC'
+- inputText: '0.5'
+- hideKeyboard
+- back

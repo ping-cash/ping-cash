@@ -1,0 +1,35 @@
+# DoD step 2: Cash-in via Onramper (ADR 0026). The Onramper widget runs
+# in expo-web-browser external context — Maestro can't drive it. So we
+# verify the pre-launch surface: amount entry + method tile + fee
+# disclosure. The /webhooks/onramper sandbox branch completes the
+# on-chain credit when synthetic checkout returns.
+#
+# Pass criteria:
+#   - Amount input accepts numeric
+#   - 3 method tiles render (Apple Pay, Card, Google Pay)
+#   - Tap card → fee disclosure alert appears
+appId: cash.ping.app
+---
+- runFlow:
+    when:
+      visible: 'Add money'
+    commands:
+      - tapOn: 'Add money'
+- assertVisible:
+    id: 'cashin-amount-input'
+- tapOn:
+    id: 'cashin-amount-input'
+- eraseText
+- inputText: '25'
+- hideKeyboard
+- assertVisible:
+    id: 'cashin-method-card'
+- assertVisible:
+    id: 'cashin-method-apple_pay'
+- assertVisible:
+    id: 'cashin-method-google_pay'
+- tapOn:
+    id: 'cashin-method-card'
+- assertVisible: 'Confirm cash-in'
+- tapOn: 'Cancel'
+- back

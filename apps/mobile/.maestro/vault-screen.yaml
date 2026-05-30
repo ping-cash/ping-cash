@@ -1,0 +1,16 @@
+# DoD steps 8-9: Vault staking surface.
+#
+# Pass criteria:
+#   - Vault tab renders
+#   - Stake balance visible
+#   - Auto-stake toggle present
+appId: cash.ping.app
+---
+- runFlow:
+    when:
+      visible: 'Vault'
+    commands:
+      - tapOn: 'Vault'
+- assertVisible: 'Your stake'
+- assertVisible: 'Auto-stake'
+- back
