@@ -1,147 +1,103 @@
 /**
- * Cash-in payment intent builder — Stripe PaymentSheet integration.
+ * Cash-in checkout builder — Onramper aggregator integration (ADR 0026).
  *
- * Mobile /cashin screen taps "Apple Pay" / "Debit/credit card" → calls
- * POST /wallet/cashin/intent with { amountUsd, method } → receives a
- * Stripe PaymentIntent clientSecret which the @stripe/stripe-react-native
- * PaymentSheet consumes. On confirm the funds settle into our Stripe
- * connected account; a separate ACH leg (out of scope here) sweeps them
- * onto the user's Solana wallet as USDC.
+ * Mobile /cashin screen taps "Pay with card" → calls
+ *   POST /wallet/cashin/intent with { amountUsd, walletAddress, userId, email? }
+ * → backend fetches best Onramper quote (Topper-via-Onramper-Base in prod)
+ * → backend builds a signed buy.onramper.com URL
+ * → mobile launches the URL in a WebView
  *
- * Until founder completes Stripe sign-up + the STRIPE_SECRET_KEY config
- * lands on openova-private, this service runs in stub mode and returns
- * a synthetic clientSecret so the mobile UI can still walk the sheet
- * during dev. The PaymentSheet will fail at confirm in stub mode —
- * that's the correct preview state.
+ * After payment completes, Onramper posts to /notify/webhooks/onramper
+ * which updates the ledger and pushes a notification to the user.
+ *
+ * Stub mode: when ONRAMPER_API_KEY is absent, returns a synthetic quote
+ * + unsigned widget URL so the mobile UI walk doesn't crash. PaymentSheet
+ * → equivalently this widget will not transact in stub mode.
+ *
+ * Per ADR 0026 §"What's IN scope": default destination = USDC on Base.
+ * Per ADR 0026 §"Per-step ownership": Ping discloses Ping fee ~1.62%
+ * to the user; bank FX is the user's bank's relationship.
  */
 import { loadConfig } from '@ping/config';
-import Stripe from 'stripe';
-import type { Stripe as StripeNS } from 'stripe';
 
-import { logger } from '../utils/logger';
+import {
+  fetchOnramperQuote,
+  buildOnramperCheckoutUrl,
+  type OnramperQuote,
+} from '../adapters/onramper.adapter';
 
-export type CashinMethod = 'apple_pay' | 'card' | 'ach';
+export type CashinMethod = 'apple_pay' | 'card' | 'ach' | 'google_pay';
 
 export interface CashinIntent {
-  clientSecret: string;
+  /** Signed Onramper widget URL — mobile launches this in WebView */
+  checkoutUrl: string;
+  /** Fiat amount in minor units (e.g., cents for USD) for ledger display */
   amount: number;
+  /** Fiat currency code (always 'USD' per ADR 0026 §"What's IN scope") */
   currency: string;
-  publishableKey: string;
-  ephemeralKey?: string;
-  customerId?: string;
-  /** True when the intent came from real Stripe; false in stub mode. */
+  /** Expected USDC delivered (best-quote payout at intent build time) */
+  expectedUsdcAmount: number;
+  /** Underlying ramp that gave the best quote (e.g., 'topper') */
+  provider: string;
+  /** Effective fee % shown to user — Ping's slice only, not bank FX */
+  feePercent: number;
+  /** True when intent is signed by real Onramper sandbox; false in stub */
   isLive: boolean;
 }
 
-let _stripe: StripeNS | null = null;
-
-function getClient(): StripeNS | null {
-  if (_stripe) return _stripe;
-  const config = loadConfig();
-  const secret = config.STRIPE_SECRET_KEY;
-  if (!secret) return null;
-  _stripe = new Stripe(secret, {
-    apiVersion: '2026-05-27.dahlia',
-    typescript: true,
-  });
-  return _stripe;
-}
-
-/**
- * Build a PaymentIntent for the given USD amount + cash-in method.
- * Returns clientSecret the mobile PaymentSheet consumes.
- *
- * In stub mode (STRIPE_SECRET_KEY unset) returns a synthetic clientSecret
- * so the mobile UI walk doesn't crash. PaymentSheet will fail at confirm
- * which is the right preview signal.
- */
 export async function buildCashinIntent(args: {
   amountUsd: string;
   method: CashinMethod;
   userId: string;
   recipientWallet: string;
+  email?: string;
+  country?: string;
 }): Promise<CashinIntent> {
   const config = loadConfig();
-  const amountCents = Math.round(parseFloat(args.amountUsd) * 100);
-  if (!Number.isFinite(amountCents) || amountCents <= 0) {
+  const amountUsd = parseFloat(args.amountUsd);
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
     throw new Error('Invalid amount');
   }
 
-  const publishableKey =
-    config.STRIPE_PUBLISHABLE_KEY ||
-    // Stripe's documented sample test publishable key — safe to ship in
-    // stub mode; it accepts no card details.
-    'pk_test_TYooMQauvdEDq54NiTphI7jx';
+  const crypto = config.ONRAMPER_DEFAULT_CRYPTO; // default 'usdc_base' per ADR 0026
+  const paymentMethodMap: Record<CashinMethod, string> = {
+    apple_pay: 'applepay',
+    google_pay: 'googlepay',
+    card: 'creditcard',
+    ach: 'banktransfer',
+  };
 
-  const client = getClient();
-  if (!client) {
-    logger.warn(
-      { method: args.method, amountUsd: args.amountUsd },
-      '[STUB MODE] Stripe key unset — returning synthetic clientSecret'
-    );
-    return {
-      clientSecret: `pi_stub_${Date.now()}_secret_stub`,
-      amount: amountCents,
-      currency: 'usd',
-      publishableKey,
-      isLive: false,
-    };
-  }
-
-  // Map our method to Stripe payment_method_types.
-  const paymentMethodTypes: string[] =
-    args.method === 'apple_pay'
-      ? ['card'] // Apple Pay is a wallet wrapper around card.
-      : args.method === 'ach'
-        ? ['us_bank_account']
-        : ['card'];
-
-  // Customer ephemeral key so the PaymentSheet can show saved methods.
-  const customer = await client.customers.create({
-    metadata: {
-      pingUserId: args.userId,
-      pingWallet: args.recipientWallet,
-    },
-  });
-  const ephemeral = await client.ephemeralKeys.create(
-    { customer: customer.id },
-    { apiVersion: '2026-05-27.dahlia' }
-  );
-
-  const intent = await client.paymentIntents.create({
-    amount: amountCents,
-    currency: 'usd',
-    customer: customer.id,
-    payment_method_types: paymentMethodTypes,
-    metadata: {
-      pingUserId: args.userId,
-      pingWallet: args.recipientWallet,
-      pingMethod: args.method,
-    },
-    description: `Ping cash-in via ${args.method}`,
+  const quote: OnramperQuote = await fetchOnramperQuote({
+    fiatCurrency: 'USD',
+    fiatAmount: amountUsd,
+    crypto,
+    country: args.country,
+    paymentMethod: paymentMethodMap[args.method],
   });
 
-  if (!intent.client_secret) {
-    throw new Error('Stripe returned a PaymentIntent without client_secret');
-  }
-
-  logger.info(
+  const checkout = buildOnramperCheckoutUrl(
     {
-      intentId: intent.id,
-      amountCents,
-      method: args.method,
-      customerId: customer.id,
+      fiatCurrency: 'USD',
+      fiatAmount: amountUsd,
+      crypto,
+      walletAddress: args.recipientWallet,
+      userId: args.userId,
+      email: args.email,
+      country: args.country,
     },
-    'Built Stripe PaymentIntent for cash-in'
+    quote
   );
+
+  const feePercent =
+    quote.payout > 0 ? ((amountUsd - quote.payout) / amountUsd) * 100 : 1.62; // ADR 0026 nominal
 
   return {
-    clientSecret: intent.client_secret,
-    amount: amountCents,
-    currency: 'usd',
-    publishableKey,
-    ephemeralKey: ephemeral.secret,
-    customerId: customer.id,
-    isLive: true,
+    checkoutUrl: checkout.checkoutUrl,
+    amount: Math.round(amountUsd * 100),
+    currency: 'USD',
+    expectedUsdcAmount: quote.payout,
+    provider: quote.ramp,
+    feePercent: Math.round(feePercent * 100) / 100,
+    isLive: quote.isLive && checkout.isLive,
   };
 }

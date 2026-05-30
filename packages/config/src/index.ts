@@ -67,6 +67,21 @@ const envSchema = z.object({
   TRANSFI_API_KEY: z.string().optional(),
   TRANSFI_API_SECRET: z.string().optional(),
 
+  // Onramper (cash-in aggregator, per ADR 0026)
+  // Sandbox: https://api-stg.onramper.com; prod: https://api.onramper.com
+  ONRAMPER_API_KEY: z.string().optional(),
+  ONRAMPER_SIGNING_SECRET: z.string().optional(),
+  ONRAMPER_WEBHOOK_SECRET: z.string().optional(),
+  ONRAMPER_API_BASE_URL: z
+    .string()
+    .url()
+    .default('https://api-stg.onramper.com'),
+  // Default destination chain for cash-in. Per ADR 0026 §"Default
+  // destination" Base is the cheapest landing chain — CCTP-rebalances
+  // to Solana at zero per-tx cost.
+  ONRAMPER_DEFAULT_NETWORK: z.string().default('base'),
+  ONRAMPER_DEFAULT_CRYPTO: z.string().default('usdc_base'),
+
   // Wise
   WISE_API_KEY: z.string().optional(),
   WISE_WEBHOOK_SECRET: z.string().optional(),

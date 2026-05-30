@@ -69,7 +69,9 @@ const SendIntentBody = z.object({
 
 const CashinIntentBody = z.object({
   amountUsd: z.string().regex(/^\d+(\.\d{1,2})?$/),
-  method: z.enum(['apple_pay', 'card', 'ach']),
+  method: z.enum(['apple_pay', 'card', 'ach', 'google_pay']),
+  email: z.string().email().optional(),
+  country: z.string().length(2).optional(),
 });
 
 const SwapQuoteQuery = z.object({
@@ -241,11 +243,13 @@ export async function walletRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // POST /wallet/cashin/intent — build Stripe PaymentIntent for Apple Pay
-  // / card / ACH cash-in (#88). Mobile @stripe/stripe-react-native
-  // PaymentSheet consumes the returned clientSecret. Falls back to a
-  // synthetic intent when STRIPE_SECRET_KEY is unset so the UI walk
-  // doesn't crash in dev.
+  // POST /wallet/cashin/intent — build Onramper signed checkout URL for
+  // Apple Pay / card / Google Pay cash-in (ADR 0026 supersedes ADR 0022).
+  // Returns { checkoutUrl, expectedUsdcAmount, provider, feePercent }.
+  // Mobile launches checkoutUrl in a WebView; on completion Onramper
+  // posts to /notify/webhooks/onramper which updates the ledger.
+  // Falls back to a synthetic intent + unsigned widget URL when
+  // ONRAMPER_API_KEY is unset so the UI walk doesn't crash in dev.
   fastify.post(
     '/cashin/intent',
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -261,6 +265,8 @@ export async function walletRoutes(fastify: FastifyInstance) {
         method: body.method as CashinMethod,
         userId: auth.sub,
         recipientWallet: auth.wallet,
+        email: body.email,
+        country: body.country,
       });
       return reply.status(200).send(intent);
     }
