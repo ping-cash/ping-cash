@@ -17,10 +17,11 @@ appId: cash.ping.app
     timeout: 25000
 - tapOn:
     id: 'btn-Add money'
+# iOS sim takes >8s to render the cashin screen — bump to 25s.
 - extendedWaitUntil:
     visible:
       id: 'cashin-amount-input'
-    timeout: 8000
+    timeout: 25000
 - tapOn:
     id: 'cashin-amount-input'
 - eraseText
