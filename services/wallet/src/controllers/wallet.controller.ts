@@ -65,6 +65,7 @@ const UnstakeIntentBody = z.object({
 const SendIntentBody = z.object({
   recipientWallet: z.string().min(32).max(44),
   amountUsdc: z.string().regex(/^\d+(\.\d{1,6})?$/),
+  tokenKind: z.enum(['USDC', 'PING']).optional(),
 });
 
 const CashinIntentBody = z.object({
@@ -237,7 +238,8 @@ export async function walletRoutes(fastify: FastifyInstance) {
       const intent = await buildSendIntent(
         auth.wallet,
         body.recipientWallet,
-        body.amountUsdc
+        body.amountUsdc,
+        body.tokenKind
       );
       return reply.status(200).send(intent);
     }

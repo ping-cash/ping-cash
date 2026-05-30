@@ -120,6 +120,8 @@ export interface SendIntent {
   expiresInSeconds: number;
   meta: {
     mint: string;
+    /** 'USDC' default; 'PING' when sending the $PING SPL token. */
+    tokenKind?: 'USDC' | 'PING';
     program: string;
     associatedTokenProgram: string;
     senderAta: string;
