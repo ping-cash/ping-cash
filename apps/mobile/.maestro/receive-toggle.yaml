@@ -6,8 +6,17 @@
 #   - USDC/USDT warning visible
 appId: cash.ping.app
 ---
+# Prior sub-flows may leave us on a non-Home screen (e.g.,
+# 04-send-screen.yaml ends on the claim-share view). Hard-tap the Home
+# tab first to guarantee fast-actions are visible.
+- tapOn:
+    id: 'tab-Home'
+- extendedWaitUntil:
+    visible:
+      id: 'btn-Send'
+    timeout: 8000
 # Home tab has 4 fast-actions: Send, Receive, Add money, Swap.
-# Button component auto-sets testID=`btn-${label}` per 03-tabs.yaml comment.
+# ActionTile component sets testID=`btn-${label}`.
 - tapOn:
     id: 'btn-Receive'
 - extendedWaitUntil:

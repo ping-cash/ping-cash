@@ -7,6 +7,12 @@
 appId: cash.ping.app
 ---
 - tapOn:
+    id: 'tab-Home'
+- extendedWaitUntil:
+    visible:
+      id: 'btn-Send'
+    timeout: 8000
+- tapOn:
     id: 'btn-Swap'
 - extendedWaitUntil:
     visible: 'USDC'
