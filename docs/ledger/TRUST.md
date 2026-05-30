@@ -4,7 +4,48 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every walk; cron-refreshed alongside [TRACKER.md](TRACKER.md).
 
-**Last refreshed:** 2026-05-29 17:20Z — api.ping.cash Ingress + LE cert SAN landed (openova-private PR #351). auth+wallet bumped to 0bf80b3 across cluster. Live e2e: `/auth/init` + `/auth/verify` with +447700900789 returns JWT carrying `isTest:true`; `/wallet/balance` with that token returns synthetic `$5.00 USDC`. Mobile prod build TLS handshake against api.ping.cash now uses Let's Encrypt R13 cert (was Traefik default self-signed, blocking iOS Maestro).
+**Last refreshed:** 2026-05-30 20:00Z — Per founder DoD escalation 18:50Z + 19:10Z: per-DoD-step verification ledger added. iOS build 26693256876 in flight on commit 2bbaf08 (Onramper cashin + Maestro DoD-enrichment flows + concurrency fix). All entries below are UNVERIFIED pending TestFlight install + walk-through. State will flip to VERIFIED-PASS / FAIL / PARTIAL per case as walks complete.
+
+## DoD walk verification ledger (founder spec 2026-05-30 19:10Z)
+
+| #   | DoD step                             | Surface                                                                                                                                                                               | Build state                                                                    | Walk state    |
+| --- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------- |
+| 1   | Real-phone signup                    | apps/mobile/app/signup.tsx + .maestro/02-signin.yaml                                                                                                                                  | ✓ shipped                                                                      | 🔴 UNVERIFIED |
+| 2   | Add money via Onramp                 | apps/mobile/app/cashin.tsx (Onramper WebView per ADR 0026) + .maestro/cashin-screen.yaml + services/wallet onramper.adapter.ts + services/notify /webhooks/onramper sandbox-auto-fund | ✓ shipped                                                                      | 🔴 UNVERIFIED |
+| 3   | User 2 joins                         | same as #1                                                                                                                                                                            | ✓ shipped                                                                      | 🔴 UNVERIFIED |
+| 4   | User 2 requests USDC                 | apps/mobile request flow                                                                                                                                                              | needs audit                                                                    | 🔴 UNVERIFIED |
+| 5   | User 1 sends USDC                    | services/wallet send.service + apps/mobile send.tsx claim flow + .maestro/04-send-screen.yaml                                                                                         | ✓ shipped                                                                      | 🔴 UNVERIFIED |
+| 6   | User 2 swaps USDC → $PING            | apps/mobile swap.tsx + Jupiter route + .maestro/swap-screen.yaml                                                                                                                      | ✓ shipped (existing)                                                           | 🔴 UNVERIFIED |
+| 7   | User 2 sends ½ $PING back            | services/wallet send.service tokenKind=PING (0aa2197) + apps/mobile api.ts (e3f7684) + send.tsx asset toggle                                                                          | partial — backend + api done, UI pending                                       | 🔴 UNVERIFIED |
+| 8   | Both stake USDC + $PING              | apps/mobile/app/(tabs)/vault.tsx + services/earn-vault + .maestro/vault-screen.yaml                                                                                                   | partial — read-only view + auto-stake toggle, stake/unstake/harvest UI pending | 🔴 UNVERIFIED |
+| 9   | Both get additional $PING from yield | services/earn-vault harvest payout                                                                                                                                                    | needs verification                                                             | 🔴 UNVERIFIED |
+| 10  | SMS claim → mom GCash                | services/claim + services/offramp TransFi GCash adapter + services/notify SMS dispatch                                                                                                | ✓ shipped (existing)                                                           | 🔴 UNVERIFIED |
+
+## Phase-1.1 Onramper Infra ledger
+
+| Component                                                                       | State                                           |
+| ------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Sandbox API key in cluster Secret (`openova-private/.../onramper-secrets.yaml`) | ✓ shipped (3c5b4d3c, ac2374b3)                  |
+| services/wallet onramper.adapter.ts (quote + signed URL + webhook verify)       | ✓ shipped (870aa93)                             |
+| services/wallet cashin.service.ts (Onramper)                                    | ✓ shipped (870aa93)                             |
+| services/notify /webhooks/onramper handler + HMAC sig                           | ✓ shipped (f1d2d70)                             |
+| services/notify sandbox auto-fund branch                                        | ✓ shipped (4a625ab)                             |
+| apps/mobile cashin.tsx (WebView + fee disclosure)                               | ✓ shipped + typecheck green (4a625ab)           |
+| apps/mobile api.ts CashinIntent shape                                           | ✓ shipped (4a625ab)                             |
+| Maestro receive-toggle, cashin-screen, swap-screen, vault-screen flows          | ✓ shipped (2bbaf08)                             |
+| iOS concurrency.group=ios-build cert-race fix                                   | ✓ shipped (8948d19)                             |
+| TestFlight delivery of all above                                                | 🔴 UNVERIFIED — iOS build 26693256876 in flight |
+
+## Live sandbox API probe results (2026-05-30 19:00Z)
+
+- `/supported/defaults` returns OMR→BTC default ✓
+- `/quotes/USD/usdc_base?amount=100&country=us&paymentMethod=creditcard` returns 4 valid ramps (Guardarian 95.6477 USDC BestPrice + Stripe 95.09 + Coinify 94.94 + MoonPay 91.87)
+- Adapter `fetchOnramperQuote` BestPrice selection logic verified end-to-end
+- Signed URL math: HMAC-SHA256(secret, canonical-query) → hex digest appended as `&signature=`
+
+## Pre-existing surface ledger (2026-05-29 17:20Z reference)
+
+api.ping.cash Ingress + LE cert SAN landed (openova-private PR #351). auth+wallet bumped to 0bf80b3 across cluster. Live e2e: `/auth/init` + `/auth/verify` with +447700900789 returns JWT carrying `isTest:true`; `/wallet/balance` with that token returns synthetic `$5.00 USDC`. Mobile prod build TLS handshake against api.ping.cash now uses Let's Encrypt R13 cert (was Traefik default self-signed, blocking iOS Maestro).
 
 ---
 
