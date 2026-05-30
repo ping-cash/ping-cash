@@ -33,13 +33,20 @@ Ping does not appear in any card-network agreement, payment-processor agreement,
 
 ### TransFi integration mode
 
+**AMENDED 2026-05-30 14:15Z** — the original wording in this section was wrong. It claimed "card data flows via iframe → SAQ A PCI scope". That framing was lifted from generic on-ramp pitches and never verified against TransFi. Live API probe (`docs/research/2026-05-30-transfi-api-sweep.md`) and live widget render at `sandbox-buy.transfi.com` confirm:
+
+- **TransFi has NO card paymentType in any currency.** No card, no Apple Pay, no Google Pay. The `paymentType=card` filter is silently ignored by `/v2/payment-methods` — every supported currency returns only `bank_transfer` or `local_wallet`.
+- **TransFi is LOCAL-RAILS-ONLY by design.** Their fee positioning (0.5-2%) exists because they avoid Visa/Mastercard. Adding card-rail would put them at MoonPay/Banxa's 3.5-4.5%.
+- **PCI DSS scope is therefore not the right framing for this ADR.** There is no card data anywhere. The "SAQ A via iframe" claim was a copy-paste from Stripe / MoonPay architecture — it does not apply to TransFi.
+- **The Apple Pay / card / ach methods in `apps/mobile/lib/api.ts` `CashinIntent` are leftover Stripe scaffolding** about to be removed per ADR 0022's un-divert plan. They are not TransFi capabilities.
+
 [`Trans-Fi/transfi-ramp-react-native-sdk`](https://github.com/Trans-Fi/transfi-ramp-react-native-sdk) — official React Native SDK with `TransfiRampReactNativeSdkView` component.
 
-- Iframe-mode rendering: card form is served by TransFi's domain inside an isolated WebView/iframe context
+- Widget renders TransFi's hosted UI inside a WebView; user selects from whichever local rails TransFi has integrated for their country (bank-transfer per supported list, local-wallet for some countries)
 - Ping renders the surrounding shell (header, branding, return navigation) as native RN
-- Card data flows from iframe → TransFi's servers; Ping's JS bundle never sees it
-- PCI DSS scope: SAQ A (no card data ever in Ping's code or infrastructure)
+- TransFi handles KYC + payment-method authorization + USDC delivery to the user's Privy wallet
 - Signature parameter required when passing `name`, `amount`, `walletAddress`, or `paymentCode` (per TransFi docs)
+- **On-ramp API key is SEPARATE from the off-ramp credentials in `ping-transfi-credentials` Secret.** Off-ramp creds (already provisioned via #65) cannot authenticate the buy widget. Founder action required: register Ping for the Ramp Buy product at `sales@transfi.com` to obtain on-ramp credentials.
 
 ### Coverage at launch
 
