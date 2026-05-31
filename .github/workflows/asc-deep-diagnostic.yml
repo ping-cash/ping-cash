@@ -24,72 +24,13 @@ jobs:
           h = {'Authorization': f'Bearer {token}'}
           base = 'https://api.appstoreconnect.apple.com'
 
-          print(f'ASC API Key ID: {os.environ["KEY_ID"]}')
-          print(f'ASC Issuer ID: {os.environ["ISSUER_ID"]}')
-
           apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
           app_id = apps['data'][0]['id']
-          print(f'App ID: {app_id}\n')
 
-          def probe(label, method, path, body=None, expect_perm_test=False):
-              print(f'\n=== {label} ===\n{method} {path}')
-              r = requests.request(method, f'{base}{path}', headers={**h, 'Content-Type': 'application/json'},
-                                   data=json.dumps(body) if body else None)
-              print(f'HTTP {r.status_code}')
-              if expect_perm_test:
-                  if r.status_code == 403:
-                      try:
-                          err = r.json().get('errors', [{}])[0]
-                          print(f'PERMISSION DENIED: {err.get("detail", "")[:300]}')
-                      except: pass
-              try: print(json.dumps(r.json(), indent=2)[:2000])
-              except: print(r.text[:2000])
-
-          # CRITICAL: Try operations requiring different scope levels to map API key's effective role
-          # https://developer.apple.com/documentation/appstoreconnectapi/list-of-required-scopes-for-each-endpoint
-
-          # 1. READ-ONLY: list apps (works for any role) — already established at top
-          # 2. Manager-level: list buildBundles for v36 — was 403 earlier
-          probe('Read buildBundles (App Manager scope)', 'GET',
-                '/v1/builds/88f711fb-a9ff-46ef-8583-d6c48764141c/buildBundles',
-                expect_perm_test=True)
-
-          # 3. Test a WRITE that requires App Manager: create betaBuildLocalization
-          # We use POST with a dummy locale that may fail validation but proves scope
-          probe('WRITE betaBuildLocalization (App Manager required)', 'POST',
-                '/v1/betaBuildLocalizations',
-                body={
-                    'data': {
-                        'type': 'betaBuildLocalizations',
-                        'attributes': {'locale': 'zz-ZZ', 'whatsNew': 'permission-test'},
-                        'relationships': {'build': {'data': {'type': 'builds',
-                            'id': '88f711fb-a9ff-46ef-8583-d6c48764141c'}}}
-                    }
-                },
-                expect_perm_test=True)
-
-          # 4. Test ADMIN-only: list users
-          probe('READ users list (Admin scope)', 'GET', '/v1/users?limit=2',
-                expect_perm_test=True)
-
-          # 5. Test ADMIN-only: list API keys themselves (reveals which key we are)
-          probe('READ API keys (Admin scope)', 'GET', '/v1/keys', expect_perm_test=True)
-
-          # 6. Account Holder only: list agreements
-          probe('READ agreements (Account Holder scope)', 'GET', '/v1/agreements',
-                expect_perm_test=True)
-          probe('READ paid agreements', 'GET', '/v1/paidAppsAgreements', expect_perm_test=True)
-          probe('READ financial reports (Account Holder)', 'GET',
-                f'/v1/financeReports?filter[reportDate]=2026-04&filter[regionCode]=Z1&filter[reportType]=FINANCIAL&filter[vendorNumber]=test',
-                expect_perm_test=True)
-
-          # 7. Self-describing: try the v1/info endpoint if exists
-          probe('Self info', 'GET', '/v1/me', expect_perm_test=True)
-
-          print('\n\nINTERPRETATION:')
-          print('- If #2/#3 succeed: API key has App Manager scope (correct for upload)')
-          print('- If #2/#3 are 403: API key is Developer scope → uploads silently rejected (silent reject root cause)')
-          print('- If #4/#5/#6 succeed: API key has Admin')
-          print('- If #4/#5/#6 are 403: API key is App Manager (which is fine for build upload)')
-          print('- If #6 succeeds + shows pending agreements: account-level gate')
+          # Latest 20 builds — does v97 surface?
+          r = requests.get(f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=20', headers=h).json()
+          print('=== Latest 20 builds in ASC ===')
+          for b in r.get('data', []):
+              a = b.get('attributes', {})
+              print(f"  v{a.get('version')}: processing={a.get('processingState')} uploaded={a.get('uploadedDate')} expired={a.get('expired')}")
           PY
