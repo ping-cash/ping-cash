@@ -92,8 +92,6 @@ jobs:
           ") \
             app_identifier:cash.ping.app \
             provisioning_name:"${{ env.PROFILE_NAME }}" \
-            adhoc:false \
-            development:false \
             force:true \
             ignore_profiles_with_different_name:true \
             output_path:"$RUNNER_TEMP/profile"
