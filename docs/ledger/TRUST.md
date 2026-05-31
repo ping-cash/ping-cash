@@ -4,7 +4,19 @@
 
 **AUTHORITY:** 🟢 LIVE STATE. Updated on every walk; cron-refreshed alongside [TRACKER.md](TRACKER.md).
 
-**Last refreshed:** 2026-05-30 20:00Z — Per founder DoD escalation 18:50Z + 19:10Z: per-DoD-step verification ledger added. iOS build 26693256876 in flight on commit 2bbaf08 (Onramper cashin + Maestro DoD-enrichment flows + concurrency fix). All entries below are UNVERIFIED pending TestFlight install + walk-through. State will flip to VERIFIED-PASS / FAIL / PARTIAL per case as walks complete.
+**Last refreshed:** 2026-05-31 04:55Z — Apple silent-reject root cause IDENTIFIED + FIX SHIPPED (a68d771). iOS Build 95 (run 26703547450) in flight on the icon fix at step 10/26 (`pod install`). Pre-fix verification state below remains 🔴 UNVERIFIED across all DoD steps. Validation gate: ASC `/v1/builds` showing v95 within 30 min of altool completion → fix confirmed. If still no v95: deeper Apple-side gate exists beyond marketing icon.
+
+**Silent-reject investigation log (principle-23 5-mechanism sweep):**
+
+1. ✓ altool `--upload-app` — returned Delivery UUID 2e47b22d-964f-4f35-8016-dd3ef56596ab; transporter accepts; ASC drops
+2. ✓ ASC API `/v1/builds` — confirmed ZERO builds since v36 on 2026-05-29 despite ~10 upload attempts today
+3. ✓ ASC API expanded probe (PRV-builds relation + appStoreVersions + betaAppReview) — PRV 0.1.0 still has only 12 builds (v7→v36); no new linkage
+4. ✓ ASC API role-mapping probe (diag 26703504634) — RULED OUT key-role hypothesis: `betaBuildLocalization` WRITE returned 409 (locale conflict, not 403); `/v1/users` 200; API key has full Admin+App-Manager scope. Also RULED OUT agreement gate: `/v1/agreements` 404 (endpoint doesn't exist in ASC REST API at all; my 02:05Z "founder-physical / Hatice dashboard agreement" framing was speculation, not evidence — corrected).
+5. ✓ LOCAL IPA asset inspection — FOUND ROOT CAUSE: `apps/mobile/assets/icon.png` + `adaptive-icon.png` were 1×1 RGBA placeholders (70 bytes). app.json points at icon.png as marketing icon. iOS 17+ TestFlight ingestion silently drops IPAs missing valid 1024×1024 marketing icon.
+
+**Fix shipped (a68d771):** Pillow-generated 1024×1024 RGB icon.png (4.5KB, ping-icon centered on white, no alpha per Apple spec) + 1024×1024 RGBA adaptive-icon.png (66KB, transparent bg). Awaiting build 26703547450 to validate via ASC v95 surfacing.
+
+**Prior refresh (2026-05-30 20:00Z):** Per founder DoD escalation 18:50Z + 19:10Z: per-DoD-step verification ledger added. iOS build 26693256876 in flight on commit 2bbaf08 (Onramper cashin + Maestro DoD-enrichment flows + concurrency fix). All entries below are UNVERIFIED pending TestFlight install + walk-through. State will flip to VERIFIED-PASS / FAIL / PARTIAL per case as walks complete.
 
 ## DoD walk verification ledger (founder spec 2026-05-30 19:10Z)
 
