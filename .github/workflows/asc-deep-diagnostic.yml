@@ -24,62 +24,72 @@ jobs:
           h = {'Authorization': f'Bearer {token}'}
           base = 'https://api.appstoreconnect.apple.com'
 
+          print(f'ASC API Key ID: {os.environ["KEY_ID"]}')
+          print(f'ASC Issuer ID: {os.environ["ISSUER_ID"]}')
+
           apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
           app_id = apps['data'][0]['id']
-          print(f'App ID: {app_id}')
+          print(f'App ID: {app_id}\n')
 
-          def probe(label, path, slice_=4000):
-              print(f'\n=== {label} ===\nGET {path}')
-              r = requests.get(f'{base}{path}', headers=h)
+          def probe(label, method, path, body=None, expect_perm_test=False):
+              print(f'\n=== {label} ===\n{method} {path}')
+              r = requests.request(method, f'{base}{path}', headers={**h, 'Content-Type': 'application/json'},
+                                   data=json.dumps(body) if body else None)
               print(f'HTTP {r.status_code}')
-              try:
-                  print(json.dumps(r.json(), indent=2)[:slice_])
-              except Exception:
-                  print(r.text[:slice_])
+              if expect_perm_test:
+                  if r.status_code == 403:
+                      try:
+                          err = r.json().get('errors', [{}])[0]
+                          print(f'PERMISSION DENIED: {err.get("detail", "")[:300]}')
+                      except: pass
+              try: print(json.dumps(r.json(), indent=2)[:2000])
+              except: print(r.text[:2000])
 
-          # 1. The relationship endpoint returned 200 last time — dump its full contents
-          # to see which build IDs are actually linked to preReleaseVersion 0.1.0
-          r = requests.get(f'{base}/v1/preReleaseVersions?filter[app]={app_id}&filter[version]=0.1.0&filter[platform]=IOS', headers=h).json()
-          if r.get('data'):
-              prv_id = r['data'][0]['id']
-              print(f'\nPreReleaseVersion 0.1.0 id: {prv_id}')
+          # CRITICAL: Try operations requiring different scope levels to map API key's effective role
+          # https://developer.apple.com/documentation/appstoreconnectapi/list-of-required-scopes-for-each-endpoint
 
-              # Get build IDs linked to this PRV (relationship endpoint = id-only)
-              probe('PRV→builds relationship (FULL)',
-                    f'/v1/preReleaseVersions/{prv_id}/relationships/builds', slice_=8000)
+          # 1. READ-ONLY: list apps (works for any role) — already established at top
+          # 2. Manager-level: list buildBundles for v36 — was 403 earlier
+          probe('Read buildBundles (App Manager scope)', 'GET',
+                '/v1/builds/88f711fb-a9ff-46ef-8583-d6c48764141c/buildBundles',
+                expect_perm_test=True)
 
-              # Builds endpoint without invalid sort param
-              probe('PRV→builds (no-sort)',
-                    f'/v1/preReleaseVersions/{prv_id}/builds?limit=200&fields[builds]=version,processingState,uploadedDate,expired,buildAudienceType')
+          # 3. Test a WRITE that requires App Manager: create betaBuildLocalization
+          # We use POST with a dummy locale that may fail validation but proves scope
+          probe('WRITE betaBuildLocalization (App Manager required)', 'POST',
+                '/v1/betaBuildLocalizations',
+                body={
+                    'data': {
+                        'type': 'betaBuildLocalizations',
+                        'attributes': {'locale': 'zz-ZZ', 'whatsNew': 'permission-test'},
+                        'relationships': {'build': {'data': {'type': 'builds',
+                            'id': '88f711fb-a9ff-46ef-8583-d6c48764141c'}}}
+                    }
+                },
+                expect_perm_test=True)
 
-          # 2. App store versions — drop the invalid sort
-          probe('App store versions (no-sort)',
-                f'/v1/apps/{app_id}/appStoreVersions?limit=10&fields[appStoreVersions]=versionString,appStoreState,platform,createdDate')
+          # 4. Test ADMIN-only: list users
+          probe('READ users list (Admin scope)', 'GET', '/v1/users?limit=2',
+                expect_perm_test=True)
 
-          # 3. Beta app review submissions — use the right filter
-          probe('Beta app review submissions (filter by app)',
-                f'/v1/betaAppReviewSubmissions?filter[build]={app_id}&limit=10')
+          # 5. Test ADMIN-only: list API keys themselves (reveals which key we are)
+          probe('READ API keys (Admin scope)', 'GET', '/v1/keys', expect_perm_test=True)
 
-          # 4. App price schedule body
-          probe('App price schedule (full body)',
-                f'/v1/apps/{app_id}/appPriceSchedule')
+          # 6. Account Holder only: list agreements
+          probe('READ agreements (Account Holder scope)', 'GET', '/v1/agreements',
+                expect_perm_test=True)
+          probe('READ paid agreements', 'GET', '/v1/paidAppsAgreements', expect_perm_test=True)
+          probe('READ financial reports (Account Holder)', 'GET',
+                f'/v1/financeReports?filter[reportDate]=2026-04&filter[regionCode]=Z1&filter[reportType]=FINANCIAL&filter[vendorNumber]=test',
+                expect_perm_test=True)
 
-          # 5. Latest build's buildBundles content — does v36 have buildBundles?
-          r = requests.get(f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=1', headers=h).json()
-          if r.get('data'):
-              build_id = r['data'][0]['id']
-              print(f'\nLatest build id (v36): {build_id}')
-              probe('v36 buildBundles', f'/v1/builds/{build_id}/buildBundles')
-              probe('v36 individualTesters', f'/v1/builds/{build_id}/individualTesters?limit=5')
-              probe('v36 betaGroups', f'/v1/builds/{build_id}/betaGroups?limit=5')
-              probe('v36 betaBuildLocalizations',
-                    f'/v1/betaBuildLocalizations?filter[build]={build_id}')
+          # 7. Self-describing: try the v1/info endpoint if exists
+          probe('Self info', 'GET', '/v1/me', expect_perm_test=True)
 
-          # 6. App-level info with valid fields only
-          probe('App full info',
-                f'/v1/apps/{app_id}?fields[apps]=name,bundleId,primaryLocale,sku,contentRightsDeclaration,availableInNewTerritories')
-
-          # 7. Test agreements/banking via different path — appEncryption + appPricePoints
-          probe('App encryption declarations',
-                f'/v1/appEncryptionDeclarations?filter[app]={app_id}&limit=5')
+          print('\n\nINTERPRETATION:')
+          print('- If #2/#3 succeed: API key has App Manager scope (correct for upload)')
+          print('- If #2/#3 are 403: API key is Developer scope → uploads silently rejected (silent reject root cause)')
+          print('- If #4/#5/#6 succeed: API key has Admin')
+          print('- If #4/#5/#6 are 403: API key is App Manager (which is fine for build upload)')
+          print('- If #6 succeeds + shows pending agreements: account-level gate')
           PY
