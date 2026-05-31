@@ -26,31 +26,53 @@ jobs:
 
           apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
           app_id = apps['data'][0]['id']
+          print(f'App ID: {app_id}\n')
 
-          # Probe across ALL processing states + ALL pre-release versions, no filter
-          print('=== Builds across ALL processing states ===')
-          for state in ['VALID', 'PROCESSING', 'FAILED', 'INVALID']:
-              r = requests.get(f'{base}/v1/builds?filter[app]={app_id}&filter[processingState]={state}&sort=-uploadedDate&limit=10', headers=h).json()
-              data = r.get('data', [])
-              print(f'\nState={state}: {len(data)} builds')
-              for b in data[:3]:
-                  a = b.get('attributes', {})
-                  print(f"  v{a.get('version')}: uploaded={a.get('uploadedDate')} expired={a.get('expired')}")
+          def probe(label, path):
+              r = requests.get(f'{base}{path}', headers=h)
+              print(f'=== {label} ===')
+              print(f'GET {path}')
+              print(f'HTTP {r.status_code}')
+              try: print(json.dumps(r.json(), indent=2)[:3000])
+              except: print(r.text[:3000])
+              print()
 
-          # All pre-release versions
-          r = requests.get(f'{base}/v1/preReleaseVersions?filter[app]={app_id}&sort=-version&limit=20', headers=h).json()
-          print(f'\n=== All PRVs ({r.get("meta",{}).get("paging",{}).get("total","?")} total) ===')
-          for v in r.get('data', []):
-              a = v.get('attributes', {})
-              print(f"  v={a.get('version')} platform={a.get('platform')}")
+          # 1. App-level info — pricing, beta program registration, etc.
+          probe('App attributes (full)',
+                f'/v1/apps/{app_id}?fields[apps]=name,bundleId,primaryLocale,sku,contentRightsDeclaration,availableInNewTerritories,inAppPurchasesEnabled,subscriptionStatusUrl,subscriptionStatusUrlVersion')
 
-          # If there's a 0.1.0 PRV, list its build relationships
-          r = requests.get(f'{base}/v1/preReleaseVersions?filter[app]={app_id}&filter[version]=0.1.0&filter[platform]=IOS', headers=h).json()
-          if r.get('data'):
-              prv_id = r['data'][0]['id']
-              r2 = requests.get(f'{base}/v1/preReleaseVersions/{prv_id}/relationships/builds', headers=h).json()
-              total = r2.get('meta', {}).get('paging', {}).get('total', 0)
-              print(f'\n=== PRV 0.1.0 build relationships: {total} total ===')
-              for b in r2.get('data', [])[:5]:
-                  print(f"  build_id={b.get('id')}")
+          # 2. Beta app info — TestFlight requires this filled
+          probe('Beta App Info', f'/v1/betaAppLocalizations?filter[app]={app_id}')
+          probe('Beta Review Details',
+                f'/v1/betaAppReviewDetails?filter[app]={app_id}')
+          probe('Beta License Agreement',
+                f'/v1/betaLicenseAgreements?filter[app]={app_id}')
+
+          # 3. App Info (separate from Beta App Info — required for store)
+          probe('App Infos', f'/v1/apps/{app_id}/appInfos')
+
+          # 4. Build bundles for v36 — schemas to compare against future builds
+          # (We already know v97/98/99 not in ASC; baseline is v36.)
+          probe('v36 bundle deep-dive',
+                f'/v1/builds/88f711fb-a9ff-46ef-8583-d6c48764141c?include=buildBundles,perfPowerMetrics,buildBetaDetail&fields[builds]=processingState,version,uploadedDate,expirationDate,minOsVersion,iconAssetToken,buildAudienceType,usesNonExemptEncryption')
+
+          # 5. Build by exact CFBundleVersion query — maybe v99 has marketing version 0.1.0 but appears under different platform?
+          probe('Builds filter version=99',
+                f'/v1/builds?filter[app]={app_id}&filter[version]=99&limit=5')
+          probe('Builds filter version=98',
+                f'/v1/builds?filter[app]={app_id}&filter[version]=98&limit=5')
+          probe('Builds filter version=97',
+                f'/v1/builds?filter[app]={app_id}&filter[version]=97&limit=5')
+
+          # 6. App pricing schedule — apps need this set for store + TestFlight
+          probe('App Price Schedule',
+                f'/v1/apps/{app_id}/appPriceSchedule')
+
+          # 7. Bundle ID record — verify our cash.ping.app is properly registered
+          probe('Bundle ID record',
+                f'/v1/bundleIds?filter[identifier]=cash.ping.app')
+
+          # 8. Any builds where processingState is NOT VALID
+          probe('Builds processingState != VALID',
+                f'/v1/builds?filter[app]={app_id}&filter[processingState]=PROCESSING,FAILED,INVALID&limit=20')
           PY
