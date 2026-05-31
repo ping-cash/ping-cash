@@ -1,0 +1,154 @@
+name: iOS Resign + Upload (fast path)
+# Re-sign the latest preserved IPA artifact with a NEW marketing version
+# (0.1.1) + bumped build number, then upload via altool. Skips ~45 min of
+# xcodebuild + archive by re-using the v99 IPA binary.
+#
+# Use case: founder's 10:30Z directive — "stop building, push what's
+# already built". This delivers v100/0.1.1 in ~10-15 min instead of 50.
+on: { workflow_dispatch: {} }
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+jobs:
+  resign:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      APP_IDENTIFIER: cash.ping.app
+      PROFILE_NAME: 'Ping App Store'
+      BETA_GROUP_NAME: Founders
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with: { ruby-version: '3.3' }
+      - run: gem install fastlane --no-document
+
+      - name: Download preserved IPA from a recent COMPLETED ios.yml run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p $RUNNER_TEMP/ipa-in
+          RUN_ID=""; ART_NAME=""
+          for run in $(gh run list --workflow=ios.yml --limit 10 --status completed --json databaseId -q '.[].databaseId'); do
+            for art in $(gh api repos/${{ github.repository }}/actions/runs/$run/artifacts --jq '.artifacts[] | select(.name | startswith("ipa-")) | .name' 2>/dev/null); do
+              if [ -n "$art" ]; then RUN_ID=$run; ART_NAME=$art; break 2; fi
+            done
+          done
+          if [ -z "$RUN_ID" ]; then echo "::error::no ipa-* artifact found"; exit 1; fi
+          echo "Source iOS run: $RUN_ID, artifact: $ART_NAME"
+          gh run download $RUN_ID -n "$ART_NAME" --dir $RUNNER_TEMP/ipa-in
+          ls -la $RUNNER_TEMP/ipa-in/
+
+      - name: Write App Store Connect API key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" | base64 -d > ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+          chmod 600 ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+
+      - name: Create keychain + revoke prior dist certs + mint fresh cert via fastlane
+        env:
+          FASTLANE_HIDE_CHANGELOG: '1'
+          FASTLANE_SKIP_UPDATE_CHECK: '1'
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 16)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" || true
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+          security default-keychain -s "$KEYCHAIN_PATH"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
+          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+
+          # Revoke any existing distribution certs (broaden — see feedback_ios_cert_cycle)
+          export ASC_KEY_ID="${{ secrets.APP_STORE_CONNECT_KEY_ID }}"
+          export ASC_ISSUER_ID="${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}"
+          fastlane run cert \
+            api_key_path:<(python3 -c "
+          import json,os
+          pem=open(os.environ['HOME']+'/private_keys/AuthKey_'+os.environ['ASC_KEY_ID']+'.p8').read()
+          print(json.dumps({'key_id':os.environ['ASC_KEY_ID'],'issuer_id':os.environ['ASC_ISSUER_ID'],'key':pem,'in_house':False,'is_key_content_base64':False}))
+          ") \
+            development:false \
+            keychain_path:"$KEYCHAIN_PATH" \
+            keychain_password:"$KEYCHAIN_PASSWORD" \
+            generate_apple_certs:true \
+            force:false || true
+
+          # Fetch fresh provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          fastlane run sigh \
+            api_key_path:<(python3 -c "
+          import json,os
+          pem=open(os.environ['HOME']+'/private_keys/AuthKey_'+os.environ['ASC_KEY_ID']+'.p8').read()
+          print(json.dumps({'key_id':os.environ['ASC_KEY_ID'],'issuer_id':os.environ['ASC_ISSUER_ID'],'key':pem,'in_house':False,'is_key_content_base64':False}))
+          ") \
+            app_identifier:cash.ping.app \
+            provisioning_name:"${{ env.PROFILE_NAME }}" \
+            adhoc:false \
+            development:false \
+            force:true \
+            ignore_profiles_with_different_name:true \
+            output_path:"$RUNNER_TEMP/profile"
+
+      - name: Re-sign IPA with new version + bumped build number
+        run: |
+          set -euo pipefail
+          IPA_IN=$(ls $RUNNER_TEMP/ipa-in/*.ipa | head -1)
+          IPA_OUT=$RUNNER_TEMP/Ping-resigned.ipa
+          PROFILE=$(ls $RUNNER_TEMP/profile/*.mobileprovision | head -1)
+          NEW_VERSION="0.1.1"
+          NEW_BUILD=${{ github.run_number }}
+          # Append a large delta so we never collide with prior ios.yml run_numbers
+          NEW_BUILD=$((NEW_BUILD + 1000))
+          echo "Re-signing with version=$NEW_VERSION build=$NEW_BUILD"
+
+          # Find the signing identity (Apple Distribution)
+          SIGNING_ID=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep -E "Apple Distribution" | head -1 | awk -F'"' '{print $2}')
+          echo "Signing identity: $SIGNING_ID"
+
+          fastlane run resign \
+            ipa:"$IPA_IN" \
+            signing_identity:"$SIGNING_ID" \
+            provisioning_profile:"$PROFILE" \
+            version:"$NEW_VERSION" \
+            display_name:"Ping" \
+            short_version:"$NEW_VERSION" \
+            bundle_version:"$NEW_BUILD" \
+            keychain_path:"$KEYCHAIN_PATH" 2>&1 | tee /tmp/resign.log
+
+          # fastlane resign writes back to the same path — copy to OUT
+          cp "$IPA_IN" "$IPA_OUT"
+          ls -la "$IPA_OUT"
+
+      - name: Validate then upload via altool
+        run: |
+          set -o pipefail
+          IPA=$RUNNER_TEMP/Ping-resigned.ipa
+          xcrun altool --validate-app -f "$IPA" --type ios \
+            --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+            --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }} 2>&1 | tee /tmp/altool-validate.log
+          if grep -qiE "UPLOAD FAILED|Validation failed|ERROR:" /tmp/altool-validate.log; then
+            echo "::error::altool --validate-app rejected the re-signed IPA"; exit 1
+          fi
+          xcrun altool --upload-app -f "$IPA" --type ios \
+            --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+            --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }} 2>&1 | tee /tmp/altool-upload.log
+          if grep -qiE "UPLOAD FAILED|Validation failed|ERROR:" /tmp/altool-upload.log; then
+            echo "::error::altool --upload-app failed"; exit 1
+          fi
+
+      - name: Preserve re-signed IPA artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipa-resigned-${{ github.run_number }}
+          path: ${{ runner.temp }}/Ping-resigned.ipa
+          if-no-files-found: warn
