@@ -93,7 +93,9 @@ export async function userRoutes(fastify: FastifyInstance) {
 
   // GET /users/internal/by-phone-hash/:hash — called by transfer-service to link
   // a transfer to an existing user when the recipient is already registered.
-  // Returns {userId} or 404.
+  // Returns {userId, walletAddress} or 404. walletAddress added 2026-05-31
+  // for #52 in-network $PING send — wallet-service callers need the recipient's
+  // wallet to build the SPL transfer intent without a second round-trip.
   fastify.get(
     '/internal/by-phone-hash/:hash',
     async (
@@ -110,7 +112,10 @@ export async function userRoutes(fastify: FastifyInstance) {
       if (!user) {
         return reply.status(404).send({ error: { code: 'USER_NOT_FOUND' } });
       }
-      return reply.status(200).send({ userId: user.id });
+      return reply.status(200).send({
+        userId: user.id,
+        walletAddress: user.walletAddress,
+      });
     }
   );
 

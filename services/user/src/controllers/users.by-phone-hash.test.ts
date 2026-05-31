@@ -41,7 +41,7 @@ describe('GET /users/internal/by-phone-hash/:hash', () => {
     await app.register(userRoutes);
   });
 
-  it('returns 200 with userId when user exists', async () => {
+  it('returns 200 with userId + walletAddress when user exists', async () => {
     (
       userService.getByPhoneHash as ReturnType<typeof vi.fn>
     ).mockResolvedValueOnce({
@@ -54,7 +54,10 @@ describe('GET /users/internal/by-phone-hash/:hash', () => {
       url: `/internal/by-phone-hash/${VALID_HASH}`,
     });
     expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.body)).toEqual({ userId: 'usr-uuid-x' });
+    expect(JSON.parse(res.body)).toEqual({
+      userId: 'usr-uuid-x',
+      walletAddress: 'wal',
+    });
   });
 
   it('returns 404 USER_NOT_FOUND when no user matches', async () => {
