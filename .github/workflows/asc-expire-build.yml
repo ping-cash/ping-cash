@@ -1,0 +1,41 @@
+name: ASC Expire latest visible build
+on: { workflow_dispatch: {} }
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyjwt cryptography requests
+      - env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, base64, time, jwt, requests, json
+          key_b64 = os.environ['PRIVATE_KEY_B64']
+          try:
+              key = base64.b64decode(key_b64, validate=False)
+              if b'PRIVATE KEY' not in key: key = key_b64.encode()
+          except: key = key_b64.encode()
+          token = jwt.encode(
+              {'iss': os.environ['ISSUER_ID'], 'iat': int(time.time()),
+               'exp': int(time.time())+1200, 'aud': 'appstoreconnect-v1'},
+              key, algorithm='ES256', headers={'kid': os.environ['KEY_ID']})
+          h = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+          base = 'https://api.appstoreconnect.apple.com'
+          apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
+          app_id = apps['data'][0]['id']
+          builds = requests.get(f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=10', headers=h).json()
+          for b in builds.get('data', []):
+              a = b['attributes']
+              bid = b['id']
+              if a.get('expired'):
+                  print(f"already expired version={a.get('version')} id={bid}")
+                  continue
+              print(f"EXPIRING version={a.get('version')} id={bid} state={a.get('processingState')}")
+              body = {'data': {'type': 'builds', 'id': bid, 'attributes': {'expired': True}}}
+              r = requests.patch(f'{base}/v1/builds/{bid}', headers=h, json=body)
+              print(f"  -> HTTP {r.status_code} {r.text[:200]}")
+          PYEOF
