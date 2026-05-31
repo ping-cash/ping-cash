@@ -3,7 +3,7 @@
 **Status:** Withdrawn 2026-05-30 18:00Z — superseded by [ADR 0026](0026-usd-only-cashin-via-onramper.md) which collapses cash-in to a single USD pipeline; GCC users now route via Visa/MC card with bank handling local FX. Rain integration no longer needed.
 **Date:** 2026-05-30
 **Supersedes:** none (extends [ADR 0022](0022-cashin-transfi-only.md))
-**Related:** [ADR 0022](0022-cashin-transfi-only.md), [ADR 0005](0005-transfi-primary-offramp.md), [ADR 0014](0014-entity-jurisdiction-oman-llc.md)
+**Related:** [ADR 0022](0022-cashin-transfi-only.md), [ADR 0005](0005-transfi-primary-offramp.md), [ADR 0014](0014-entity-structure.md)
 
 ## Context
 
@@ -12,7 +12,7 @@
 - TransFi's MENA cash-in is **UAE-only** (`AED bank_transfer`)
 - **OMR, SAR, QAR, KWD, BHD, JOD all return `Invalid Currency` at the API level** — not card-fallback, not workaround-possible, the currency codes do not exist in TransFi's system
 - This blocks Ping's primary launch corridor (Oman housemaid → Philippines mom)
-- Founder's residence + the Ping operating entity (Oman LLC, [ADR 0014](0014-entity-jurisdiction-oman-llc.md)) both make OMR the natural Phase-1 origin
+- Founder's residence + the Ping operating entity (Oman LLC, [ADR 0014](0014-entity-structure.md)) both make OMR the natural Phase-1 origin
 
 Ping needs a **second cash-in provider** that covers GCC currencies TransFi doesn't.
 
@@ -105,6 +105,6 @@ Estimated engineering: 4-6 days after sandbox credentials land.
 ## References
 
 - [ADR 0022 — Cash-in via TransFi only](0022-cashin-transfi-only.md)
-- [ADR 0014 — Entity jurisdiction: Oman LLC](0014-entity-jurisdiction-oman-llc.md)
+- [ADR 0014 — Entity jurisdiction: Oman LLC](0014-entity-structure.md)
 - TransFi API sweep evidence: `docs/research/2026-05-30-transfi-api-sweep.md`
 - Rain corporate: https://www.rain.bh (CBB cleared)
