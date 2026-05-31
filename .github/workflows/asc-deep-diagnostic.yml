@@ -28,48 +28,46 @@ jobs:
           app_id = apps['data'][0]['id']
           print(f'App ID: {app_id}')
 
-          # 1. ALL builds (no state filter) — show PROCESSING / INVALID / etc.
-          r = requests.get(f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=20', headers=h).json()
-          print(f'\n=== Last 20 builds (ALL states) ===')
-          for b in r.get('data', []):
-              a = b.get('attributes', {})
-              print(f"  v{a.get('version')}: processing={a.get('processingState')} uploaded={a.get('uploadedDate')} expired={a.get('expired')}")
-
-          # 2. Look for builds uploaded in last 4 hours (covers today's attempts)
-          import datetime
-          cutoff = (datetime.datetime.utcnow() - datetime.timedelta(hours=4)).isoformat() + 'Z'
-          r = requests.get(f'{base}/v1/builds?filter[app]={app_id}&filter[uploadedDate]={cutoff}&sort=-uploadedDate&limit=20', headers=h)
-          print(f'\n=== Builds uploaded in last 4 hours (any state) ===')
-          print(f'HTTP {r.status_code}; body 200chars: {r.text[:200]}')
-
-          # 3. Pre-release versions — these include builds being prepped for review
-          r = requests.get(f'{base}/v1/preReleaseVersions?filter[app]={app_id}&sort=-version&limit=10', headers=h).json()
-          print(f'\n=== Pre-release versions ===')
-          for v in r.get('data', []):
-              a = v.get('attributes', {})
-              print(f"  v={a.get('version')} platform={a.get('platform')}")
-
-          # 4. App-level info — review status, content rights, age rating etc.
-          r = requests.get(f'{base}/v1/apps/{app_id}?fields[apps]=availableInNewTerritories,contentRightsDeclaration,name,primaryLocale,sku,subscriptionStatusUrlForSandbox,subscriptionStatusUrl,subscriptionStatusUrlVersion,subscriptionStatusUrlVersionForSandbox', headers=h)
-          print(f'\n=== App-level info ===')
-          print(f'HTTP {r.status_code}')
-          print(json.dumps(r.json().get('data', {}).get('attributes', {}), indent=2)[:800])
-
-          # 5. Current user info via /v1/users/me (NOT exposed by ASC API directly — instead /v1/users)
-          r = requests.get(f'{base}/v1/users', headers=h)
-          print(f'\n=== Team users + roles ===')
-          for u in r.json().get('data', [])[:5]:
-              a = u.get('attributes', {})
-              print(f"  {a.get('firstName')} {a.get('lastName')} <{a.get('username')}> roles={a.get('roles')}")
-
-          # 6. Subscriptions / agreements — try the agreementHolder relation
-          # Apple Developer Agreement signature is exposed through /v1/agreements? on some account types
-          for endpoint in ['/v1/agreements', '/v1/paidAppsAgreements', '/v1/subscriptionGroups']:
-              r = requests.get(f'{base}{endpoint}', headers=h)
-              print(f'\n=== {endpoint} ===')
+          def probe(label, path):
+              print(f'\n=== {label} === GET {path}')
+              r = requests.get(f'{base}{path}', headers=h)
               print(f'HTTP {r.status_code}')
               if r.status_code == 200:
-                  print(json.dumps(r.json(), indent=2)[:500])
+                  print(json.dumps(r.json(), indent=2)[:1500])
               else:
-                  print(r.text[:300])
+                  print(r.text[:500])
+
+          # 1. ALL preReleaseVersions across both platforms (no version filter)
+          probe('All pre-release versions (IOS)',
+                f'/v1/preReleaseVersions?filter[app]={app_id}&filter[platform]=IOS&limit=50')
+
+          # 2. Get the prereleaseVersion id for 0.1.0 and list ITS builds via relationship
+          r = requests.get(f'{base}/v1/preReleaseVersions?filter[app]={app_id}&filter[version]=0.1.0&filter[platform]=IOS', headers=h).json()
+          if r.get('data'):
+              prv_id = r['data'][0]['id']
+              print(f'\nPreReleaseVersion 0.1.0 id: {prv_id}')
+              probe('Builds via preReleaseVersion relationship',
+                    f'/v1/preReleaseVersions/{prv_id}/builds?sort=-version&limit=50')
+              probe('Build relationships ids',
+                    f'/v1/preReleaseVersions/{prv_id}/relationships/builds')
+
+          # 3. App-level: builds with no filter, just sorted desc by uploadedDate
+          probe('Builds ALL (no filter)',
+                f'/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=50&include=buildBundles')
+
+          # 4. App store version submissions (catches if a build went straight to review)
+          probe('App store versions',
+                f'/v1/apps/{app_id}/appStoreVersions?sort=-createdDate&limit=10')
+
+          # 5. Beta app review submissions
+          probe('Beta app review submissions',
+                f'/v1/betaAppReviewSubmissions?filter[build.app]={app_id}&limit=10')
+
+          # 6. Beta groups + tester invitations (proves auth works at this scope)
+          probe('Beta groups',
+                f'/v1/betaGroups?filter[app]={app_id}&limit=10')
+
+          # 7. App pricing readiness
+          probe('App price schedule',
+                f'/v1/apps/{app_id}/relationships/appPriceSchedule')
           PY
