@@ -32,3 +32,6 @@ appId: cash.ping.app
 # screenshot artifacts. Ship TestFlight on the proven subset first.
 - runFlow: receive-toggle.yaml
 - runFlow: 04-send-screen.yaml
+# DoD step 7 (#52) — send-screen $PING toggle. Stays on /send stack
+# (04-send-screen left us there). Captures screenshots 09 + 10.
+- runFlow: send-token-toggle.yaml

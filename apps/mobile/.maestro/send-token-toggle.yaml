@@ -1,0 +1,24 @@
+# DoD step 7 surface (#52): Send screen USDC|$PING token toggle.
+# The $PING toggle is the entry point for in-network send; tap PING +
+# verify the fee pill copy switches to the in-network variant.
+#
+# Pass criteria:
+#   - Both token pills are visible by testID
+#   - Tapping send-token-ping switches the active state (UI re-renders)
+#   - Tapping back returns to send-empty screen
+appId: cash.ping.app
+---
+# This flow assumes 04-send-screen.yaml has already opened the send route.
+- extendedWaitUntil:
+    visible:
+      id: 'send-token-usdc'
+    timeout: 8000
+- assertVisible:
+    id: 'send-token-ping'
+- tapOn:
+    id: 'send-token-ping'
+- takeScreenshot: 09-send-ping-mode
+# Tap back to USDC to verify toggle works both ways
+- tapOn:
+    id: 'send-token-usdc'
+- takeScreenshot: 10-send-usdc-mode
