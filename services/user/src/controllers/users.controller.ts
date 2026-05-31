@@ -1,3 +1,4 @@
+import { hashPhone } from '@ping/utils';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 
@@ -6,6 +7,10 @@ import * as contactsService from '../services/contacts.service';
 import * as userService from '../services/user.service';
 import * as welcomeStakeService from '../services/welcome-stake.service';
 import { UserErrors } from '../utils/errors';
+
+const LookupByPhoneBody = z.object({
+  phone: z.string().regex(/^\+[1-9]\d{6,14}$/, 'Invalid E.164 phone'),
+});
 
 const UpdateProfileBody = z.object({
   displayName: z.string().min(1).max(100).optional(),
@@ -172,6 +177,30 @@ export async function userRoutes(fastify: FastifyInstance) {
       const body = ContactSyncBody.parse(request.body);
       const result = await contactsService.sync(userId, body.contacts);
       return reply.status(200).send(result);
+    }
+  );
+
+  // POST /users/me/contacts/lookup-by-phone — auth-required phone→wallet
+  // resolver for in-network $PING send (#52). Mobile passes E.164 phone;
+  // server hashes + queries the user repo + returns ONLY {walletAddress}
+  // (no userId, no PII) to limit the privacy surface. 404 if not registered.
+  fastify.post(
+    '/me/contacts/lookup-by-phone',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      await requireAuth(request, reply);
+      const body = LookupByPhoneBody.parse(request.body);
+      const phoneHash = hashPhone(body.phone);
+      const user = await userService.getByPhoneHash(phoneHash);
+      if (!user) {
+        return reply.status(404).send({
+          error: {
+            code: 'RECIPIENT_NOT_REGISTERED',
+            message:
+              'No Ping user with that phone — $PING can only be sent to Ping users',
+          },
+        });
+      }
+      return reply.status(200).send({ walletAddress: user.walletAddress });
     }
   );
 }
