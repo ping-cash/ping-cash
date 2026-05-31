@@ -16,16 +16,26 @@ jobs:
         uses: ruby/setup-ruby@v1
         with: { ruby-version: '3.3' }
       - run: gem install fastlane --no-document
-      - name: Download preserved IPA from latest iOS run
+      - name: Download preserved IPA from a recent COMPLETED iOS run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p $RUNNER_TEMP/ipa-in
-          # Find the latest iOS TestFlight run and grab its ipa-* artifact
-          RUN_ID=$(gh run list --workflow=ios.yml --limit 1 --json databaseId -q '.[0].databaseId')
+          # Find the latest COMPLETED iOS run (status=completed) that has an ipa-* artifact.
+          # Picking the first ipa-* across the latest few completed runs to avoid grabbing
+          # an in-progress run with no artifacts yet.
+          RUN_ID=""
+          ART_NAME=""
+          for run in $(gh run list --workflow=ios.yml --limit 5 --status completed --json databaseId -q '.[].databaseId'); do
+            for art in $(gh api repos/${{ github.repository }}/actions/runs/$run/artifacts --jq '.artifacts[] | select(.name | startswith("ipa-")) | .name' 2>/dev/null); do
+              if [ -n "$art" ]; then
+                RUN_ID=$run; ART_NAME=$art; break 2
+              fi
+            done
+          done
+          if [ -z "$RUN_ID" ]; then echo "::error::no ipa-* artifact found across last 5 completed ios.yml runs"; exit 1; fi
           echo "Source iOS run: $RUN_ID"
-          ART_NAME=$(gh api repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts --jq '.artifacts[] | select(.name | startswith("ipa-")) | .name' | head -1)
           echo "Artifact: $ART_NAME"
           gh run download $RUN_ID -n "$ART_NAME" --dir $RUNNER_TEMP/ipa-in
           ls -la $RUNNER_TEMP/ipa-in/
