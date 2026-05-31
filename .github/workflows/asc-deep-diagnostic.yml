@@ -27,10 +27,30 @@ jobs:
           apps = requests.get(f'{base}/v1/apps?filter[bundleId]=cash.ping.app', headers=h).json()
           app_id = apps['data'][0]['id']
 
-          # Latest 20 builds — does v97 surface?
-          r = requests.get(f'{base}/v1/builds?filter[app]={app_id}&sort=-uploadedDate&limit=20', headers=h).json()
-          print('=== Latest 20 builds in ASC ===')
-          for b in r.get('data', []):
-              a = b.get('attributes', {})
-              print(f"  v{a.get('version')}: processing={a.get('processingState')} uploaded={a.get('uploadedDate')} expired={a.get('expired')}")
+          # Probe across ALL processing states + ALL pre-release versions, no filter
+          print('=== Builds across ALL processing states ===')
+          for state in ['VALID', 'PROCESSING', 'FAILED', 'INVALID']:
+              r = requests.get(f'{base}/v1/builds?filter[app]={app_id}&filter[processingState]={state}&sort=-uploadedDate&limit=10', headers=h).json()
+              data = r.get('data', [])
+              print(f'\nState={state}: {len(data)} builds')
+              for b in data[:3]:
+                  a = b.get('attributes', {})
+                  print(f"  v{a.get('version')}: uploaded={a.get('uploadedDate')} expired={a.get('expired')}")
+
+          # All pre-release versions
+          r = requests.get(f'{base}/v1/preReleaseVersions?filter[app]={app_id}&sort=-version&limit=20', headers=h).json()
+          print(f'\n=== All PRVs ({r.get("meta",{}).get("paging",{}).get("total","?")} total) ===')
+          for v in r.get('data', []):
+              a = v.get('attributes', {})
+              print(f"  v={a.get('version')} platform={a.get('platform')}")
+
+          # If there's a 0.1.0 PRV, list its build relationships
+          r = requests.get(f'{base}/v1/preReleaseVersions?filter[app]={app_id}&filter[version]=0.1.0&filter[platform]=IOS', headers=h).json()
+          if r.get('data'):
+              prv_id = r['data'][0]['id']
+              r2 = requests.get(f'{base}/v1/preReleaseVersions/{prv_id}/relationships/builds', headers=h).json()
+              total = r2.get('meta', {}).get('paging', {}).get('total', 0)
+              print(f'\n=== PRV 0.1.0 build relationships: {total} total ===')
+              for b in r2.get('data', [])[:5]:
+                  print(f"  build_id={b.get('id')}")
           PY
