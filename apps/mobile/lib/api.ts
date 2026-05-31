@@ -268,6 +268,19 @@ class ApiClient {
     });
   }
 
+  // Phone → wallet lookup for in-network $PING send (#52). Wraps
+  // /users/me/contacts/lookup-by-phone (JWT-required, privacy filtered).
+  // Returns walletAddress when the phone is registered, or rejects with
+  // RECIPIENT_NOT_REGISTERED.
+  async lookupRecipientWallet(
+    phone: string
+  ): Promise<{ walletAddress: string }> {
+    return this.request('/users/me/contacts/lookup-by-phone', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    });
+  }
+
   async getTransfer(id: string): Promise<Transfer> {
     return this.request(`/transfers/${id}`);
   }

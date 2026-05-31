@@ -36,9 +36,11 @@ export default function SendScreen() {
       ? params.to
       : `+${params.to}`
     : '+';
+  type TokenKind = 'USDC' | 'PING';
   const [phone, setPhone] = useState(initialPhone);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
+  const [tokenKind, setTokenKind] = useState<TokenKind>('USDC');
   const [loading, setLoading] = useState(false);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
   const [recipientName, setRecipientName] = useState<string | null>(null);
@@ -136,6 +138,20 @@ export default function SendScreen() {
     }
     setLoading(true);
     try {
+      if (tokenKind === 'PING') {
+        // In-network only — lookup recipient wallet first. $PING cannot be
+        // sent to non-Ping users (no claim-link UX). Privy MPC sign + Solana
+        // RPC submit is a follow-up; this iteration validates the resolver
+        // path end-to-end so the Maestro walk has full coverage.
+        const { walletAddress } = await api.lookupRecipientWallet(phone);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert(
+          'Recipient found',
+          `${amount} $PING → ${walletAddress.slice(0, 4)}…${walletAddress.slice(-4)}\n\nOn-chain submit via Privy MPC ships in the next iteration. Backend is ready (wallet-service /send-intent accepts tokenKind:'PING').`,
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
+        return;
+      }
       const transfer = await api.createTransfer({
         recipientPhone: phone,
         amount,
@@ -152,7 +168,15 @@ export default function SendScreen() {
       }
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Send failed', (err as Error).message);
+      const msg = (err as Error).message;
+      if (tokenKind === 'PING' && msg.includes('RECIPIENT_NOT_REGISTERED')) {
+        Alert.alert(
+          'Not on Ping yet',
+          '$PING can only be sent to existing Ping users. Use USDC to send to anyone via claim link.'
+        );
+      } else {
+        Alert.alert('Send failed', msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -294,6 +318,46 @@ export default function SendScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+            {/* Token toggle — USDC default, $PING in-network only (#52) */}
+            <View style={styles.tokenToggleRow}>
+              <Pressable
+                onPress={() => {
+                  setTokenKind('USDC');
+                  Haptics.selectionAsync();
+                }}
+                style={[
+                  styles.tokenPill,
+                  tokenKind === 'USDC' && styles.tokenPillActive,
+                ]}
+                testID="send-token-usdc"
+              >
+                <Heading
+                  variant="labelSmall"
+                  color={tokenKind === 'USDC' ? 'primary' : 'tertiary'}
+                >
+                  USDC
+                </Heading>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setTokenKind('PING');
+                  Haptics.selectionAsync();
+                }}
+                style={[
+                  styles.tokenPill,
+                  tokenKind === 'PING' && styles.tokenPillActive,
+                ]}
+                testID="send-token-ping"
+              >
+                <Heading
+                  variant="labelSmall"
+                  color={tokenKind === 'PING' ? 'primary' : 'tertiary'}
+                >
+                  $PING
+                </Heading>
+              </Pressable>
+            </View>
+
             {/* Amount entry — jumbo */}
             <View style={styles.amountSection}>
               <Heading variant="labelSmall" color="tertiary" align="center">
@@ -301,7 +365,7 @@ export default function SendScreen() {
               </Heading>
               <View style={styles.amountInputRow}>
                 <Heading variant="displayMedium" color="tertiary">
-                  $
+                  {tokenKind === 'USDC' ? '$' : ''}
                 </Heading>
                 <TextInput
                   style={styles.amountInput}
@@ -316,8 +380,13 @@ export default function SendScreen() {
                   editable={!loading}
                   autoFocus
                 />
+                {tokenKind === 'PING' ? (
+                  <Heading variant="bodyLarge" color="tertiary">
+                    $PING
+                  </Heading>
+                ) : null}
               </View>
-              {localPreview ? (
+              {localPreview && tokenKind === 'USDC' ? (
                 <Heading
                   variant="bodyStrong"
                   color="brand"
@@ -330,7 +399,9 @@ export default function SendScreen() {
               <View style={styles.feePill}>
                 <View style={styles.dot} />
                 <Heading variant="caption" color="secondary">
-                  FREE in-network · ~0.5% if cash-out
+                  {tokenKind === 'PING'
+                    ? 'In-network only · instant on-chain'
+                    : 'FREE in-network · ~0.5% if cash-out'}
                 </Heading>
               </View>
             </View>
@@ -460,6 +531,23 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxxl,
+  },
+  tokenToggleRow: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.full,
+    padding: 4,
+    gap: 4,
+    marginTop: spacing.md,
+  },
+  tokenPill: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 8,
+    borderRadius: radii.full,
+  },
+  tokenPillActive: {
+    backgroundColor: colors.brand,
   },
   amountSection: {
     alignItems: 'center',
