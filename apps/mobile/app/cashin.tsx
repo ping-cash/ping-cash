@@ -193,6 +193,8 @@ export default function CashinScreen() {
                 placeholder="25"
                 placeholderTextColor={colors.textTertiary}
                 testID="cashin-amount-input"
+                accessible
+                accessibilityLabel="Cash-in amount in USD"
               />
               <Heading variant="bodyLarge" color="tertiary">
                 USD

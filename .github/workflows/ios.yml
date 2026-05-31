@@ -485,6 +485,35 @@ jobs:
           path: ${{ runner.temp }}/app.xcarchive/dSYMs/**
           if-no-files-found: warn
 
+      # PRE-UPLOAD VALIDATION (#85 silent-reject defense).
+      # altool --validate-app surfaces Apple's content-validation errors
+      # that --upload-app silently accepts. If validation fails, exit
+      # immediately + preserve the IPA for inspection. If validation
+      # passes but upload-app still produces a silent-reject downstream,
+      # we know the issue is server-side, not the IPA.
+      - name: Validate IPA via altool (pre-flight)
+        run: |
+          set -o pipefail
+          xcrun altool --validate-app \
+            -f $RUNNER_TEMP/export/*.ipa \
+            --type ios \
+            --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+            --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }} 2>&1 | tee /tmp/altool-validate.log
+          if grep -qiE "UPLOAD FAILED|Validation failed|ERROR:" /tmp/altool-validate.log; then
+            echo "::error::altool --validate-app rejected the IPA — see log + IPA artifact"
+            exit 1
+          fi
+          echo "::notice::altool --validate-app PASSED — IPA structurally valid"
+
+      - name: Preserve IPA artifact (for silent-reject debugging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipa-${{ github.run_number }}
+          path: ${{ runner.temp }}/export/*.ipa
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Upload to TestFlight via altool
         run: |
           set -o pipefail
