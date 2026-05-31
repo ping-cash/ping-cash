@@ -1,0 +1,72 @@
+name: ASC Pilot Upload (diagnostic)
+# Manually-dispatched: take the latest preserved IPA artifact and upload it
+# via fastlane pilot (different code path than altool --upload-app). pilot
+# typically gives more verbose Apple-side error messages and exposes silent
+# rejections that altool hides.
+on: { workflow_dispatch: {} }
+jobs:
+  pilot:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with: { ruby-version: '3.3' }
+      - run: gem install fastlane --no-document
+      - name: Download preserved IPA from latest iOS run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p $RUNNER_TEMP/ipa-in
+          # Find the latest iOS TestFlight run and grab its ipa-* artifact
+          RUN_ID=$(gh run list --workflow=ios.yml --limit 1 --json databaseId -q '.[0].databaseId')
+          echo "Source iOS run: $RUN_ID"
+          ART_NAME=$(gh api repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts --jq '.artifacts[] | select(.name | startswith("ipa-")) | .name' | head -1)
+          echo "Artifact: $ART_NAME"
+          gh run download $RUN_ID -n "$ART_NAME" --dir $RUNNER_TEMP/ipa-in
+          ls -la $RUNNER_TEMP/ipa-in/
+      - name: Write App Store Connect API key for fastlane
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PRIVATE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/private_keys
+          echo "$PRIVATE_KEY_B64" | base64 -d > ~/private_keys/AuthKey_${KEY_ID}.p8
+          chmod 600 ~/private_keys/AuthKey_${KEY_ID}.p8
+          cat > $RUNNER_TEMP/asc_api_key.json <<JSON
+          { "key_id": "${KEY_ID}",
+            "issuer_id": "${ISSUER_ID}",
+            "key": "$(cat ~/private_keys/AuthKey_${KEY_ID}.p8 | sed 's/$/\\n/' | tr -d '\n')",
+            "in_house": false,
+            "is_key_content_base64": false }
+          JSON
+          echo "API key written to $RUNNER_TEMP/asc_api_key.json"
+      - name: Upload via fastlane pilot (verbose)
+        env:
+          FASTLANE_HIDE_CHANGELOG: '1'
+          FASTLANE_SKIP_UPDATE_CHECK: '1'
+          FASTLANE_LOG_DEBUG: '1'
+        run: |
+          set -euo pipefail
+          IPA=$(ls $RUNNER_TEMP/ipa-in/*.ipa | head -1)
+          echo "Uploading: $IPA"
+          fastlane run upload_to_testflight \
+            api_key_path:$RUNNER_TEMP/asc_api_key.json \
+            ipa:"$IPA" \
+            skip_waiting_for_build_processing:false \
+            skip_submission:true \
+            app_identifier:cash.ping.app \
+            verbose:true 2>&1 | tee /tmp/pilot.log
+      - name: Preserve pilot log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pilot-log-${{ github.run_number }}
+          path: /tmp/pilot.log
+          if-no-files-found: warn
