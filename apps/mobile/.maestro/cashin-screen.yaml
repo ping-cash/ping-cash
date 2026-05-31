@@ -27,11 +27,13 @@ appId: cash.ping.app
 - eraseText
 - inputText: '25'
 - hideKeyboard
+- takeScreenshot: 11-cashin-amount-entered
 - assertVisible:
     id: 'cashin-method-card'
 - assertVisible:
     id: 'cashin-method-apple_pay'
 - assertVisible:
     id: 'cashin-method-google_pay'
+- takeScreenshot: 12-cashin-methods
 - tapOn:
     id: 'back-button'

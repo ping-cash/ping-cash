@@ -8,5 +8,6 @@ appId: cash.ping.app
 ---
 - tapOn:
     id: 'tab-Earn'
+- takeScreenshot: 14-vault-earn
 - tapOn:
     id: 'tab-Home'

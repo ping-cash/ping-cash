@@ -13,4 +13,5 @@ appId: cash.ping.app
     timeout: 25000
 - tapOn:
     id: 'btn-Swap'
+- takeScreenshot: 13-swap-screen
 - back
