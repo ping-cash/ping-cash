@@ -23,11 +23,12 @@ vi.mock('../middleware/kyc-tier', () => ({
   },
 }));
 
+import * as userService from '../services/user.service';
+
+import { userRoutes } from './users.controller';
+
 // Mock JWT verify to bypass auth
 const mockJwt = { verify: vi.fn(() => ({ sub: 'caller-uuid' })) };
-
-import * as userService from '../services/user.service';
-import { userRoutes } from './users.controller';
 
 describe('POST /users/me/contacts/lookup-by-phone', () => {
   let app: ReturnType<typeof Fastify>;
