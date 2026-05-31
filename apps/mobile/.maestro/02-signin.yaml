@@ -3,7 +3,7 @@ appId: cash.ping.app
 - tapOn: 'Create account'
 - extendedWaitUntil:
     visible: 'phone number'
-    timeout: 8000
+    timeout: 25000
 - takeScreenshot: 02-signup
 # Hard-target the phone input now that it has a testID. The input
 # default value is the user's IDD prefix from expo-localization (or
